@@ -1,0 +1,194 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* ── MLB Edge Pro color system — always dark ────────────────────────────────── */
+
+@theme inline {
+  --color-background:         hsl(var(--background));
+  --color-foreground:         hsl(var(--foreground));
+  --color-card:               hsl(var(--card));
+  --color-card-foreground:    hsl(var(--card-foreground));
+  --color-popover:            hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary:            hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary:          hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted:              hsl(var(--muted));
+  --color-muted-foreground:   hsl(var(--muted-foreground));
+  --color-accent:             hsl(var(--accent));
+  --color-accent-foreground:  hsl(var(--accent-foreground));
+  --color-destructive:        hsl(var(--destructive));
+  --color-border:             hsl(var(--border));
+  --color-input:              hsl(var(--input));
+  --color-ring:               hsl(var(--ring));
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  /* Brand tokens */
+  --color-orange:       #FF7828;
+  --color-orange-light: #FFA550;
+  --color-orange-dark:  #C85014;
+  --color-surface:      #111622;
+  --color-surface-2:    #191C22;
+}
+
+/* Single theme — always dark, matching the mobile app exactly */
+:root {
+  /* Background: #0A0E14 → hsl(220 30% 6%) */
+  --background:       220 30% 6%;
+  --foreground:       0 0% 96%;
+
+  /* Card: #111622 → hsl(220 27% 9%) */
+  --card:             220 27% 9%;
+  --card-foreground:  0 0% 96%;
+
+  --popover:          220 27% 9%;
+  --popover-foreground: 0 0% 96%;
+
+  /* Primary: #FF7828 orange → hsl(24 100% 57%) */
+  --primary:          24 100% 57%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary:        220 20% 12%;
+  --secondary-foreground: 0 0% 96%;
+
+  --muted:            220 20% 12%;
+  --muted-foreground: 0 0% 45%;
+
+  --accent:           220 20% 14%;
+  --accent-foreground: 0 0% 96%;
+
+  --destructive:      0 72% 51%;
+
+  /* Border: rgba(255,255,255,0.08) */
+  --border:           220 20% 15%;
+  --input:            220 20% 12%;
+  --ring:             24 100% 57%;
+
+  --radius: 0.75rem;
+}
+
+/* Force dark on html always */
+html {
+  color-scheme: dark;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  ::selection {
+    background-color: rgba(255, 120, 40, 0.25);
+  }
+}
+
+/* ── Gradient utilities ──────────────────────────────────────────────────────── */
+.gradient-orange {
+  background: linear-gradient(135deg, #FFA550, #FF7828, #C85014);
+}
+
+.gradient-orange-text {
+  background: linear-gradient(135deg, #FFA550, #FF7828);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.glass-card {
+  background: rgba(17, 22, 34, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+}
+
+/* Glow effects */
+/* Hide scrollbar but allow scroll */
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+.glow-orange {
+  box-shadow: 0 0 40px rgba(255, 120, 40, 0.15), 0 0 80px rgba(255, 120, 40, 0.06);
+}
+
+/* ── Clerk dark-mode overrides ───────────────────────────────────────────────── */
+/* Force the social buttons (Apple, Google) to fit the dark theme */
+
+/* Card root */
+.cl-card,
+.cl-rootBox .cl-card {
+  background-color: #111622 !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.5) !important;
+}
+
+/* Social buttons */
+.cl-socialButtonsBlockButton {
+  background-color: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.09) !important;
+  color: #ffffff !important;
+  border-radius: 14px !important;
+  transition: background-color 0.15s !important;
+}
+.cl-socialButtonsBlockButton:hover {
+  background-color: rgba(255,255,255,0.08) !important;
+}
+.cl-socialButtonsBlockButtonText {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+/* Make Apple logo white (it's black by default) */
+.cl-providerIcon__apple {
+  filter: brightness(0) invert(1) !important;
+}
+
+/* Divider */
+.cl-dividerLine { background: rgba(255,255,255,0.07) !important; }
+.cl-dividerText { color: rgba(255,255,255,0.25) !important; }
+
+/* Inputs */
+.cl-formFieldInput {
+  background-color: #191C22 !important;
+  border-color: rgba(255,255,255,0.09) !important;
+  color: #ffffff !important;
+  border-radius: 14px !important;
+}
+.cl-formFieldInput:focus {
+  border-color: rgba(255,120,40,0.5) !important;
+  box-shadow: 0 0 0 2px rgba(255,120,40,0.15) !important;
+}
+
+/* Labels */
+.cl-formFieldLabel { color: rgba(255,255,255,0.45) !important; font-size: 11px !important; font-weight: 700 !important; letter-spacing: 0.08em !important; }
+
+/* Primary button */
+.cl-formButtonPrimary {
+  background: linear-gradient(135deg, #FFA550, #FF7828, #C85014) !important;
+  border-radius: 999px !important;
+  font-weight: 800 !important;
+  box-shadow: 0 6px 20px rgba(255,120,40,0.35) !important;
+  transition: opacity 0.15s !important;
+}
+.cl-formButtonPrimary:hover { opacity: 0.9 !important; }
+
+/* Footer links */
+.cl-footerActionText { color: rgba(255,255,255,0.35) !important; }
+.cl-footerActionLink { color: #FF7828 !important; }
+.cl-footerActionLink:hover { color: #FFA550 !important; }
+
+/* Header */
+.cl-headerTitle { color: #ffffff !important; font-weight: 900 !important; }
+.cl-headerSubtitle { color: rgba(255,255,255,0.40) !important; }
+
+/* Optional / badge text */
+.cl-formFieldHintText { color: rgba(255,255,255,0.25) !important; }
+.cl-badge { display: none !important; }
+
+/* Internal link (sign in / sign up) */
+.cl-identityPreviewText { color: #ffffff !important; }
+.cl-identityPreviewEditButton { color: #FF7828 !important; }
