@@ -3,14 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
-import { CircleDot, BarChart3, Layers, TrendingUp, Settings, Lock } from "lucide-react";
+import { CircleDot, BarChart3, Layers, TrendingUp, Target, Settings, Lock } from "lucide-react";
 import { useSubscription } from "@/lib/subscription";
 
 const NAV = [
-  { href: "/games",    icon: CircleDot,  label: "Today's Games", pro: false },
-  { href: "/scores",   icon: BarChart3,  label: "Live Scores",   pro: false },
-  { href: "/analysis", icon: TrendingUp, label: "Edge Report",   pro: true  },
-  { href: "/props",    icon: Layers,     label: "Prop Builder",  pro: true  },
+  { href: "/games",        icon: CircleDot,  label: "Today's Games", requiredTier: null          },
+  { href: "/scores",       icon: BarChart3,  label: "Live Scores",   requiredTier: null          },
+  { href: "/analysis",     icon: TrendingUp, label: "Edge Report",   requiredTier: "fan" as const },
+  { href: "/props",        icon: Layers,     label: "Prop Builder",  requiredTier: "fan" as const },
+  { href: "/hr-deep-dive", icon: Target,     label: "HR Nuke",       requiredTier: "pro" as const },
 ];
 
 function DiamondLogo() {
@@ -24,7 +25,13 @@ function DiamondLogo() {
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const { isPro } = useSubscription();
+  const { isPro, isSuperPro } = useSubscription();
+
+  function isLocked(requiredTier: "fan" | "pro" | null): boolean {
+    if (!requiredTier) return false;
+    if (requiredTier === "fan") return !isPro;
+    return !isSuperPro;
+  }
 
   return (
     <header className="h-14 flex items-center justify-between px-5 border-b border-white/[0.06] bg-[#0A0E14]/95 backdrop-blur-xl sticky top-0 z-40">
@@ -38,16 +45,20 @@ export function AppSidebar() {
 
       {/* Center nav */}
       <nav className="hidden sm:flex items-center gap-1">
-        {NAV.map(({ href, icon: Icon, label, pro }) => {
+        {NAV.map(({ href, icon: Icon, label, requiredTier }) => {
           const active = pathname.startsWith(href);
-          const locked = pro && !isPro;
+          const locked = isLocked(requiredTier);
+          const isProFeature = requiredTier === "pro";
+          const activeColor = isProFeature ? "#818cf8" : "#FF7828";
           return (
             <Link
               key={href}
               href={href}
               className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-medium transition-colors relative ${
                 active
-                  ? "bg-[#FF7828]/12 text-[#FF7828]"
+                  ? isProFeature
+                    ? "bg-[#818cf8]/12 text-[#818cf8]"
+                    : "bg-[#FF7828]/12 text-[#FF7828]"
                   : "text-white/40 hover:text-white hover:bg-white/[0.05]"
               }`}
             >
@@ -59,17 +70,22 @@ export function AppSidebar() {
         })}
       </nav>
 
-      {/* Right — settings + user */}
+      {/* Right — upgrade pill + settings + user */}
       <div className="flex items-center gap-2">
-        {/* Upgrade pill (free users only) */}
-        {!isPro && (
+        {/* Smart upgrade pill */}
+        {!isSuperPro && (
           <Link
-            href="/upgrade"
-            className="hidden md:flex items-center gap-1.5 rounded-full border border-[#FF7828]/30 bg-[#FF7828]/10 px-3 py-1.5 text-[11px] font-bold text-[#FF7828] hover:bg-[#FF7828]/15 transition-colors"
+            href={isPro ? "/upgrade?tier=pro" : "/upgrade?tier=fan"}
+            className={`hidden md:flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold transition-colors ${
+              isPro
+                ? "border-[#818cf8]/30 bg-[#818cf8]/10 text-[#818cf8] hover:bg-[#818cf8]/15"
+                : "border-[#FF7828]/30 bg-[#FF7828]/10 text-[#FF7828] hover:bg-[#FF7828]/15"
+            }`}
           >
-            Upgrade to Pro
+            {isPro ? "Upgrade to Pro" : "Go Fan"}
           </Link>
         )}
+
         <Link
           href="/settings"
           className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${

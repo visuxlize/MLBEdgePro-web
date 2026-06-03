@@ -17,7 +17,7 @@ import Stripe from "stripe";
 import { clerkClient } from "@clerk/nextjs/server";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-05-28.basil",
+  apiVersion: "2026-02-25.clover",
 });
 
 export async function POST(req: Request) {
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
 
   // ── checkout.session.completed ─────────────────────────────────────────────
   if (event.type === "checkout.session.completed") {
-    const session = event.data.object as Stripe.CheckoutSession;
+    const session = event.data.object as Stripe.Checkout.Session;
     const clerkId = session.metadata?.clerk_user_id;
     const tier    = session.metadata?.tier as "fan" | "pro" | undefined;
 

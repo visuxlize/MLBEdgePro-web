@@ -83,6 +83,70 @@ export const TEAM_ABBR: Record<number, string> = {
   143: "PHI", 144: "ATL", 145: "CWS", 146: "MIA", 147: "NYY", 158: "MIL",
 };
 
+// ── Extended stat types ────────────────────────────────────────────────────────
+
+export interface PitcherSeasonStats {
+  era: number;
+  whip: number;
+  strikeoutsPer9Inn: number;
+  walksPer9Inn: number;
+  homeRunsPer9: number;
+  flyBallPct?: number;
+  barrelsPct?: number;
+}
+
+export interface BatterSeasonStats {
+  avg: number;
+  obp: number;
+  slg: number;
+  ops: number;
+  homeRuns: number;
+  iso: number;
+  barrelsPct?: number;
+  avgExitVelocity?: number;
+  hardHitPct?: number;
+}
+
+export interface LineupPlayer {
+  id: number;
+  fullName: string;
+  position: string;
+  battingOrder: number;
+}
+
+// Venue lat/long for weather lookups (MLB venue IDs → coords)
+const VENUE_COORDS: Record<number, { lat: number; lon: number }> = {
+  1:    { lat: 40.8296, lon: -73.9262 }, // Yankee Stadium
+  2:    { lat: 42.3467, lon: -71.0972 }, // Fenway Park
+  3:    { lat: 41.8299, lon: -87.6338 }, // Wrigley Field
+  4:    { lat: 38.8730, lon: -77.0074 }, // Nationals Park
+  5:    { lat: 39.7559, lon: -104.9942 }, // Coors Field
+  7:    { lat: 41.4962, lon: -81.6852 }, // Progressive Field
+  12:   { lat: 37.7786, lon: -122.3893 }, // Oracle Park
+  14:   { lat: 36.1601, lon: -86.7785 }, // Truist Park
+  15:   { lat: 33.8908, lon: -84.4677 }, // Truist Park (ATL)
+  17:   { lat: 42.6910, lon: -83.2453 }, // Comerica Park
+  19:   { lat: 29.7573, lon: -95.3555 }, // Minute Maid Park
+  22:   { lat: 34.0739, lon: -118.2400 }, // Dodger Stadium
+  31:   { lat: 37.7516, lon: -122.2005 }, // Oakland Coliseum
+  32:   { lat: 39.9012, lon: -82.9963 }, // Great American Ball Park
+  680:  { lat: 47.5914, lon: -122.3328 }, // T-Mobile Park
+  2392: { lat: 32.7073, lon: -97.0836 }, // Globe Life Field
+  2394: { lat: 33.4453, lon: -112.0667 }, // Chase Field
+  2395: { lat: 25.7781, lon: -80.2196 }, // loanDepot park
+  2602: { lat: 43.6414, lon: -79.3894 }, // Rogers Centre
+  2680: { lat: 44.9817, lon: -93.2783 }, // Target Field
+  2681: { lat: 44.9817, lon: -93.2783 }, // Target Field alt
+  2889: { lat: 38.9569, lon: -76.8914 }, // Camden Yards alt
+  3289: { lat: 39.0558, lon: -84.5076 }, // Great American BPark
+  3309: { lat: 40.4469, lon: -79.9599 }, // PNC Park
+  3312: { lat: 32.7473, lon: -117.1573 }, // Petco Park
+  3313: { lat: 38.5737, lon: -121.4678 }, // Sutter Health Park
+  4169: { lat: 40.7571, lon: -73.8458 }, // Citi Field
+  4705: { lat: 43.0284, lon: -76.1062 }, // NBT Bank Stadium
+  5325: { lat: 35.0961, lon: -80.8428 }, // Truist Field
+};
+
 // ── Fetchers ───────────────────────────────────────────────────────────────────
 
 export async function fetchGamesByDate(date: string): Promise<Game[]> {
@@ -100,6 +164,107 @@ export async function fetchTodaysGames(): Promise<Game[]> {
 export async function fetchScores(): Promise<Game[]> {
   const games = await fetchTodaysGames();
   return games.filter((g) => g.status.abstractGameState !== "Preview");
+}
+
+export async function fetchPitcherStats(personId: number): Promise<PitcherSeasonStats | null> {
+  try {
+    const url = `${BASE}/people/${personId}/stats?stats=season&group=pitching&season=2025`;
+    const res = await fetch(url, { next: { revalidate: 300 } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const split = data.stats?.[0]?.splits?.[0]?.stat;
+    if (!split) return null;
+    return {
+      era:                 parseFloat(split.era ?? "0"),
+      whip:                parseFloat(split.whip ?? "0"),
+      strikeoutsPer9Inn:   parseFloat(split.strikeoutsPer9Inn ?? "0"),
+      walksPer9Inn:        parseFloat(split.walksPer9Inn ?? "0"),
+      homeRunsPer9:        parseFloat(split.homeRunsPer9 ?? "0"),
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchBatterStats(personId: number): Promise<BatterSeasonStats | null> {
+  try {
+    const url = `${BASE}/people/${personId}/stats?stats=season&group=hitting&season=2025`;
+    const res = await fetch(url, { next: { revalidate: 300 } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const split = data.stats?.[0]?.splits?.[0]?.stat;
+    if (!split) return null;
+    const slg = parseFloat(split.slg ?? "0");
+    const obp = parseFloat(split.obp ?? "0");
+    const avg = parseFloat(split.avg ?? "0");
+    return {
+      avg,
+      obp,
+      slg,
+      ops:       parseFloat(split.ops ?? "0"),
+      homeRuns:  parseInt(split.homeRuns ?? "0", 10),
+      iso:       Math.max(0, slg - avg),
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchGameLineup(gamePk: number): Promise<LineupPlayer[]> {
+  try {
+    const url = `${BASE}/game/${gamePk}/boxscore`;
+    const res = await fetch(url, { next: { revalidate: 120 } });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const players: LineupPlayer[] = [];
+    for (const side of ["away", "home"] as const) {
+      const roster = data.teams?.[side]?.players ?? {};
+      for (const p of Object.values(roster) as any[]) {
+        if (p.battingOrder) {
+          players.push({
+            id:           p.person.id,
+            fullName:     p.person.fullName,
+            position:     p.position?.abbreviation ?? "?",
+            battingOrder: parseInt(p.battingOrder, 10),
+          });
+        }
+      }
+    }
+    return players.sort((a, b) => a.battingOrder - b.battingOrder);
+  } catch {
+    return [];
+  }
+}
+
+export interface VenueWeather {
+  tempF: number;
+  windMph: number;
+  windDirection: string;
+  conditions: string;
+  humidity: number;
+}
+
+export async function fetchVenueWeather(venueId: number): Promise<VenueWeather | null> {
+  const coords = VENUE_COORDS[venueId];
+  if (!coords || !process.env.OPENWEATHER_API_KEY) return null;
+  try {
+    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${coords.lat}&lon=${coords.lon}&units=imperial&appid=${process.env.OPENWEATHER_API_KEY}`;
+    const res = await fetch(url, { next: { revalidate: 900 } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const deg = data.wind?.deg ?? 0;
+    const dirs = ["N","NE","E","SE","S","SW","W","NW"];
+    const windDirection = dirs[Math.round(deg / 45) % 8];
+    return {
+      tempF:         Math.round(data.main?.temp ?? 72),
+      windMph:       Math.round((data.wind?.speed ?? 0) * 1.15), // m/s to mph already in imperial
+      windDirection,
+      conditions:    data.weather?.[0]?.description ?? "clear",
+      humidity:      data.main?.humidity ?? 50,
+    };
+  } catch {
+    return null;
+  }
 }
 
 // ── Display helpers ────────────────────────────────────────────────────────────
