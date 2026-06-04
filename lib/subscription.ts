@@ -1,6 +1,6 @@
 "use client";
 
-import { useUser } from "@clerk/nextjs";
+import { useUser, useAuth } from "@clerk/nextjs";
 
 export type Plan = "free" | "fan" | "pro";
 
@@ -16,22 +16,26 @@ export interface SubscriptionStatus {
 }
 
 /**
- * Reads subscription status from Clerk publicMetadata.
+ * Reads subscription status from Clerk Billing plans + publicMetadata fallback.
  *
  * Tier mapping:
  *   free       → no features locked
  *   fan  $4.99 → Edge Report, Prop Builder, Matchup Analysis
  *   pro $14.99 → Everything in Fan + HR Deep Dive, Advanced Analysis
  *
- * To grant a tier manually (dev/testing):
- *   Clerk Dashboard → Users → your user → Metadata → Public
+ * Clerk Billing plan keys:
+ *   fan_subscription  → Fan plan
+ *   pro_subscription  → Pro plan
+ *
+ * Legacy publicMetadata fallback (for users subscribed before Clerk Billing):
  *   { "plan": "pro", "isPro": true, "isSuperPro": true }
  */
 export function useSubscription(): SubscriptionStatus {
   const { user, isLoaded } = useUser();
+  const { has, isLoaded: authLoaded } = useAuth();
 
-  if (!isLoaded) return { plan: "free", isPro: false, isSuperPro: false, isLoaded: false };
-  if (!user)     return { plan: "free", isPro: false, isSuperPro: false, isLoaded: true  };
+  if (!isLoaded || !authLoaded) return { plan: "free", isPro: false, isSuperPro: false, isLoaded: false };
+  if (!user)                    return { plan: "free", isPro: false, isSuperPro: false, isLoaded: true  };
 
   const meta = (user.publicMetadata ?? {}) as {
     plan?: Plan;
@@ -41,9 +45,22 @@ export function useSubscription(): SubscriptionStatus {
     subscriptionExpiresAt?: string;
   };
 
-  const plan: Plan     = meta.plan ?? "free";
-  const isPro          = meta.isPro === true || plan === "fan" || plan === "pro";
-  const isSuperPro     = meta.isSuperPro === true || plan === "pro";
+  // Clerk Billing checks (primary)
+  const hasFanBilling = has?.({ plan: "fan_subscription" }) ?? false;
+  const hasProBilling = has?.({ plan: "pro_subscription" }) ?? false;
+
+  // Legacy publicMetadata checks (backward compat)
+  const legacyPlan: Plan = meta.plan ?? "free";
+  const legacyIsFan      = legacyPlan === "fan";
+  const legacyIsSuperPro = meta.isSuperPro === true || legacyPlan === "pro";
+
+  const isFan      = hasFanBilling || legacyIsFan;
+  const isSuperPro = hasProBilling || legacyIsSuperPro;
+  const isPro      = isFan || isSuperPro;
+
+  let plan: Plan = "free";
+  if (isSuperPro)  plan = "pro";
+  else if (isFan)  plan = "fan";
 
   return {
     plan,

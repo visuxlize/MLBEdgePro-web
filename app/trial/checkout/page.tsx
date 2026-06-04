@@ -1,53 +1,71 @@
 "use client";
 
 import { useEffect, useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useClerk } from "@clerk/nextjs";
 import { Loader2, Zap, Star, AlertCircle } from "lucide-react";
 import Link from "next/link";
+
+const FAN_PLAN_ID = process.env.NEXT_PUBLIC_CLERK_FAN_PLAN_ID!;
+const PRO_PLAN_ID = process.env.NEXT_PUBLIC_CLERK_PRO_PLAN_ID!;
 
 function TrialCheckoutInner() {
   const searchParams = useSearchParams();
   const tier = (searchParams.get("tier") ?? "fan") as "fan" | "pro";
+  const router = useRouter();
+  const clerk = useClerk();
   const [error, setError] = useState<string | null>(null);
 
   const isFan = tier === "fan";
   const color = isFan ? "#FF7828" : "#818CF8";
   const Icon = isFan ? Zap : Star;
   const trialDays = isFan ? "14" : "3";
+  const planId = isFan ? FAN_PLAN_ID : PRO_PLAN_ID;
 
   useEffect(() => {
     let cancelled = false;
 
     async function startCheckout() {
       try {
-        const res = await fetch("/api/stripe/checkout", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tier, trial: true }),
+        if (!planId) {
+          throw new Error("Plan not configured. Please contact support.");
+        }
+
+        // clerk.billing is experimental — cast to any
+        const billing = (clerk as any).billing;
+        if (!billing) {
+          throw new Error("Billing not available. Please refresh and try again.");
+        }
+
+        await billing.startCheckout({
+          planId,
+          planPeriod: "monthly",
         });
 
-        const data = await res.json();
-        if (cancelled) return;
-
-        if (!res.ok) throw new Error(data.error ?? `Request failed (${res.status})`);
-        if (!data.url) throw new Error("No checkout URL returned from Stripe");
-
-        window.location.href = data.url;
+        if (!cancelled) {
+          router.push(`/games?upgrade=success&tier=${tier}`);
+        }
       } catch (err: any) {
-        if (!cancelled) setError(err.message ?? "Something went wrong. Please try again.");
+        if (!cancelled) {
+          setError(err.message ?? "Something went wrong. Please try again.");
+        }
       }
     }
 
-    startCheckout();
+    // Wait for clerk to be loaded before starting
+    if (clerk.loaded) {
+      startCheckout();
+    }
+
     return () => { cancelled = true; };
-  }, [tier]);
+  }, [clerk.loaded]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (error) {
     return (
       <div className="min-h-screen bg-[#0A0E14] flex flex-col items-center justify-center px-6 text-center">
         <div className="rounded-2xl border border-[#EB505A]/25 bg-[#EB505A]/[0.06] p-8 max-w-md w-full">
           <AlertCircle size={32} className="text-[#EB505A] mx-auto mb-4" strokeWidth={1.5} />
-          <p className="text-[#EB505A] font-bold text-lg mb-2">Couldn't start checkout</p>
+          <p className="text-[#EB505A] font-bold text-lg mb-2">Couldn&apos;t start checkout</p>
           <p className="text-white/40 text-sm mb-6 leading-relaxed">{error}</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <a
@@ -89,7 +107,7 @@ function TrialCheckoutInner() {
         <div>
           <p className="text-white font-black text-xl mb-1">Setting up your trial…</p>
           <p className="text-white/40 text-sm">
-            Opening Stripe for your{" "}
+            Opening checkout for your{" "}
             <span className="font-bold" style={{ color }}>
               {trialDays}-day {isFan ? "Fan" : "Pro"} trial
             </span>

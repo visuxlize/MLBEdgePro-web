@@ -18,6 +18,7 @@ export default async function TrialPage({ searchParams }: Props) {
   }
 
   // ── Signed in — check if trial was already used ───────────────────────────
+  const { has } = await auth();
   const user = await currentUser();
   const meta = (user?.publicMetadata ?? {}) as {
     trialUsed?: boolean;
@@ -25,8 +26,12 @@ export default async function TrialPage({ searchParams }: Props) {
     plan?: string;
   };
 
-  // Already on a paid plan — send straight to the app
-  if (meta.isPro) {
+  // Clerk Billing plan checks (primary)
+  const hasFan = has?.({ plan: "fan_subscription" }) ?? false;
+  const hasPro = has?.({ plan: "pro_subscription" }) ?? false;
+
+  // Already on a paid plan (Clerk Billing or legacy metadata) — send straight to the app
+  if (hasFan || hasPro || meta.isPro) {
     redirect("/games");
   }
 

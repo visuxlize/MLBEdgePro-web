@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
+import { useClerk } from "@clerk/nextjs";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Check, Minus, Zap, Star, ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
@@ -52,9 +53,13 @@ function CheckIcon({ yes, color }: { yes: boolean; color?: string }) {
 }
 
 // Isolated component so Suspense boundary only wraps the searchParams call
+const FAN_PLAN_ID = process.env.NEXT_PUBLIC_CLERK_FAN_PLAN_ID!;
+const PRO_PLAN_ID = process.env.NEXT_PUBLIC_CLERK_PRO_PLAN_ID!;
+
 function UpgradeInner({ highlightTier }: { highlightTier: "fan" | "pro" | null }) {
   const { isPro, isSuperPro, plan } = useSubscription();
   const router = useRouter();
+  const clerk = useClerk();
 
   const [loadingTier, setLoadingTier] = useState<"fan" | "pro" | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
@@ -63,24 +68,23 @@ function UpgradeInner({ highlightTier }: { highlightTier: "fan" | "pro" | null }
     setLoadingTier(tier);
     setCheckoutError(null);
     try {
-      const res = await fetch("/api/stripe/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tier }),
+      const planId = tier === "fan" ? FAN_PLAN_ID : PRO_PLAN_ID;
+
+      if (!planId) {
+        throw new Error("Plan not configured. Please contact support.");
+      }
+
+      const billing = (clerk as any).billing;
+      if (!billing) {
+        throw new Error("Billing not available. Please refresh and try again.");
+      }
+
+      await billing.startCheckout({
+        planId,
+        planPeriod: "monthly",
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error ?? `Request failed (${res.status})`);
-      }
-
-      if (!data.url) {
-        throw new Error("No checkout URL returned from Stripe");
-      }
-
-      // Use window.location for external Stripe URL — router.push only works for internal routes
-      window.location.href = data.url;
+      router.push(`/games?upgrade=success&tier=${tier}`);
     } catch (err: any) {
       setCheckoutError(err.message ?? "Something went wrong. Please try again.");
       setLoadingTier(null);

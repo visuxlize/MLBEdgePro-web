@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { UserProfile, useClerk } from "@clerk/nextjs";
+import { UserProfile, useClerk, useAuth } from "@clerk/nextjs";
 import { Check, Zap, ChevronDown, LogOut, Home } from "lucide-react";
 import { useSubscription } from "@/lib/subscription";
 import { TeamLogoImg } from "@/components/web-tool/team-logo-img";
@@ -112,7 +112,13 @@ function TeamPicker() {
 // ── Subscription card ─────────────────────────────────────────────────────────
 
 function SubscriptionCard() {
-  const { isPro, expiresAt } = useSubscription();
+  const { has } = useAuth();
+  const { isPro, isSuperPro, expiresAt } = useSubscription();
+
+  // Clerk Billing plan checks for display label
+  const hasFan = has?.({ plan: "fan_subscription" }) ?? false;
+  const hasPro = has?.({ plan: "pro_subscription" }) ?? false;
+  const planLabel = hasPro || isSuperPro ? "Pro" : hasFan || (isPro && !isSuperPro) ? "Fan" : null;
 
   return (
     <div className={`rounded-xl border p-5 ${
@@ -124,7 +130,7 @@ function SubscriptionCard() {
             style={{ color: isPro ? "#FF7828" : "rgba(255,255,255,0.30)" }}>
             Current Plan
           </p>
-          <p className="text-white font-black text-xl">{isPro ? "Edge Pro" : "Free Plan"}</p>
+          <p className="text-white font-black text-xl">{planLabel ? `Edge ${planLabel}` : "Free Plan"}</p>
           {isPro && expiresAt && (
             <p className="text-white/30 text-xs mt-1">
               Renews {new Date(expiresAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
