@@ -24,27 +24,24 @@ export async function POST(req: Request) {
 
   const { tier, trial } = await req.json() as { tier: "fan" | "pro"; trial?: boolean };
 
-  const priceId =
-    tier === "pro"
-      ? process.env.STRIPE_PRO_PRICE_ID
-      : process.env.STRIPE_FAN_PRICE_ID;
+  // Use dedicated trial price IDs when trial=true, regular price IDs otherwise
+  const priceId = trial
+    ? (tier === "pro" ? process.env.STRIPE_PRO_TRIAL_PRICE_ID : process.env.STRIPE_FAN_TRIAL_PRICE_ID)
+    : (tier === "pro" ? process.env.STRIPE_PRO_PRICE_ID       : process.env.STRIPE_FAN_PRICE_ID);
 
-  // Validate it's a price_ ID, not prod_ or placeholder
+  const priceLabel = trial
+    ? `STRIPE_${tier.toUpperCase()}_TRIAL_PRICE_ID`
+    : `STRIPE_${tier.toUpperCase()}_PRICE_ID`;
+
   if (!priceId) {
     return NextResponse.json(
-      { error: `STRIPE_${tier.toUpperCase()}_PRICE_ID is not set in environment variables.` },
-      { status: 500 }
-    );
-  }
-  if (priceId.startsWith("prod_")) {
-    return NextResponse.json(
-      { error: `STRIPE_${tier.toUpperCase()}_PRICE_ID is a Product ID (prod_...) — you need a Price ID (price_...). Go to Stripe Dashboard → Products → your product → Pricing → copy the price ID.` },
+      { error: `${priceLabel} is not set in environment variables.` },
       { status: 500 }
     );
   }
   if (!priceId.startsWith("price_")) {
     return NextResponse.json(
-      { error: `STRIPE_${tier.toUpperCase()}_PRICE_ID looks invalid. It should start with price_.` },
+      { error: `${priceLabel} looks invalid — it should start with price_. Got: ${priceId}` },
       { status: 500 }
     );
   }
@@ -72,8 +69,8 @@ export async function POST(req: Request) {
           clerk_user_id: userId,
           tier,
         },
-        // Trial period: Fan = 14 days, Pro = 3 days (only when trial flag is set)
-        ...(trial ? { trial_period_days: tier === "pro" ? 3 : 14 } : {}),
+        // Trial period is baked into the trial price IDs themselves —
+        // no need to set trial_period_days separately
       },
       success_url: `https://mlbedgepro.dev/games?upgrade=success&tier=${tier}`,
       cancel_url:  `${origin}/upgrade`,
