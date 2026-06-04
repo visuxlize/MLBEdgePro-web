@@ -105,6 +105,13 @@ function propLabel(pct: number) {
 function combinedProbability(slip: SlipEntry[]) {
   return slip.reduce((a, e) => a * (e.probability / 100), 1) * 100;
 }
+
+function formatCombinedPct(pct: number): string {
+  if (pct >= 10)   return `${pct.toFixed(0)}%`;
+  if (pct >= 1)    return `${pct.toFixed(1)}%`;
+  if (pct >= 0.01) return `${pct.toFixed(2)}%`;
+  return "< 0.01%";
+}
 function gameTimeLabel(game: PropGame) {
   if (game.status === "Final" || game.status === "Game Over") return "Final";
   if (game.status === "In Progress") return "Live";
@@ -646,81 +653,80 @@ function SlipPanel({ slip, onRemove, onClear, onOddsChange }: {
   }
 
   return (
-    <div className="rounded-2xl border border-white/[0.07] bg-[#111622] overflow-hidden lg:sticky lg:top-20">
-      {/* Header */}
-      <div className="px-5 py-4 border-b border-white/[0.05] flex items-center justify-between">
+    <div className="rounded-2xl border border-white/[0.07] bg-[#111622] overflow-hidden lg:sticky lg:top-20 flex flex-col max-h-[calc(100vh-6rem)]">
+      {/* Header — fixed */}
+      <div className="px-4 py-3.5 border-b border-white/[0.05] flex items-center justify-between shrink-0">
         <div>
-          <p className="text-base font-black text-white">Your Slip</p>
-          <p className="text-xs text-white/30">{slip.length} leg{slip.length === 1 ? "" : "s"}</p>
+          <p className="text-sm font-black text-white">Your Slip</p>
+          <p className="text-[11px] text-white/30">{slip.length} leg{slip.length === 1 ? "" : "s"}</p>
         </div>
         {slip.length > 0 && (
           <button onClick={onClear}
-            className="flex items-center gap-1 rounded-xl border border-[#EB505A]/25 bg-[#EB505A]/10 px-2.5 py-1.5 text-xs font-bold text-[#EB505A]">
-            <Trash2 size={12} />
+            className="flex items-center gap-1 rounded-lg border border-[#EB505A]/25 bg-[#EB505A]/10 px-2.5 py-1.5 text-xs font-bold text-[#EB505A]">
+            <Trash2 size={11} />
             Clear
           </button>
         )}
       </div>
 
       {slip.length === 0 ? (
-        <div className="py-12 text-center px-5">
-          <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center mx-auto mb-3">
-            <Receipt size={20} className="text-white/15" strokeWidth={1.5} />
+        <div className="py-10 text-center px-5">
+          <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center mx-auto mb-3">
+            <Receipt size={17} className="text-white/15" strokeWidth={1.5} />
           </div>
           <p className="text-sm text-white/25 font-bold mb-1">Slip is empty</p>
           <p className="text-xs text-white/18">Tap &ldquo;Slip&rdquo; on any prop to add a leg</p>
         </div>
       ) : (
-        <div className="p-4 space-y-2">
-          {/* Legs with odds inputs */}
+        /* Scrollable legs area */
+        <div className="overflow-y-auto flex-1 p-3 space-y-2">
           {slip.map((entry) => {
             const sign   = entry.odds.startsWith("-") ? "-" : "+";
             const numStr = entry.odds.replace(/[^0-9]/g, "");
+            const color  = propColor(entry.probability);
 
             return (
-              <div key={entry.id}
-                className="rounded-xl border border-white/[0.05] bg-[#0D1117] p-3 space-y-2">
-                {/* Leg description row */}
-                <div className="flex items-start gap-2">
-                  <div className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: propColor(entry.probability) }} />
-                  <p className="text-xs font-bold text-white leading-snug flex-1 min-w-0">{entry.description}</p>
-                  <button onClick={() => onRemove(entry.id)} className="text-white/20 hover:text-white/50 shrink-0">
-                    <X size={13} />
+              <div key={entry.id} className="rounded-xl border border-white/[0.05] bg-[#0D1117] p-2.5">
+                {/* Description + remove */}
+                <div className="flex items-start gap-2 mb-2">
+                  <div className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: color }} />
+                  <p className="text-[11px] font-bold text-white leading-snug flex-1 min-w-0">{entry.description}</p>
+                  <button onClick={() => onRemove(entry.id)} className="text-white/20 hover:text-white/50 shrink-0 ml-1">
+                    <X size={12} />
                   </button>
                 </div>
 
-                {/* Odds input */}
-                <div className="flex items-center gap-2 pl-4">
-                  <p className="text-[10px] text-white/30 shrink-0">FanDuel odds:</p>
-                  <div className="flex items-center rounded-lg border border-white/[0.08] bg-white/[0.04] overflow-hidden">
-                    {/* +/- toggle */}
+                {/* Odds row */}
+                <div className="flex items-center gap-2 pl-3">
+                  <span className="text-[10px] text-white/30 shrink-0 w-7">Odds</span>
+                  <div className="flex items-center rounded-lg border border-white/[0.08] bg-white/[0.04] overflow-hidden h-7">
                     <button
                       onClick={() => {
                         const newSign = sign === "+" ? "-" : "+";
                         onOddsChange(entry.id, numStr ? `${newSign}${numStr}` : "");
                       }}
-                      className="w-8 h-8 flex items-center justify-center text-xs font-black border-r border-white/[0.08] transition-colors"
-                      style={{ color: sign === "+" ? "#50C882" : "#EB505A", backgroundColor: sign === "+" ? "rgba(80,200,130,0.08)" : "rgba(235,80,90,0.08)" }}
+                      className="w-7 h-full flex items-center justify-center text-xs font-black border-r border-white/[0.08] transition-colors shrink-0"
+                      style={{
+                        color: sign === "+" ? "#50C882" : "#EB505A",
+                        backgroundColor: sign === "+" ? "rgba(80,200,130,0.10)" : "rgba(235,80,90,0.10)",
+                      }}
                     >
                       {sign}
                     </button>
-                    {/* Number input */}
                     <input
-                      type="number"
-                      min="100"
+                      type="text"
+                      inputMode="numeric"
                       placeholder="110"
                       value={numStr}
                       onChange={(e) => {
                         const v = e.target.value.replace(/[^0-9]/g, "");
                         onOddsChange(entry.id, v ? `${sign}${v}` : "");
                       }}
-                      className="w-16 h-8 bg-transparent text-xs font-black text-white text-center outline-none px-1"
-                      style={{ color: entry.odds ? (sign === "+" ? "#50C882" : "#EB505A") : "rgba(255,255,255,0.3)" }}
+                      className="w-14 bg-transparent text-xs font-black text-center outline-none px-1"
+                      style={{ color: numStr ? (sign === "+" ? "#50C882" : "#EB505A") : "rgba(255,255,255,0.25)" }}
                     />
                   </div>
-                  <p className="text-[10px] font-black" style={{ color: propColor(entry.probability) }}>
-                    {entry.probability}%
-                  </p>
+                  <span className="text-[10px] font-black shrink-0" style={{ color }}>{entry.probability}%</span>
                 </div>
               </div>
             );
@@ -728,39 +734,45 @@ function SlipPanel({ slip, onRemove, onClear, onOddsChange }: {
 
           {/* Combined probability */}
           {slip.length > 1 && (
-            <div className="rounded-xl border border-[#50C882]/20 bg-[#50C882]/[0.06] p-3 mt-1">
+            <div className="rounded-xl border border-white/[0.07] bg-[#0D1117] p-3">
               <div className="flex items-center justify-between mb-1.5">
-                <p className="text-xs font-bold text-white/40">Combined probability</p>
-                <p className="text-xl font-black text-[#50C882]">{combined.toFixed(combined < 10 ? 1 : 0)}%</p>
+                <p className="text-[10px] font-bold text-white/35 uppercase tracking-wider">Combined</p>
+                <p className="text-base font-black" style={{ color: combined >= 20 ? "#50C882" : combined >= 5 ? "#FF7828" : "#EB505A" }}>
+                  {formatCombinedPct(combined)}
+                </p>
               </div>
-              <div className="h-1.5 rounded-full bg-white/[0.08] overflow-hidden">
-                <div className="h-full rounded-full bg-[#50C882]" style={{ width: `${Math.min(combined * 4, 100)}%` }} />
+              <div className="h-1 rounded-full bg-white/[0.06] overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{
+                    width: `${Math.min(combined * 3, 100)}%`,
+                    backgroundColor: combined >= 20 ? "#50C882" : combined >= 5 ? "#FF7828" : "#EB505A",
+                  }}
+                />
               </div>
             </div>
           )}
 
-          {/* Wager input */}
-          <div className="rounded-xl border border-white/[0.07] bg-[#0D1117] p-3 mt-1">
+          {/* Wager + To Win */}
+          <div className="rounded-xl border border-white/[0.07] bg-[#0D1117] p-3">
             <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider mb-2">Wager</p>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 h-10 flex-1">
-                <span className="text-white/40 text-sm mr-1">$</span>
-                <input
-                  type="number"
-                  min="1"
-                  placeholder="10"
-                  value={wager}
-                  onChange={(e) => setWager(e.target.value)}
-                  className="flex-1 bg-transparent text-sm font-black text-white outline-none"
-                />
-              </div>
-              {hasOdds && toWin > 0 && (
-                <div className="text-right">
-                  <p className="text-[9px] text-white/25 uppercase tracking-wider">To win</p>
-                  <p className="text-sm font-black text-[#50C882]">${toWin.toFixed(2)}</p>
-                </div>
-              )}
+            <div className="flex items-center rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 h-9">
+              <span className="text-white/40 text-sm mr-1 shrink-0">$</span>
+              <input
+                type="text"
+                inputMode="decimal"
+                placeholder="10"
+                value={wager}
+                onChange={(e) => setWager(e.target.value.replace(/[^0-9.]/g, ""))}
+                className="flex-1 bg-transparent text-sm font-black text-white outline-none"
+              />
             </div>
+            {hasOdds && toWin > 0 && (
+              <div className="flex items-center justify-between mt-2 px-1">
+                <p className="text-[10px] text-white/30">To win</p>
+                <p className="text-sm font-black text-[#50C882]">${toWin.toFixed(2)}</p>
+              </div>
+            )}
           </div>
         </div>
       )}
