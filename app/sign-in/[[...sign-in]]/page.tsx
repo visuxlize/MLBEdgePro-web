@@ -19,8 +19,10 @@ const CLERK_APPEARANCE = {
     card:            "shadow-[0_32px_80px_rgba(0,0,0,0.6)] border border-white/[0.07]",
     headerTitle:     "text-white font-black",
     headerSubtitle:  "text-white/45",
-    socialButtonsBlockButton:
-      "border-white/[0.08] bg-white/[0.04] text-white hover:bg-white/[0.08]",
+    // Hide social buttons until Google/Apple OAuth redirect URIs are configured
+    socialButtonsBlockButton: "hidden",
+    socialButtonsBlock:       "hidden",
+    dividerRow:               "hidden",
     formButtonPrimary:
       "bg-[#FF7828] hover:bg-[#FFA550] shadow-[0_6px_20px_rgba(255,120,40,0.40)]",
     footerActionLink: "text-[#FF7828] hover:text-[#FFA550]",

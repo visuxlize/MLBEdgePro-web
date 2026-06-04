@@ -57,19 +57,32 @@ function UpgradeInner({ highlightTier }: { highlightTier: "fan" | "pro" | null }
   const router = useRouter();
 
   const [loadingTier, setLoadingTier] = useState<"fan" | "pro" | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   async function handleCheckout(tier: "fan" | "pro") {
     setLoadingTier(tier);
+    setCheckoutError(null);
     try {
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tier }),
       });
-      if (!res.ok) throw new Error("Checkout failed");
-      const { url } = await res.json();
-      if (url) router.push(url);
-    } catch {
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error ?? `Request failed (${res.status})`);
+      }
+
+      if (!data.url) {
+        throw new Error("No checkout URL returned from Stripe");
+      }
+
+      // Use window.location for external Stripe URL — router.push only works for internal routes
+      window.location.href = data.url;
+    } catch (err: any) {
+      setCheckoutError(err.message ?? "Something went wrong. Please try again.");
       setLoadingTier(null);
     }
   }
@@ -89,6 +102,18 @@ function UpgradeInner({ highlightTier }: { highlightTier: "fan" | "pro" | null }
           <ArrowLeft size={14} strokeWidth={2} />
           Back to app
         </Link>
+
+        {/* Checkout error banner */}
+        {checkoutError && (
+          <div className="mb-6 rounded-2xl border border-[#EB505A]/30 bg-[#EB505A]/[0.06] px-5 py-4 flex items-start gap-3">
+            <span className="text-[#EB505A] text-lg leading-none mt-0.5">⚠</span>
+            <div className="flex-1">
+              <p className="text-sm font-bold text-[#EB505A] mb-0.5">Checkout failed</p>
+              <p className="text-xs text-white/50">{checkoutError}</p>
+            </div>
+            <button onClick={() => setCheckoutError(null)} className="text-white/25 hover:text-white/50 shrink-0">✕</button>
+          </div>
+        )}
 
         {/* Header */}
         <motion.div

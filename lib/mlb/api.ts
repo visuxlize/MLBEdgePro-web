@@ -39,10 +39,12 @@ export function getScore(side: TeamSide, linescore?: Linescore, which?: "away" |
   return undefined;
 }
 
+// Primary full-colour logo — works on any background
 export function teamLogoUrl(teamId: number): string {
-  return `https://www.mlbstatic.com/team-logos/team-cap-on-light/${teamId}.svg`;
+  return `https://www.mlbstatic.com/team-logos/${teamId}.svg`;
 }
 
+// Cap logo on dark — used as a secondary fallback
 export function teamLogoDarkUrl(teamId: number): string {
   return `https://www.mlbstatic.com/team-logos/team-cap-on-dark/${teamId}.svg`;
 }

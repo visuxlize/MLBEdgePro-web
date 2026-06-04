@@ -144,14 +144,12 @@ function FeaturedGameCard({ game }: { game: Game }) {
       {/* Teams */}
       <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6 flex items-end gap-6">
         {/* Away */}
-        <div className="flex flex-col items-center gap-2 flex-1">
-          <div className="w-14 h-14 sm:w-16 sm:h-16">
-            <TeamLogoImg teamId={away.team.id} name={away.team.name} size={64} />
-          </div>
+        <div className="flex flex-col items-center gap-2.5 flex-1">
+          <TeamLogoImg teamId={away.team.id} name={away.team.name} size={56} badge />
           <div className="text-center">
             <p className="text-white font-black text-lg sm:text-xl">{TEAM_ABBR[away.team.id] ?? away.team.name.split(" ").pop()}</p>
             {away.probablePitcher && (
-              <p className="text-white/35 text-[10px] mt-0.5">{away.probablePitcher.fullName.split(" ").pop()}</p>
+              <p className="text-white/40 text-[10px] mt-0.5">{away.probablePitcher.fullName.split(" ").pop()}</p>
             )}
           </div>
           {(isLive || isFinal) && awayScore !== undefined && (
@@ -160,24 +158,22 @@ function FeaturedGameCard({ game }: { game: Game }) {
         </div>
 
         {/* Center */}
-        <div className="flex flex-col items-center pb-2">
+        <div className="flex flex-col items-center pb-2 shrink-0">
           {!isLive && !isFinal && (
             <p className="text-white/25 text-xs font-semibold mb-1">
               {new Date(game.gameDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
             </p>
           )}
-          <p className="text-white/50 font-black text-sm">VS</p>
+          <p className="text-white/40 font-black text-sm">VS</p>
         </div>
 
         {/* Home */}
-        <div className="flex flex-col items-center gap-2 flex-1">
-          <div className="w-14 h-14 sm:w-16 sm:h-16">
-            <TeamLogoImg teamId={home.team.id} name={home.team.name} size={64} />
-          </div>
+        <div className="flex flex-col items-center gap-2.5 flex-1">
+          <TeamLogoImg teamId={home.team.id} name={home.team.name} size={56} badge />
           <div className="text-center">
             <p className="text-white font-black text-lg sm:text-xl">{TEAM_ABBR[home.team.id] ?? home.team.name.split(" ").pop()}</p>
             {home.probablePitcher && (
-              <p className="text-white/35 text-[10px] mt-0.5">{home.probablePitcher.fullName.split(" ").pop()}</p>
+              <p className="text-white/40 text-[10px] mt-0.5">{home.probablePitcher.fullName.split(" ").pop()}</p>
             )}
           </div>
           {(isLive || isFinal) && homeScore !== undefined && (
@@ -250,11 +246,11 @@ function GameCard({ game }: { game: Game }) {
       </div>
 
       {/* Teams */}
-      <div className="px-4 pb-4 pt-1">
-        <div className="flex items-center justify-between">
+      <div className="px-4 pb-4 pt-2">
+        <div className="flex items-center justify-between gap-2">
           {/* Away */}
           <div className="flex flex-col items-center gap-1.5 flex-1">
-            <div className="w-10 h-10"><TeamLogoImg teamId={away.team.id} name={away.team.name} size={40} /></div>
+            <TeamLogoImg teamId={away.team.id} name={away.team.name} size={36} badge />
             <p className="text-sm font-black text-white">{TEAM_ABBR[away.team.id] ?? away.team.name.split(" ").pop()}</p>
             <PitcherRow pitcherId={away.probablePitcher?.id} name={away.probablePitcher?.fullName} side="away" />
             {(isLive || isFinal) && awayScore !== undefined && (
@@ -262,11 +258,11 @@ function GameCard({ game }: { game: Game }) {
             )}
           </div>
 
-          <span className="text-white/15 font-black text-xs mb-4">VS</span>
+          <span className="text-white/20 font-bold text-[10px] mb-3 shrink-0">VS</span>
 
           {/* Home */}
           <div className="flex flex-col items-center gap-1.5 flex-1">
-            <div className="w-10 h-10"><TeamLogoImg teamId={home.team.id} name={home.team.name} size={40} /></div>
+            <TeamLogoImg teamId={home.team.id} name={home.team.name} size={36} badge />
             <p className="text-sm font-black text-white">{TEAM_ABBR[home.team.id] ?? home.team.name.split(" ").pop()}</p>
             <PitcherRow pitcherId={home.probablePitcher?.id} name={home.probablePitcher?.fullName} side="home" />
             {(isLive || isFinal) && homeScore !== undefined && (
