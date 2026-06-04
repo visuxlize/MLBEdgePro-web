@@ -45,7 +45,7 @@ function TrialCheckoutInner() {
         if (billing && planId) {
           await billing.startCheckout({
             planId,
-            planPeriod: "monthly",
+            planPeriod: "month",
           });
           if (!cancelled) router.push(`/games?upgrade=success&tier=${tier}`);
           return;

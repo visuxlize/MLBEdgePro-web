@@ -81,7 +81,7 @@ function UpgradeInner({ highlightTier }: { highlightTier: "fan" | "pro" | null }
 
       await billing.startCheckout({
         planId,
-        planPeriod: "monthly",
+        planPeriod: "month",
       });
 
       router.push(`/games?upgrade=success&tier=${tier}`);
