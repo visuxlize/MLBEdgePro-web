@@ -26,9 +26,14 @@ export default async function TrialPage({ searchParams }: Props) {
     plan?: string;
   };
 
-  // Clerk Billing plan checks (primary)
-  const hasFan = has?.({ plan: "fan_subscription" }) ?? false;
-  const hasPro = has?.({ plan: "pro_subscription" }) ?? false;
+  // Clerk Billing plan checks — wrapped in try/catch since billing claims
+  // may not be present in the JWT if billing isn't fully active yet
+  let hasFan = false;
+  let hasPro = false;
+  try {
+    hasFan = has?.({ plan: "fan_subscription" }) ?? false;
+    hasPro = has?.({ plan: "pro_subscription" }) ?? false;
+  } catch {}
 
   // Already on a paid plan (Clerk Billing or legacy metadata) — send straight to the app
   if (hasFan || hasPro || meta.isPro) {

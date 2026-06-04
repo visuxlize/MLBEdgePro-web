@@ -6,8 +6,8 @@ import { useClerk } from "@clerk/nextjs";
 import { Loader2, Zap, Star, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
-const FAN_PLAN_ID = process.env.NEXT_PUBLIC_CLERK_FAN_PLAN_ID!;
-const PRO_PLAN_ID = process.env.NEXT_PUBLIC_CLERK_PRO_PLAN_ID!;
+const FAN_PLAN_ID = process.env.NEXT_PUBLIC_CLERK_FAN_PLAN_ID;
+const PRO_PLAN_ID = process.env.NEXT_PUBLIC_CLERK_PRO_PLAN_ID;
 
 function TrialCheckoutInner() {
   const searchParams = useSearchParams();
@@ -23,28 +23,35 @@ function TrialCheckoutInner() {
   const planId = isFan ? FAN_PLAN_ID : PRO_PLAN_ID;
 
   useEffect(() => {
+    if (!clerk.loaded) return;
+
     let cancelled = false;
 
     async function startCheckout() {
       try {
-        if (!planId) {
-          throw new Error("Plan not configured. Please contact support.");
-        }
-
-        // clerk.billing is experimental — cast to any
         const billing = (clerk as any).billing;
-        if (!billing) {
-          throw new Error("Billing not available. Please refresh and try again.");
+
+        // ── Path A: Clerk Billing available + plan ID set ────────────────
+        if (billing && planId) {
+          await billing.startCheckout({
+            planId,
+            planPeriod: "monthly",
+          });
+          if (!cancelled) router.push(`/games?upgrade=success&tier=${tier}`);
+          return;
         }
 
-        await billing.startCheckout({
-          planId,
-          planPeriod: "monthly",
+        // ── Path B: Fall back to Stripe checkout API ─────────────────────
+        const res = await fetch("/api/stripe/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tier, trial: true }),
         });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error ?? `Error ${res.status}`);
+        if (!data.url) throw new Error("No checkout URL returned");
+        window.location.href = data.url;
 
-        if (!cancelled) {
-          router.push(`/games?upgrade=success&tier=${tier}`);
-        }
       } catch (err: any) {
         if (!cancelled) {
           setError(err.message ?? "Something went wrong. Please try again.");
@@ -52,11 +59,7 @@ function TrialCheckoutInner() {
       }
     }
 
-    // Wait for clerk to be loaded before starting
-    if (clerk.loaded) {
-      startCheckout();
-    }
-
+    startCheckout();
     return () => { cancelled = true; };
   }, [clerk.loaded]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -89,14 +92,12 @@ function TrialCheckoutInner() {
 
   return (
     <div className="min-h-screen bg-[#0A0E14] flex flex-col items-center justify-center px-6 text-center">
-      {/* Ambient glow */}
       <div
         className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full blur-[120px]"
         style={{ background: `${color}0D` }}
       />
 
       <div className="relative z-10 flex flex-col items-center gap-5">
-        {/* Icon */}
         <div
           className="w-16 h-16 rounded-2xl flex items-center justify-center"
           style={{ background: `${color}18`, border: `1px solid ${color}30` }}
@@ -114,7 +115,6 @@ function TrialCheckoutInner() {
           </p>
         </div>
 
-        {/* Badge */}
         <div
           className="flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold"
           style={{ background: `${color}15`, color }}

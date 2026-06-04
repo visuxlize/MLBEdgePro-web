@@ -45,9 +45,13 @@ export function useSubscription(): SubscriptionStatus {
     subscriptionExpiresAt?: string;
   };
 
-  // Clerk Billing checks (primary)
-  const hasFanBilling = has?.({ plan: "fan_subscription" }) ?? false;
-  const hasProBilling = has?.({ plan: "pro_subscription" }) ?? false;
+  // Clerk Billing checks (primary) — try/catch in case billing claims aren't in JWT
+  let hasFanBilling = false;
+  let hasProBilling = false;
+  try {
+    hasFanBilling = has?.({ plan: "fan_subscription" }) ?? false;
+    hasProBilling = has?.({ plan: "pro_subscription" }) ?? false;
+  } catch {}
 
   // Legacy publicMetadata checks (backward compat)
   const legacyPlan: Plan = meta.plan ?? "free";
