@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { TRPCProvider } from "@/lib/trpc/client";
 import "./globals.css";
@@ -25,12 +24,6 @@ export const metadata: Metadata = {
   },
 };
 
-const geist = Geist({
-  variable: "--font-geist",
-  display: "swap",
-  subsets: ["latin"],
-});
-
 export default function RootLayout({
   children,
 }: {
@@ -39,7 +32,7 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en" className="dark" suppressHydrationWarning>
-        <body className={`${geist.variable} font-[var(--font-geist)] antialiased`}>
+        <body className="font-sans antialiased">
           <TRPCProvider>
             {children}
           </TRPCProvider>

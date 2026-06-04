@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft, ChevronRight, RefreshCw, Cloud,
-  Wind, Thermometer, CircleDot,
+  CircleDot,
 } from "lucide-react";
 import {
   fetchGamesByDate, gameStatusLabel, getStadiumImageUrl,
@@ -102,7 +103,10 @@ function FeaturedGameCard({ game }: { game: Game }) {
   const homeColor = TEAM_COLORS[home.team.id] ?? "#818cf8";
 
   return (
-    <div className="relative rounded-2xl overflow-hidden mb-8 group cursor-pointer h-[280px] sm:h-[320px]">
+    <div
+      className="relative rounded-2xl overflow-hidden mb-8 group cursor-pointer h-[280px] sm:h-[320px]"
+      onClick={() => (window as any).__gameNav?.(game.gamePk)}
+    >
       {/* Stadium image */}
       {stadiumUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
@@ -222,7 +226,8 @@ function GameCard({ game }: { game: Game }) {
   return (
     <motion.div
       whileHover={{ y: -2 }}
-      className="rounded-2xl border border-white/[0.07] bg-[#111622] overflow-hidden hover:border-white/[0.14] transition-colors"
+      onClick={() => (window as any).__gameNav?.(game.gamePk)}
+      className="rounded-2xl border border-white/[0.07] bg-[#111622] overflow-hidden hover:border-white/[0.14] transition-colors cursor-pointer"
     >
       {/* Stadium mini-banner */}
       <div className="relative h-16 overflow-hidden">
@@ -294,6 +299,7 @@ function StatsBar({ games, date }: { games: Game[]; date: string }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function GamesPage() {
+  const router = useRouter();
   const [date, setDate]   = useState(todayStr());
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
@@ -305,6 +311,12 @@ export default function GamesPage() {
       .catch(() => setGames([]))
       .finally(() => setLoading(false));
   }, [date]);
+
+  // Expose router to click handlers on child components
+  useEffect(() => {
+    (window as any).__gameNav = (gamePk: number) => router.push(`/game/${gamePk}`);
+    return () => { delete (window as any).__gameNav; };
+  }, [router]);
 
   const live     = games.filter((g) => g.status.detailedState === "In Progress");
   const upcoming = games.filter((g) => g.status.abstractGameState === "Preview");

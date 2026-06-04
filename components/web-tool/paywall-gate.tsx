@@ -18,12 +18,13 @@ const TIER_CONFIG = {
     price:    "$4.99",
     color:    "#FF7828",
     badge:    "FAN",
-    tagline:  "Unlock props, edge reports & matchup analysis",
+    tagline:  "Win probability, full props, edge reports & matchup analysis",
     benefits: [
-      "Edge Report — AI ranked value bets",
-      "Full Prop Builder (HR, Hit, K props)",
-      "Matchup analysis & pitcher grades",
-      "Save & track your bet slips",
+      "Win probability model per game",
+      "Full prop signals — all HR, Hit, K, 2+ Bases players",
+      "Edge Report — AI-ranked value bets",
+      "Full Prop Builder across all games",
+      "Pitcher strikeout O/U + Total Runs O/U",
     ],
   },
   pro: {
@@ -31,13 +32,13 @@ const TIER_CONFIG = {
     price:    "$14.99",
     color:    "#818cf8",
     badge:    "PRO",
-    tagline:  "The deepest MLB analysis available anywhere",
+    tagline:  "Everything in Fan + the deepest MLB analysis anywhere",
     benefits: [
-      "Everything in Fan ($4.99)",
-      "HR Deep Dive — spray charts, wall clearance",
-      "Pitch → spray connection analysis",
-      "Carry conditions & park factor breakdowns",
-      "Batter power metrics & pitcher vulnerability",
+      "Everything in Fan ($4.99/mo)",
+      "Bet Tracker — log slips, FanDuel odds, ROI tracking",
+      "HR Deep Dive — spray charts & wall clearance",
+      "Pitch → spray connection for all batters",
+      "Barrel rate, exit velocity & pitcher vulnerability",
     ],
   },
 };
@@ -59,7 +60,7 @@ export function PaywallGate({
 
   return (
     <div
-      className="relative w-full overflow-hidden"
+      className="relative grid w-full place-items-center overflow-hidden"
       style={{ minHeight: "calc(100vh - 3.5rem)" }}
     >
       {/* Dim preview */}
@@ -76,7 +77,7 @@ export function PaywallGate({
         style={{ background: "radial-gradient(ellipse 90% 80% at 50% 50%, rgba(10,14,20,0.55) 0%, rgba(10,14,20,0.96) 100%)" }} />
 
       {/* Lock card */}
-      <div className="absolute inset-0 flex items-center justify-center p-5 sm:p-8">
+      <div className="relative z-10 flex w-full items-center justify-center p-5 sm:p-8">
         <div
           className="w-full max-w-[440px] rounded-3xl backdrop-blur-2xl shadow-[0_32px_80px_rgba(0,0,0,0.8)] overflow-hidden border"
           style={{ backgroundColor: "#0D1117fd", borderColor: `${cfg.color}22` }}

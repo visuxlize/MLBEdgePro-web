@@ -91,6 +91,13 @@ export interface PitcherSeasonStats {
   strikeoutsPer9Inn: number;
   walksPer9Inn: number;
   homeRunsPer9: number;
+  strikeOuts: number;
+  wins: number;
+  losses: number;
+  inningsPitched: string;
+  homeRuns: number;
+  baseOnBalls: number;
+  gamesStarted: number;
   flyBallPct?: number;
   barrelsPct?: number;
 }
@@ -112,6 +119,23 @@ export interface LineupPlayer {
   fullName: string;
   position: string;
   battingOrder: number;
+}
+
+export interface RosterBatter {
+  id: number;
+  fullName: string;
+  position: string;
+  teamId: number;
+  stats: {
+    avg: string;
+    homeRuns: number;
+    rbi: number;
+    strikeOuts: number;
+    baseOnBalls: number;
+    ops: string;
+    atBats: number;
+    plateAppearances: number;
+  };
 }
 
 // Venue lat/long for weather lookups (MLB venue IDs → coords)
@@ -180,6 +204,13 @@ export async function fetchPitcherStats(personId: number): Promise<PitcherSeason
       strikeoutsPer9Inn:   parseFloat(split.strikeoutsPer9Inn ?? "0"),
       walksPer9Inn:        parseFloat(split.walksPer9Inn ?? "0"),
       homeRunsPer9:        parseFloat(split.homeRunsPer9 ?? "0"),
+      strikeOuts:          parseInt(split.strikeOuts ?? "0", 10),
+      wins:                parseInt(split.wins ?? "0", 10),
+      losses:              parseInt(split.losses ?? "0", 10),
+      inningsPitched:      split.inningsPitched ?? "0.0",
+      homeRuns:            parseInt(split.homeRuns ?? "0", 10),
+      baseOnBalls:         parseInt(split.baseOnBalls ?? "0", 10),
+      gamesStarted:        parseInt(split.gamesStarted ?? "1", 10),
     };
   } catch {
     return null;
@@ -210,6 +241,112 @@ export async function fetchBatterStats(personId: number): Promise<BatterSeasonSt
   }
 }
 
+// Comprehensive player season stats (batter + pitcher combined)
+export interface PlayerFullStats {
+  id: number;
+  fullName: string;
+  position: string;
+  teamName: string;
+  // Batter stats
+  avg?: number;
+  obp?: number;
+  slg?: number;
+  ops?: number;
+  homeRuns?: number;
+  rbi?: number;
+  hits?: number;
+  atBats?: number;
+  strikeOuts?: number;
+  walks?: number;
+  stolenBases?: number;
+  iso?: number;
+  woba?: number;
+  // Pitcher stats
+  era?: number;
+  whip?: number;
+  wins?: number;
+  losses?: number;
+  strikeoutsPer9?: number;
+  walksPer9?: number;
+  homeRunsPer9?: number;
+  innings?: string;
+  saves?: number;
+}
+
+export async function fetchPlayerFullStats(personId: number, isPitcher = false): Promise<PlayerFullStats | null> {
+  try {
+    const groups = isPitcher ? "pitching" : "hitting";
+    const url = `${BASE}/people/${personId}?hydrate=stats(type=season,group=${groups},season=2025),currentTeam`;
+    const res = await fetch(url, { next: { revalidate: 300 } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const person = data.people?.[0];
+    if (!person) return null;
+    const split = person.stats?.[0]?.splits?.[0]?.stat ?? {};
+    const base: PlayerFullStats = {
+      id:       person.id,
+      fullName: person.fullName,
+      position: person.primaryPosition?.abbreviation ?? "—",
+      teamName: person.currentTeam?.name ?? "",
+    };
+    if (isPitcher) {
+      return {
+        ...base,
+        era:            parseFloat(split.era ?? "0"),
+        whip:           parseFloat(split.whip ?? "0"),
+        wins:           parseInt(split.wins ?? "0", 10),
+        losses:         parseInt(split.losses ?? "0", 10),
+        strikeoutsPer9: parseFloat(split.strikeoutsPer9Inn ?? "0"),
+        walksPer9:      parseFloat(split.walksPer9Inn ?? "0"),
+        homeRunsPer9:   parseFloat(split.homeRunsPer9 ?? "0"),
+        innings:        split.inningsPitched ?? "0.0",
+        saves:          parseInt(split.saves ?? "0", 10),
+      };
+    }
+    const avg = parseFloat(split.avg ?? "0");
+    const slg = parseFloat(split.slg ?? "0");
+    return {
+      ...base,
+      avg,
+      obp:         parseFloat(split.obp ?? "0"),
+      slg,
+      ops:         parseFloat(split.ops ?? "0"),
+      homeRuns:    parseInt(split.homeRuns ?? "0", 10),
+      rbi:         parseInt(split.rbi ?? "0", 10),
+      hits:        parseInt(split.hits ?? "0", 10),
+      atBats:      parseInt(split.atBats ?? "0", 10),
+      strikeOuts:  parseInt(split.strikeOuts ?? "0", 10),
+      walks:       parseInt(split.baseOnBalls ?? "0", 10),
+      stolenBases: parseInt(split.stolenBases ?? "0", 10),
+      iso:         Math.max(0, slg - avg),
+    };
+  } catch {
+    return null;
+  }
+}
+
+// Rule-based win probability from pitcher stats
+export function computeWinProbability(
+  homePitcher: PitcherSeasonStats | null,
+  awayPitcher: PitcherSeasonStats | null,
+): { home: number; away: number } {
+  const score = (p: PitcherSeasonStats | null) => {
+    if (!p) return 50;
+    const eraScore  = Math.max(0, (6 - p.era) * 8);
+    const whipScore = Math.max(0, (2 - p.whip) * 12);
+    const k9Score   = p.strikeoutsPer9Inn * 1.5;
+    return eraScore + whipScore + k9Score;
+  };
+  const homeAdv = 3; // home field
+  const h = score(homePitcher) + homeAdv;
+  const a = score(awayPitcher);
+  const total = h + a || 1;
+  const homeRaw = Math.round((h / total) * 100);
+  // clamp 38-68%
+  const home = Math.min(68, Math.max(38, homeRaw));
+  return { home, away: 100 - home };
+}
+
 export async function fetchGameLineup(gamePk: number): Promise<LineupPlayer[]> {
   try {
     const url = `${BASE}/game/${gamePk}/boxscore`;
@@ -231,6 +368,48 @@ export async function fetchGameLineup(gamePk: number): Promise<LineupPlayer[]> {
       }
     }
     return players.sort((a, b) => a.battingOrder - b.battingOrder);
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchTeamBatters(teamId: number): Promise<RosterBatter[]> {
+  try {
+    const season = new Date().getFullYear();
+    const url = `${BASE}/teams/${teamId}/roster?rosterType=active&season=${season}&hydrate=person(stats(type=season,group=hitting,season=${season}))`;
+    const res = await fetch(url, { next: { revalidate: 1800 } });
+    if (!res.ok) return [];
+    const data = await res.json();
+
+    const batters: RosterBatter[] = [];
+    for (const entry of data.roster ?? []) {
+      const person = entry.person;
+      const pos = entry.position?.abbreviation ?? "";
+      if (!person?.id || pos === "P" || pos === "TWP") continue;
+
+      const stat = person.stats?.[0]?.splits?.[0]?.stat ?? {};
+      const atBats = parseInt(stat.atBats ?? "0", 10);
+      if (atBats < 10) continue;
+
+      batters.push({
+        id: person.id,
+        fullName: person.fullName,
+        position: pos,
+        teamId,
+        stats: {
+          avg: stat.avg ?? ".000",
+          homeRuns: parseInt(stat.homeRuns ?? "0", 10),
+          rbi: parseInt(stat.rbi ?? "0", 10),
+          strikeOuts: parseInt(stat.strikeOuts ?? "0", 10),
+          baseOnBalls: parseInt(stat.baseOnBalls ?? "0", 10),
+          ops: stat.ops ?? ".000",
+          atBats,
+          plateAppearances: parseInt(stat.plateAppearances ?? String(atBats), 10),
+        },
+      });
+    }
+
+    return batters.sort((a, b) => parseFloat(b.stats.ops) - parseFloat(a.stats.ops));
   } catch {
     return [];
   }

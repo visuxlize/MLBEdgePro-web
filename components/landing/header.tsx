@@ -9,10 +9,11 @@ import { Container } from "./container";
 import { Button } from "@/components/ui/button";
 
 const navLinks = [
-  { label: "Features", href: "#features" },
-  { label: "How it Works", href: "#how-it-works" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "Download App", href: "/download" },
+  { label: "Features",    href: "#features"    },
+  { label: "How it Works",href: "#how-it-works" },
+  { label: "Pricing",     href: "#pricing"      },
+  { label: "Results",     href: "/results"      },
+  { label: "Download",    href: "/download"     },
 ];
 
 function DiamondLogo() {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { generateJSON } from "@/lib/gemini";
+import { generateJSON } from "@/lib/anthropic";
 
 interface GameSummary {
   away: string;
@@ -62,7 +62,7 @@ Return ONLY this JSON (no markdown, no code fences):
     const result = await generateJSON<DailyPicksOutput>(prompt);
     return NextResponse.json(result);
   } catch (err) {
-    console.error("Gemini daily-picks error:", err);
+    console.error("Claude daily-picks error:", err);
     return NextResponse.json({ error: "Analysis failed" }, { status: 500 });
   }
 }

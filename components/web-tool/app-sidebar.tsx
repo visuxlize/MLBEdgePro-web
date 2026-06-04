@@ -2,16 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { UserButton } from "@clerk/nextjs";
-import { CircleDot, BarChart3, Layers, TrendingUp, Target, Settings, Lock } from "lucide-react";
+import { useUser } from "@clerk/nextjs";
+import { CircleDot, BarChart3, Layers, TrendingUp, Target, Settings, Lock, BookOpen } from "lucide-react";
 import { useSubscription } from "@/lib/subscription";
 
 const NAV = [
-  { href: "/games",        icon: CircleDot,  label: "Today's Games", requiredTier: null          },
-  { href: "/scores",       icon: BarChart3,  label: "Live Scores",   requiredTier: null          },
+  { href: "/games",        icon: CircleDot,  label: "Today's Games", requiredTier: null           },
+  { href: "/scores",       icon: BarChart3,  label: "Live Scores",   requiredTier: null           },
   { href: "/analysis",     icon: TrendingUp, label: "Edge Report",   requiredTier: "fan" as const },
   { href: "/props",        icon: Layers,     label: "Prop Builder",  requiredTier: "fan" as const },
   { href: "/hr-deep-dive", icon: Target,     label: "HR Nuke",       requiredTier: "pro" as const },
+  { href: "/bet-tracker",  icon: BookOpen,   label: "Bet Tracker",   requiredTier: "pro" as const },
 ];
 
 function DiamondLogo() {
@@ -26,6 +27,7 @@ function DiamondLogo() {
 export function AppSidebar() {
   const pathname = usePathname();
   const { isPro, isSuperPro } = useSubscription();
+  const { user } = useUser();
 
   function isLocked(requiredTier: "fan" | "pro" | null): boolean {
     if (!requiredTier) return false;
@@ -44,17 +46,16 @@ export function AppSidebar() {
       </Link>
 
       {/* Center nav */}
-      <nav className="hidden sm:flex items-center gap-1">
+      <nav className="hidden sm:flex items-center gap-0.5">
         {NAV.map(({ href, icon: Icon, label, requiredTier }) => {
           const active = pathname.startsWith(href);
           const locked = isLocked(requiredTier);
           const isProFeature = requiredTier === "pro";
-          const activeColor = isProFeature ? "#818cf8" : "#FF7828";
           return (
             <Link
               key={href}
               href={href}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-medium transition-colors relative ${
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
                 active
                   ? isProFeature
                     ? "bg-[#818cf8]/12 text-[#818cf8]"
@@ -88,6 +89,7 @@ export function AppSidebar() {
 
         <Link
           href="/settings"
+          aria-label="Open settings"
           className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${
             pathname === "/settings"
               ? "bg-[#FF7828]/12 text-[#FF7828]"
@@ -96,9 +98,20 @@ export function AppSidebar() {
         >
           <Settings size={17} strokeWidth={1.7} />
         </Link>
-        <UserButton
-          appearance={{ elements: { avatarBox: "w-8 h-8 rounded-lg" } }}
-        />
+        <Link
+          href="/settings"
+          aria-label="Open account settings"
+          className="h-9 w-9 overflow-hidden rounded-xl border border-white/[0.08] bg-white/[0.04] transition hover:border-white/15"
+        >
+          {user?.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={user.imageUrl} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <span className="flex h-full w-full items-center justify-center text-xs font-black text-white/45">
+              {user?.firstName?.[0] ?? user?.emailAddresses[0]?.emailAddress[0] ?? "M"}
+            </span>
+          )}
+        </Link>
       </div>
     </header>
   );

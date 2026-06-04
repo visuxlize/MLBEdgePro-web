@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { generateJSON } from "@/lib/gemini";
+import { generateJSON } from "@/lib/anthropic";
 
 interface HRNukeInput {
   batterName: string;
@@ -118,7 +118,7 @@ Respond ONLY with this JSON (no markdown, no code fences):
     const result = await generateJSON<HRNukeOutput>(prompt);
     return NextResponse.json(result);
   } catch (err) {
-    console.error("Gemini hr-nuke error:", err);
+    console.error("Claude hr-nuke error:", err);
     return NextResponse.json({ error: "Analysis failed" }, { status: 500 });
   }
 }
