@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Zap, Star, X, Flame } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
+import { setPendingTrial } from "@/components/PendingTrialRedirect";
 
 const STORAGE_KEY = "mlbedge_trial_popup_v1";
 
@@ -28,9 +29,10 @@ export function TrialPopup() {
     setVisible(false);
   }
 
-  function goTo(href: string) {
+  function goTo(tier: "fan" | "pro") {
+    setPendingTrial(tier);
     dismiss();
-    router.push(href);
+    router.push(`/trial?tier=${tier}`);
   }
 
   return (
@@ -75,7 +77,7 @@ export function TrialPopup() {
             <div className="flex flex-col gap-3">
               {/* Fan */}
               <button
-                onClick={() => goTo("/trial?tier=fan")}
+                onClick={() => goTo("fan")}
                 className="w-full text-left rounded-2xl border border-[#FF7828]/30 bg-[#FF7828]/[0.06] p-4 hover:bg-[#FF7828]/[0.12] transition-colors group"
               >
                 <div className="flex items-center justify-between mb-2">
@@ -92,7 +94,7 @@ export function TrialPopup() {
 
               {/* Pro */}
               <button
-                onClick={() => goTo("/trial?tier=pro")}
+                onClick={() => goTo("pro")}
                 className="w-full text-left rounded-2xl border border-[#818CF8]/30 bg-[#818CF8]/[0.06] p-4 hover:bg-[#818CF8]/[0.12] transition-colors group"
               >
                 <div className="flex items-center justify-between mb-2">

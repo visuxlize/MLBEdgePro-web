@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
 import { SignUp, ClerkLoaded } from "@clerk/nextjs";
 import { Zap, Star } from "lucide-react";
+import { setPendingTrial } from "@/components/PendingTrialRedirect";
 
 const CLERK_APPEARANCE = {
   variables: {
@@ -50,6 +52,13 @@ const TIER_META = {
 export function TrialSignUp({ tier }: { tier: "fan" | "pro" }) {
   const meta = TIER_META[tier];
   const { Icon } = meta;
+
+  // Save the intended tier to localStorage immediately — this survives ANY
+  // redirect chain (Google OAuth, email verify, etc.) so PendingTrialRedirect
+  // in the app layout can pick it up and send the user to /api/trial/[tier].
+  useEffect(() => {
+    setPendingTrial(tier);
+  }, [tier]);
 
   // After sign-up/OAuth, Clerk redirects to the server-side API route which
   // immediately creates the Stripe checkout session and redirects to Stripe.
