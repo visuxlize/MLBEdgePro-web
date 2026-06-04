@@ -30,8 +30,6 @@ interface BetSlip {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const STORAGE_KEY = "mlbedge_bet_tracker_v1";
-
 function americanToDecimal(odds: string): number {
   const n = parseInt(odds.replace("+", ""), 10);
   if (isNaN(n)) return 2;
@@ -68,12 +66,42 @@ function colorFor(pct: number): string {
   return "#EB505A";
 }
 
-function loadSlips(): BetSlip[] {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]"); } catch { return []; }
+// ── Supabase API helpers ──────────────────────────────────────────────────────
+
+async function fetchSlips(): Promise<BetSlip[]> {
+  const res = await fetch("/api/bet-slips");
+  if (!res.ok) return [];
+  const rows = await res.json();
+  // Map snake_case DB columns → camelCase BetSlip
+  return rows.map((r: any): BetSlip => ({
+    id:         r.id,
+    createdAt:  r.created_at,
+    settledAt:  r.settled_at ?? undefined,
+    legs:       r.legs,
+    wager:      Number(r.wager),
+    toWin:      r.to_win != null ? Number(r.to_win) : undefined,
+    status:     r.status,
+  }));
 }
 
-function saveSlips(slips: BetSlip[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(slips));
+async function apiCreate(slip: BetSlip): Promise<void> {
+  await fetch("/api/bet-slips", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(slip),
+  });
+}
+
+async function apiPatch(id: string, patch: Partial<BetSlip>): Promise<void> {
+  await fetch(`/api/bet-slips/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(patch),
+  });
+}
+
+async function apiDelete(id: string): Promise<void> {
+  await fetch(`/api/bet-slips/${id}`, { method: "DELETE" });
 }
 
 // ── Stat card ─────────────────────────────────────────────────────────────────
@@ -545,23 +573,34 @@ type TabType = "pending" | "won" | "lost";
 
 export default function BetTrackerPage() {
   const [slips, setSlips]           = useState<BetSlip[]>([]);
+  const [loading, setLoading]       = useState(true);
   const [showModal, setShowModal]   = useState(false);
   const [activeTab, setActiveTab]   = useState<TabType>("pending");
 
-  useEffect(() => { setSlips(loadSlips()); }, []);
-
-  const persistSlips = useCallback((next: BetSlip[]) => {
-    setSlips(next);
-    saveSlips(next);
+  // Load from Supabase on mount
+  useEffect(() => {
+    fetchSlips().then((data) => { setSlips(data); setLoading(false); });
   }, []);
 
-  function addSlip(slip: BetSlip) { persistSlips([slip, ...slips]); }
-  function settleSlip(id: string, status: "won" | "lost") {
-    persistSlips(slips.map((s) => s.id === id ? { ...s, status, settledAt: new Date().toISOString() } : s));
+  async function addSlip(slip: BetSlip) {
+    setSlips((prev) => [slip, ...prev]); // optimistic
+    await apiCreate(slip);
   }
-  function deleteSlip(id: string) { persistSlips(slips.filter((s) => s.id !== id)); }
-  function updateSlip(id: string, updated: Partial<BetSlip>) {
-    persistSlips(slips.map((s) => s.id === id ? { ...s, ...updated } : s));
+
+  async function settleSlip(id: string, status: "won" | "lost") {
+    const settledAt = new Date().toISOString();
+    setSlips((prev) => prev.map((s) => s.id === id ? { ...s, status, settledAt } : s));
+    await apiPatch(id, { status, settledAt });
+  }
+
+  async function deleteSlip(id: string) {
+    setSlips((prev) => prev.filter((s) => s.id !== id));
+    await apiDelete(id);
+  }
+
+  async function updateSlip(id: string, updated: Partial<BetSlip>) {
+    setSlips((prev) => prev.map((s) => s.id === id ? { ...s, ...updated } : s));
+    await apiPatch(id, updated);
   }
 
   const won     = slips.filter((s) => s.status === "won");
@@ -582,6 +621,19 @@ export default function BetTrackerPage() {
   ];
 
   const visibleSlips = activeTab === "pending" ? pending : activeTab === "won" ? won : lost;
+
+  if (loading) {
+    return (
+      <PaywallGate requiredTier="pro" feature="Bet Tracker" benefits={[]}>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-8 h-8 rounded-full border-2 border-[#FF7828]/30 border-t-[#FF7828] animate-spin" />
+            <p className="text-sm text-white/30">Loading your slips…</p>
+          </div>
+        </div>
+      </PaywallGate>
+    );
+  }
 
   return (
     <PaywallGate
@@ -737,7 +789,7 @@ export default function BetTrackerPage() {
       </AnimatePresence>
 
       <p className="mt-8 text-xs text-white/15 text-center">
-        Bet history stored locally in your browser. For educational tracking only.
+        Bet history synced across all your devices via Supabase. For educational tracking only.
       </p>
 
       {/* Modal */}
