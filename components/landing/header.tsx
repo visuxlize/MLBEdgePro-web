@@ -12,6 +12,7 @@ const navLinks = [
   { label: "Features",    href: "#features"    },
   { label: "How it Works",href: "#how-it-works" },
   { label: "Pricing",     href: "#pricing"      },
+  { label: "Free Trial",  href: "#pricing"      },
   { label: "Results",     href: "/results"      },
   { label: "Download",    href: "/download"     },
 ];
@@ -50,9 +51,13 @@ export function Header() {
         <nav className="hidden md:flex items-center gap-7">
           {navLinks.map((link) => (
             <Link
-              key={link.href}
+              key={link.label}
               href={link.href}
-              className="text-sm text-white/45 hover:text-white transition-colors"
+              className={
+                link.label === "Free Trial"
+                  ? "text-sm font-bold text-[#FF7828] hover:text-[#FFA550] transition-colors"
+                  : "text-sm text-white/45 hover:text-white transition-colors"
+              }
             >
               {link.label}
             </Link>
@@ -106,9 +111,13 @@ export function Header() {
             <Container className="py-5 flex flex-col gap-4">
               {navLinks.map((link) => (
                 <Link
-                  key={link.href}
+                  key={link.label}
                   href={link.href}
-                  className="text-sm text-white/60 hover:text-white"
+                  className={
+                    link.label === "Free Trial"
+                      ? "text-sm font-bold text-[#FF7828] hover:text-[#FFA550]"
+                      : "text-sm text-white/60 hover:text-white"
+                  }
                   onClick={() => setMobileOpen(false)}
                 >
                   {link.label}

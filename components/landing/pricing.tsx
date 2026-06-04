@@ -9,29 +9,29 @@ import { Container } from "./container";
 const FREE_FEATURES = [
   "Today's full game schedule",
   "Live scores & game status",
-  "Win predictions (home/away)",
+  "Win prediction (home / away)",
   "Upcoming matchup overview",
   "Stadium weather conditions",
 ];
 
 const FAN_FEATURES = [
   "Everything in Free",
-  "Edge Report — ranked value bets",
-  "HR, Hit & multi-hit props",
-  "Pitcher strikeout projections",
-  "Full batter vs pitcher analysis",
-  "Prop Builder & slip tracking",
+  "Edge Report — AI-ranked value bets",
+  "Full Prop Builder (HR, 1+ Hit, 2+ Hits, K props)",
+  "Batter vs Pitcher matchup analysis",
+  "Multi-leg prop slips",
   "Save & track your bet slips",
   "Priority data refresh",
 ];
 
 const PRO_FEATURES = [
   "Everything in Fan",
-  "HR Deep Dive — spray charts",
+  "HR Deep Dive — spray charts & grade",
   "Wall Clearance + Carry Analysis",
   "Pitch → Spray Connection",
-  "Barrel Rate & EV Analysis",
+  "Barrel Rate & Exit Velocity Analysis",
   "Confident daily picks",
+  "Batter power & pitcher vulnerability",
 ];
 
 const fadeUp = {
@@ -88,7 +88,7 @@ export function LandingPricing() {
           transition={{ duration: 0.5, delay: 0.1 }}
           className="mt-5 text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-center text-white"
         >
-          Simple pricing. No surprises.
+          Start free. Try Fan or Pro on us.
         </motion.h2>
 
         <motion.p
@@ -98,7 +98,7 @@ export function LandingPricing() {
           transition={{ duration: 0.5, delay: 0.18 }}
           className="mt-4 text-center text-white/45 max-w-md mx-auto"
         >
-          Start free, go Fan for the full edge, or go Pro for deep-dive analytics.
+          14-day Fan trial. 3-day Pro trial. Card required. No charge until your trial ends.
         </motion.p>
 
         <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-5 max-w-5xl mx-auto">
@@ -145,7 +145,7 @@ export function LandingPricing() {
           >
             <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full bg-[#FF7828]/10 blur-3xl pointer-events-none" />
 
-            <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center justify-between mb-2">
               <p className="text-xs font-bold text-[#FF7828] tracking-widest uppercase">Fan</p>
               <div className="flex items-center gap-1.5 rounded-full border border-[#FF7828]/30 bg-[#FF7828]/10 px-2.5 py-1">
                 <Zap size={9} className="text-[#FF7828]" strokeWidth={2.5} />
@@ -153,17 +153,21 @@ export function LandingPricing() {
               </div>
             </div>
 
+            {/* Trial badge */}
+            <div className="mb-4 w-fit flex items-center gap-1.5 rounded-full border border-[#FF7828]/40 bg-[#FF7828]/15 px-2.5 py-1">
+              <span className="text-[9px] font-black text-[#FF7828] tracking-widest uppercase">14-Day Free Trial</span>
+            </div>
+
             <div className="flex items-baseline gap-1 mb-1">
               <span className="text-4xl font-black text-white">$4.99</span>
-              <span className="text-white/45 text-base">/month</span>
+              <span className="text-white/45 text-base">/mo after trial</span>
             </div>
             <p className="text-sm text-white/35 mb-7">Cancel anytime. No contracts.</p>
 
-            <Link href="/sign-up">
+            <Link href="/trial?tier=fan">
               <Button className="w-full rounded-full h-11 font-bold bg-[#FF7828] hover:bg-[#FFA550] text-white gap-2 shadow-[0_6px_24px_rgba(255,120,40,0.35)]">
                 <Zap size={14} strokeWidth={2.5} />
-                Start Fan
-                <ArrowRight size={14} strokeWidth={2.5} />
+                Try Fan Free → 14 Days
               </Button>
             </Link>
 
@@ -190,7 +194,7 @@ export function LandingPricing() {
           >
             <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full bg-[#818cf8]/10 blur-3xl pointer-events-none" />
 
-            <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center justify-between mb-2">
               <p className="text-xs font-bold text-[#818cf8] tracking-widest uppercase">Pro</p>
               <div className="flex items-center gap-1.5 rounded-full border border-[#818cf8]/30 bg-[#818cf8]/10 px-2.5 py-1">
                 <Star size={9} className="text-[#818cf8]" strokeWidth={2.5} />
@@ -198,13 +202,18 @@ export function LandingPricing() {
               </div>
             </div>
 
+            {/* Trial badge */}
+            <div className="mb-4 w-fit flex items-center gap-1.5 rounded-full border border-[#818cf8]/40 bg-[#818cf8]/15 px-2.5 py-1">
+              <span className="text-[9px] font-black text-[#818cf8] tracking-widest uppercase">3-Day Free Trial</span>
+            </div>
+
             <div className="flex items-baseline gap-1 mb-1">
               <span className="text-4xl font-black text-white">$14.99</span>
-              <span className="text-white/45 text-base">/month</span>
+              <span className="text-white/45 text-base">/mo after trial</span>
             </div>
             <p className="text-sm text-white/35 mb-7">Cancel anytime. No contracts.</p>
 
-            <Link href="/sign-up">
+            <Link href="/trial?tier=pro">
               <Button
                 className="w-full rounded-full h-11 font-bold text-white gap-2"
                 style={{
@@ -213,8 +222,7 @@ export function LandingPricing() {
                 }}
               >
                 <Star size={14} strokeWidth={2.5} />
-                Start Pro
-                <ArrowRight size={14} strokeWidth={2.5} />
+                Try Pro Free → 3 Days
               </Button>
             </Link>
 
@@ -240,14 +248,14 @@ export function LandingPricing() {
           className="mt-14 max-w-5xl mx-auto"
         >
           <div className="rounded-2xl border border-white/[0.07] overflow-hidden">
-            <div className="grid grid-cols-[1fr_72px_72px_72px] border-b border-white/[0.07] bg-white/[0.02] px-6 py-3">
+            <div className="grid grid-cols-[1fr_48px_48px_48px] sm:grid-cols-[1fr_72px_72px_72px] border-b border-white/[0.07] bg-white/[0.02] px-4 sm:px-6 py-3">
               <span className="text-xs font-bold text-white/30 uppercase tracking-wider">Feature</span>
               <span className="text-xs font-bold text-white/30 uppercase tracking-wider text-center">Free</span>
               <span className="text-xs font-bold text-[#FF7828] uppercase tracking-wider text-center">Fan</span>
               <span className="text-xs font-bold text-[#818cf8] uppercase tracking-wider text-center">Pro</span>
             </div>
             {COMPARISON.map(([label, free, fan, pro]) => (
-              <div key={label} className="grid grid-cols-[1fr_72px_72px_72px] border-b border-white/[0.04] last:border-0 px-6 py-3.5">
+              <div key={label} className="grid grid-cols-[1fr_48px_48px_48px] sm:grid-cols-[1fr_72px_72px_72px] border-b border-white/[0.04] last:border-0 px-4 sm:px-6 py-3.5">
                 <span className="text-sm text-white/55">{label}</span>
                 <div className="flex justify-center"><CheckIcon yes={free} /></div>
                 <div className="flex justify-center"><CheckIcon yes={fan} color="#FF7828" /></div>

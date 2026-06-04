@@ -213,22 +213,22 @@ export function LandingHero() {
             transition={{ duration: 0.7, delay: 0.4, ease: easing }}
             className="mt-9 flex flex-col sm:flex-row items-start gap-3"
           >
-            <Link href="/sign-up">
+            <Link href="/trial?tier=fan">
               <Button
                 size="lg"
                 className="h-13 px-7 rounded-full bg-[#FF7828] hover:bg-[#FFA550] text-white font-bold text-base gap-2 group shadow-[0_8px_32px_rgba(255,120,40,0.40)]"
               >
-                Start Free — No Card
+                Try Fan Free — 14 Days
                 <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" strokeWidth={2.5} />
               </Button>
             </Link>
-            <Link href="/download">
+            <Link href="/trial?tier=pro">
               <Button
                 variant="ghost"
                 size="lg"
                 className="h-13 px-5 rounded-full text-white/45 hover:text-white hover:bg-white/5 font-medium text-sm gap-2"
               >
-                Get the iOS App
+                Try Pro Free — 3 Days
                 <ArrowRight size={13} strokeWidth={2} />
               </Button>
             </Link>
@@ -240,7 +240,7 @@ export function LandingHero() {
             transition={{ duration: 0.5, delay: 0.65 }}
             className="mt-4 text-xs text-white/20"
           >
-            Free plan always free. Upgrade anytime for the full edge.
+            No charge until trial ends · Card required · Cancel anytime
           </motion.p>
 
           {/* Stat pills */}

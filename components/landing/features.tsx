@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { CircleDot, Flame, Zap, TrendingUp, Cloud, BarChart3, Lock } from "lucide-react";
+import { CircleDot, Flame, Zap, TrendingUp, Cloud, BarChart3, Lock, Target, Activity } from "lucide-react";
 import { Container } from "./container";
 
 const features = [
@@ -29,23 +29,37 @@ const features = [
   {
     icon: Flame,
     title: "Prop Builder",
-    description: "HR, 1+ Hit, 2+ Hits, and strikeout props for every batter vs confirmed starters. Ranked by probability. Build multi-leg slips and save them to track results.",
-    tier: "pro",
+    description: "HR, 1+ Hit, 2+ Hits, and K props for every confirmed starter matchup. Build multi-leg slips, set wager amounts, and track results.",
+    tier: "fan",
     size: "lg",
   },
   {
     icon: Zap,
     title: "Edge Report",
-    description: "AI-ranked value bets across the full slate. Identifies line discrepancies, pitcher-batter mismatches, and weather-boosted edges before the books adjust.",
-    tier: "pro",
+    description: "AI-ranked value bets across the full slate. Identifies line discrepancies and pitcher-batter edges — updated as lineups confirm.",
+    tier: "fan",
     size: "lg",
   },
   {
     icon: BarChart3,
     title: "Full Matchup Analysis",
-    description: "Pitcher ERA, WHIP, K/9 vs opposing lineup OPS and recent form. Every statistical edge visualized.",
-    tier: "pro",
+    description: "Pitcher ERA, WHIP, K/9 vs opposing lineup OPS and hot/cold streaks. Every edge surfaced.",
+    tier: "fan",
     size: "sm",
+  },
+  {
+    icon: Target,
+    title: "HR Deep Dive",
+    description: "Spray charts, wall clearance, barrel rate, and exit velocity — know why a ball leaves the park, not just if it might.",
+    tier: "superPro",
+    size: "lg",
+  },
+  {
+    icon: Activity,
+    title: "Daily Picks",
+    description: "Confident model picks with edge scores and reasoning. The plays our model grades highest each day.",
+    tier: "superPro",
+    size: "lg",
   },
 ];
 
@@ -60,7 +74,22 @@ const fadeUp = {
 
 function FeatureCard({ feature, index }: { feature: typeof features[0]; index: number }) {
   const Icon = feature.icon;
-  const isPro = feature.tier === "pro";
+  const isFan = feature.tier === "fan";
+  const isSuperPro = feature.tier === "superPro";
+
+  const borderCls = isSuperPro
+    ? "border-[#818cf8]/20 bg-[#818cf8]/[0.04]"
+    : isFan
+    ? "border-[#FF7828]/20 bg-[#FF7828]/[0.04]"
+    : "border-white/[0.07] bg-[#111622]";
+
+  const iconBgCls = isSuperPro
+    ? "bg-[#818cf8]/15"
+    : isFan
+    ? "bg-[#FF7828]/15"
+    : "bg-white/[0.06]";
+
+  const iconColor = isSuperPro ? "#818cf8" : isFan ? "#FF7828" : undefined;
 
   return (
     <motion.div
@@ -69,24 +98,30 @@ function FeatureCard({ feature, index }: { feature: typeof features[0]; index: n
       whileInView="visible"
       viewport={{ once: true, margin: "-50px" }}
       variants={fadeUp}
-      className={`relative flex flex-col rounded-2xl border p-6 overflow-hidden ${
-        isPro
-          ? "border-[#FF7828]/20 bg-[#FF7828]/[0.04]"
-          : "border-white/[0.07] bg-[#111622]"
-      } ${feature.size === "lg" ? "min-h-[220px]" : "min-h-[180px]"}`}
+      className={`relative flex flex-col rounded-2xl border p-6 overflow-hidden ${borderCls} ${
+        feature.size === "lg" ? "min-h-[220px]" : "min-h-[180px]"
+      }`}
     >
-      {/* Pro badge */}
-      {isPro && (
+      {/* Tier badge */}
+      {isFan && (
         <div className="absolute top-4 right-4 flex items-center gap-1.5 rounded-full border border-[#FF7828]/30 bg-[#FF7828]/10 px-2.5 py-1">
           <Zap size={9} className="text-[#FF7828]" strokeWidth={2.5} />
-          <span className="text-[9px] font-black text-[#FF7828] tracking-widest uppercase">Pro</span>
+          <span className="text-[9px] font-black text-[#FF7828] tracking-widest uppercase">Fan</span>
+        </div>
+      )}
+      {isSuperPro && (
+        <div className="absolute top-4 right-4 flex items-center gap-1.5 rounded-full border border-[#818cf8]/30 bg-[#818cf8]/10 px-2.5 py-1">
+          <span className="text-[9px] font-black text-[#818cf8] tracking-widest uppercase">Pro</span>
         </div>
       )}
 
-      <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-4 ${
-        isPro ? "bg-[#FF7828]/15" : "bg-white/[0.06]"
-      }`}>
-        <Icon size={18} className={isPro ? "text-[#FF7828]" : "text-white/55"} strokeWidth={1.7} />
+      <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-4 ${iconBgCls}`}>
+        <Icon
+          size={18}
+          strokeWidth={1.7}
+          style={iconColor ? { color: iconColor } : undefined}
+          className={!iconColor ? "text-white/55" : undefined}
+        />
       </div>
 
       <h3 className="text-base font-bold text-white mb-2">{feature.title}</h3>
@@ -129,10 +164,10 @@ export function LandingFeatures() {
           transition={{ duration: 0.5, delay: 0.18 }}
           className="mt-4 text-center text-white/45 max-w-xl mx-auto leading-relaxed"
         >
-          Every game, every score, every prediction — free. Unlock props, edges, and full analysis for $4.99/month.
+          Every game, score, and prediction free. Fan unlocks props and edge reports. Pro goes all the way.
         </motion.p>
 
-        {/* Free tier label */}
+        {/* Free tier */}
         <div className="mt-12 mb-3 flex items-center gap-3">
           <span className="text-xs font-bold text-white/30 tracking-widest uppercase">Free Plan</span>
           <div className="flex-1 h-px bg-white/[0.06]" />
@@ -143,15 +178,27 @@ export function LandingFeatures() {
           ))}
         </div>
 
-        {/* Pro tier label */}
+        {/* Fan tier */}
         <div className="mt-6 mb-3 flex items-center gap-3">
-          <span className="text-xs font-bold text-[#FF7828] tracking-widest uppercase">Edge Pro — $4.99/mo</span>
+          <span className="text-xs font-bold text-[#FF7828] tracking-widest uppercase">Fan — $4.99/mo · 14-Day Free Trial</span>
           <div className="flex-1 h-px bg-[#FF7828]/15" />
           <Lock size={11} className="text-[#FF7828]/50" strokeWidth={2} />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {features.filter((f) => f.tier === "pro").map((f, i) => (
+          {features.filter((f) => f.tier === "fan").map((f, i) => (
             <FeatureCard key={f.title} feature={f} index={i + 3} />
+          ))}
+        </div>
+
+        {/* Pro tier */}
+        <div className="mt-6 mb-3 flex items-center gap-3">
+          <span className="text-xs font-bold text-[#818cf8] tracking-widest uppercase">Pro — $14.99/mo · 3-Day Free Trial</span>
+          <div className="flex-1 h-px bg-[#818cf8]/15" />
+          <Lock size={11} className="text-[#818cf8]/50" strokeWidth={2} />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {features.filter((f) => f.tier === "superPro").map((f, i) => (
+            <FeatureCard key={f.title} feature={f} index={i + 6} />
           ))}
         </div>
       </Container>
