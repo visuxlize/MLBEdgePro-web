@@ -66,17 +66,28 @@ export async function POST(req: Request) {
       } catch {}
     }
 
+    // Check if this checkout included a trial
+    let isTrialing = false;
+    if (subscriptionId) {
+      try {
+        const sub = await stripe.subscriptions.retrieve(subscriptionId);
+        isTrialing = sub.status === "trialing";
+      } catch {}
+    }
+
     await client.users.updateUserMetadata(clerkId, {
       publicMetadata: {
         plan:                    tier,
-        isPro:                   true,   // both fan and pro get isPro for backward compat
+        isPro:                   true,
         isSuperPro:              tier === "pro",
         stripeSubscriptionId:    subscriptionId,
         subscriptionExpiresAt:   expiresAt,
+        // Stamp trialUsed once — never cleared, so we know they've had a trial
+        ...(isTrialing ? { trialUsed: true } : {}),
       },
     });
 
-    console.log(`✅ Granted ${tier} plan to ${clerkId}`);
+    console.log(`✅ Granted ${tier} plan to ${clerkId}${isTrialing ? " (trial)" : ""}`);
   }
 
   // ── customer.subscription.updated (renewal, upgrade, downgrade) ────────────
