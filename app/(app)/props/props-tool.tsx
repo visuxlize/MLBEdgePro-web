@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import type { ElementType } from "react";
 import {
   Check, Flame, Layers, Plus, Receipt, Trash2, X,
@@ -76,6 +76,7 @@ interface SlipEntry {
   id: string;
   description: string;
   probability: number;
+  odds: string; // e.g. "+150" or "-110" — set in slip panel
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -282,7 +283,7 @@ function BatterCard({ rank, row, propType, inSlip, onAdd }: {
         </div>
 
         <button
-          onClick={() => onAdd({ id: `${row.id}-${propType}`, description: `${row.playerName} ${propType} vs ${row.pitcherName.split(" ").pop()}`, probability: row.pct })}
+          onClick={() => onAdd({ id: `${row.id}-${propType}`, description: `${row.playerName} ${propType} vs ${row.pitcherName.split(" ").pop()}`, probability: row.pct, odds: "" })}
           disabled={inSlip}
           className={`flex items-center gap-1 rounded-xl border px-2.5 py-1.5 text-xs font-bold transition-all shrink-0 ${
             inSlip
@@ -359,7 +360,7 @@ function PitcherKCard({ pitcher, slip, onAdd }: {
               <div className="flex items-center gap-3">
                 <span className="text-xl font-black" style={{ color: item.color }}>{item.pct}%</span>
                 <button
-                  onClick={() => onAdd({ id: item.id, description: `${pitcher.name} ${item.label}`, probability: item.pct })}
+                  onClick={() => onAdd({ id: item.id, description: `${pitcher.name} ${item.label}`, probability: item.pct, odds: "" })}
                   disabled={item.inSlip}
                   className={`flex items-center gap-1 rounded-xl border px-2.5 py-1.5 text-xs font-bold transition-all ${
                     item.inSlip
@@ -560,7 +561,7 @@ function TotalRunsCard({ data, slip, onAdd }: {
               <div className="flex items-center gap-3 shrink-0">
                 <span className="text-xl font-black" style={{ color: item.color }}>{item.pct}%</span>
                 <button
-                  onClick={() => onAdd({ id: item.id, description: `${awAbbr} @ ${hmAbbr} ${item.label} Total Runs`, probability: item.pct })}
+                  onClick={() => onAdd({ id: item.id, description: `${awAbbr} @ ${hmAbbr} ${item.label} Total Runs`, probability: item.pct, odds: "" })}
                   disabled={item.inSlip}
                   className={`flex items-center gap-1 rounded-xl border px-3 py-1.5 text-xs font-bold transition-all ${
                     item.inSlip
@@ -582,40 +583,65 @@ function TotalRunsCard({ data, slip, onAdd }: {
   );
 }
 
-// ── Slip panel ────────────────────────────────────────────────────────────────
+// ── Helpers for parlay math ───────────────────────────────────────────────────
 
-const BET_TRACKER_KEY = "mlbedge_bet_tracker_v1";
-
-function saveToTracker(slip: SlipEntry[]) {
-  try {
-    const existing = JSON.parse(localStorage.getItem(BET_TRACKER_KEY) ?? "[]");
-    const newSlip = {
-      id:          crypto.randomUUID(),
-      createdAt:   new Date().toISOString(),
-      status:      "pending",
-      wager:       10,
-      legs: slip.map((s) => ({
-        id:          s.id,
-        description: s.description,
-        probability: s.probability,
-        odds:        "",  // to be filled in bet tracker
-      })),
-    };
-    localStorage.setItem(BET_TRACKER_KEY, JSON.stringify([newSlip, ...existing]));
-    return true;
-  } catch { return false; }
+function americanToDecimal(odds: string): number {
+  const n = parseInt(odds.replace("+", ""), 10);
+  if (isNaN(n) || n === 0) return 1;
+  return n > 0 ? n / 100 + 1 : 100 / Math.abs(n) + 1;
 }
 
-function SlipPanel({ slip, onRemove, onClear }: {
-  slip: SlipEntry[]; onRemove: (id: string) => void; onClear: () => void;
+function parlayToWin(wager: number, legs: SlipEntry[]): number {
+  const decimal = legs.reduce((acc, l) => acc * americanToDecimal(l.odds), 1);
+  return Math.round((wager * decimal - wager) * 100) / 100;
+}
+
+// ── Slip panel ────────────────────────────────────────────────────────────────
+
+function SlipPanel({ slip, onRemove, onClear, onOddsChange }: {
+  slip: SlipEntry[];
+  onRemove: (id: string) => void;
+  onClear: () => void;
+  onOddsChange: (id: string, odds: string) => void;
 }) {
   const combined = combinedProbability(slip);
-  const [saved, setSaved] = useState(false);
+  const [wager, setWager]     = useState("10");
+  const [saving, setSaving]   = useState(false);
+  const [saved, setSaved]     = useState(false);
+  const [error, setError]     = useState<string | null>(null);
 
-  function handleSave() {
-    if (saveToTracker(slip)) {
+  const wagerNum = parseFloat(wager) || 0;
+  const toWin    = wagerNum > 0 ? parlayToWin(wagerNum, slip) : 0;
+  const hasOdds  = slip.some((e) => e.odds);
+
+  async function handleSave() {
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/bet-slips", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id:        crypto.randomUUID(),
+          createdAt: new Date().toISOString(),
+          status:    "pending",
+          wager:     wagerNum || 10,
+          toWin:     hasOdds ? toWin : undefined,
+          legs:      slip.map((s) => ({
+            id:          s.id,
+            description: s.description,
+            probability: s.probability,
+            odds:        s.odds,
+          })),
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to save");
       setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
+      setTimeout(() => setSaved(false), 3000);
+    } catch {
+      setError("Couldn't save — check your connection and try again.");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -646,60 +672,124 @@ function SlipPanel({ slip, onRemove, onClear }: {
         </div>
       ) : (
         <div className="p-4 space-y-2">
-          {slip.map((entry) => (
-            <div key={entry.id}
-              className="flex items-start gap-3 rounded-xl border border-white/[0.05] bg-[#0D1117] p-3">
-              <div className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: propColor(entry.probability) }} />
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-white leading-snug">{entry.description}</p>
-                <p className="text-[10px] font-black mt-1" style={{ color: propColor(entry.probability) }}>
-                  {entry.probability}% · {propLabel(entry.probability)}
-                </p>
-              </div>
-              <button onClick={() => onRemove(entry.id)} className="text-white/20 hover:text-white/50 mt-0.5 shrink-0">
-                <X size={14} />
-              </button>
-            </div>
-          ))}
+          {/* Legs with odds inputs */}
+          {slip.map((entry) => {
+            const sign   = entry.odds.startsWith("-") ? "-" : "+";
+            const numStr = entry.odds.replace(/[^0-9]/g, "");
 
-          {slip.length > 1 && (
-            <div className="rounded-xl border border-[#50C882]/20 bg-[#50C882]/[0.06] p-4 mt-2">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-bold text-white/40">Combined probability</p>
-                <p className="text-2xl font-black text-[#50C882]">{combined.toFixed(combined < 10 ? 1 : 0)}%</p>
+            return (
+              <div key={entry.id}
+                className="rounded-xl border border-white/[0.05] bg-[#0D1117] p-3 space-y-2">
+                {/* Leg description row */}
+                <div className="flex items-start gap-2">
+                  <div className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: propColor(entry.probability) }} />
+                  <p className="text-xs font-bold text-white leading-snug flex-1 min-w-0">{entry.description}</p>
+                  <button onClick={() => onRemove(entry.id)} className="text-white/20 hover:text-white/50 shrink-0">
+                    <X size={13} />
+                  </button>
+                </div>
+
+                {/* Odds input */}
+                <div className="flex items-center gap-2 pl-4">
+                  <p className="text-[10px] text-white/30 shrink-0">FanDuel odds:</p>
+                  <div className="flex items-center rounded-lg border border-white/[0.08] bg-white/[0.04] overflow-hidden">
+                    {/* +/- toggle */}
+                    <button
+                      onClick={() => {
+                        const newSign = sign === "+" ? "-" : "+";
+                        onOddsChange(entry.id, numStr ? `${newSign}${numStr}` : "");
+                      }}
+                      className="w-8 h-8 flex items-center justify-center text-xs font-black border-r border-white/[0.08] transition-colors"
+                      style={{ color: sign === "+" ? "#50C882" : "#EB505A", backgroundColor: sign === "+" ? "rgba(80,200,130,0.08)" : "rgba(235,80,90,0.08)" }}
+                    >
+                      {sign}
+                    </button>
+                    {/* Number input */}
+                    <input
+                      type="number"
+                      min="100"
+                      placeholder="110"
+                      value={numStr}
+                      onChange={(e) => {
+                        const v = e.target.value.replace(/[^0-9]/g, "");
+                        onOddsChange(entry.id, v ? `${sign}${v}` : "");
+                      }}
+                      className="w-16 h-8 bg-transparent text-xs font-black text-white text-center outline-none px-1"
+                      style={{ color: entry.odds ? (sign === "+" ? "#50C882" : "#EB505A") : "rgba(255,255,255,0.3)" }}
+                    />
+                  </div>
+                  <p className="text-[10px] font-black" style={{ color: propColor(entry.probability) }}>
+                    {entry.probability}%
+                  </p>
+                </div>
               </div>
-              <div className="h-2 rounded-full bg-white/[0.08] overflow-hidden">
+            );
+          })}
+
+          {/* Combined probability */}
+          {slip.length > 1 && (
+            <div className="rounded-xl border border-[#50C882]/20 bg-[#50C882]/[0.06] p-3 mt-1">
+              <div className="flex items-center justify-between mb-1.5">
+                <p className="text-xs font-bold text-white/40">Combined probability</p>
+                <p className="text-xl font-black text-[#50C882]">{combined.toFixed(combined < 10 ? 1 : 0)}%</p>
+              </div>
+              <div className="h-1.5 rounded-full bg-white/[0.08] overflow-hidden">
                 <div className="h-full rounded-full bg-[#50C882]" style={{ width: `${Math.min(combined * 4, 100)}%` }} />
               </div>
-              <p className="text-[10px] text-white/25 mt-2">
-                {combined >= 30 ? "Solid multi-leg" : combined >= 15 ? "Moderate parlay" : "High-risk parlay"}
-              </p>
             </div>
           )}
+
+          {/* Wager input */}
+          <div className="rounded-xl border border-white/[0.07] bg-[#0D1117] p-3 mt-1">
+            <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider mb-2">Wager</p>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 h-10 flex-1">
+                <span className="text-white/40 text-sm mr-1">$</span>
+                <input
+                  type="number"
+                  min="1"
+                  placeholder="10"
+                  value={wager}
+                  onChange={(e) => setWager(e.target.value)}
+                  className="flex-1 bg-transparent text-sm font-black text-white outline-none"
+                />
+              </div>
+              {hasOdds && toWin > 0 && (
+                <div className="text-right">
+                  <p className="text-[9px] text-white/25 uppercase tracking-wider">To win</p>
+                  <p className="text-sm font-black text-[#50C882]">${toWin.toFixed(2)}</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
       {slip.length > 0 && (
         <div className="px-4 pb-4 space-y-2">
-          {/* Save to Bet Tracker */}
+          {error && (
+            <p className="text-[11px] text-[#EB505A] text-center">{error}</p>
+          )}
           <button
             onClick={handleSave}
+            disabled={saving || saved}
             className={`w-full h-11 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all border ${
               saved
                 ? "border-[#50C882]/40 bg-[#50C882]/10 text-[#50C882]"
-                : "border-[#FF7828]/30 bg-[#FF7828]/10 text-[#FF7828] hover:bg-[#FF7828]/18"
+                : "border-[#FF7828]/30 bg-[#FF7828]/10 text-[#FF7828] hover:bg-[#FF7828]/18 disabled:opacity-60"
             }`}
           >
             {saved ? (
               <><Check size={15} strokeWidth={2.5} />Saved to Bet Tracker!</>
+            ) : saving ? (
+              <><div className="w-4 h-4 rounded-full border-2 border-[#FF7828]/30 border-t-[#FF7828] animate-spin" />Saving…</>
             ) : (
               <><BookOpen size={15} strokeWidth={2} />Save to Bet Tracker</>
             )}
           </button>
-
           {saved && (
             <p className="text-[10px] text-white/30 text-center">
-              Open Bet Tracker to enter FanDuel odds &amp; wager
+              Find it in Bet Tracker — mark Won or Lost when the game ends
             </p>
           )}
         </div>
@@ -723,6 +813,10 @@ export function PropsTool({ games }: { games: PropGame[] }) {
   function addToSlip(entry: SlipEntry) {
     setSlip((cur) => cur.some((e) => e.id === entry.id) ? cur : [...cur, entry]);
   }
+
+  const updateOdds = useCallback((id: string, odds: string) => {
+    setSlip((cur) => cur.map((e) => e.id === id ? { ...e, odds } : e));
+  }, []);
 
   const isBatterProp = ["HR","Hit","2+ Hits","2+ Bases"].includes(activeProp);
   const rows = isBatterProp ? selected.props[activeProp as "HR" | "Hit" | "2+ Hits" | "2+ Bases"] : [];
@@ -791,6 +885,7 @@ export function PropsTool({ games }: { games: PropGame[] }) {
         slip={slip}
         onRemove={(id) => setSlip((cur) => cur.filter((e) => e.id !== id))}
         onClear={() => setSlip([])}
+        onOddsChange={updateOdds}
       />
     </div>
   );

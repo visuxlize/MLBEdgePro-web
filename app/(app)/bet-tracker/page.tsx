@@ -653,14 +653,14 @@ export default function BetTrackerPage() {
         <div>
           <p className="text-[10px] font-bold text-white/25 tracking-widest uppercase mb-1">Bet Tracker</p>
           <h1 className="text-3xl font-black text-white">My Slips</h1>
-          <p className="text-sm text-white/35 mt-1">Log bets, track results, compound your accuracy</p>
+          <p className="text-sm text-white/35 mt-1">Build slips in Prop Builder → they appear here automatically</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 rounded-2xl bg-[#FF7828] text-white font-bold px-5 py-3 hover:bg-[#FFA550] transition-colors shadow-[0_6px_20px_rgba(255,120,40,0.35)]"
+          className="flex items-center gap-2 rounded-2xl border border-white/[0.08] bg-white/[0.04] text-white/50 font-bold px-4 py-2.5 text-sm hover:bg-white/[0.07] hover:text-white transition-colors"
         >
-          <Plus size={16} strokeWidth={2.5} />
-          Log Slip
+          <Plus size={14} strokeWidth={2.5} />
+          Manual entry
         </button>
       </div>
 
@@ -762,13 +762,13 @@ export default function BetTrackerPage() {
               {activeTab === "pending" ? "No open slips" : activeTab === "won" ? "No wins logged yet" : "No losses logged yet"}
             </p>
             {activeTab === "pending" && (
-              <button
-                onClick={() => setShowModal(true)}
+              <a
+                href="/props"
                 className="mt-2 flex items-center gap-2 rounded-xl border border-[#FF7828]/30 bg-[#FF7828]/10 px-4 py-2 text-sm font-bold text-[#FF7828] hover:bg-[#FF7828]/18 transition-colors"
               >
                 <Plus size={14} />
-                Log your first slip
-              </button>
+                Build a slip in Prop Builder
+              </a>
             )}
           </motion.div>
         ) : (
