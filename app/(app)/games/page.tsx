@@ -303,6 +303,19 @@ export default function GamesPage() {
   const [date, setDate]   = useState(todayStr());
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
+  const [upgradeBanner, setUpgradeBanner] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Show success banner after Stripe checkout
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("upgrade") === "success") {
+      const tier = params.get("tier") ?? "fan";
+      setUpgradeBanner(tier === "pro" ? "🎉 Welcome to Pro! Your full access is now unlocked." : "🎉 Welcome to Fan! Your features are now unlocked.");
+      // Clean URL without reload
+      window.history.replaceState({}, "", window.location.pathname);
+      setTimeout(() => setUpgradeBanner(null), 6000);
+    }
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -327,7 +340,22 @@ export default function GamesPage() {
   const rest = games.filter((g) => g.gamePk !== featured?.gamePk);
 
   return (
-    <div className="px-5 sm:px-8 py-6 max-w-screen-xl mx-auto">
+    <div className="px-4 sm:px-8 py-6 max-w-screen-xl mx-auto">
+      {/* Upgrade success banner */}
+      <AnimatePresence>
+        {upgradeBanner && (
+          <motion.div
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            className="mb-5 rounded-2xl border border-[#50C882]/30 bg-[#50C882]/10 px-5 py-4 flex items-center justify-between gap-4"
+          >
+            <p className="text-sm font-bold text-[#50C882]">{upgradeBanner}</p>
+            <button onClick={() => setUpgradeBanner(null)} className="text-[#50C882]/50 hover:text-[#50C882] text-lg leading-none">×</button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Page header */}
       <div className="mb-6">
         <p className="text-[10px] font-bold text-white/25 tracking-widest uppercase mb-1">Schedule</p>

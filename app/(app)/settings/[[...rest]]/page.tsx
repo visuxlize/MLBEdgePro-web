@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { UserProfile } from "@clerk/nextjs";
-import { Check, Zap, ChevronDown } from "lucide-react";
+import { UserProfile, useClerk } from "@clerk/nextjs";
+import { Check, Zap, ChevronDown, LogOut, Home, ArrowLeft } from "lucide-react";
 import { useSubscription } from "@/lib/subscription";
 import { TeamLogoImg } from "@/components/web-tool/team-logo-img";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 // Team list (same as mobile app)
 const ALL_TEAMS = [
@@ -159,11 +160,37 @@ function SubscriptionCard() {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
+  const { signOut } = useClerk();
+  const router = useRouter();
+
+  async function handleSignOut() {
+    await signOut();
+    router.push("/");
+  }
+
   return (
     <div className="px-5 sm:px-8 py-6 max-w-screen-xl mx-auto">
-      <div className="mb-8">
-        <p className="text-[10px] font-bold text-white/25 tracking-widest uppercase mb-1">Account</p>
-        <h1 className="text-2xl sm:text-3xl font-black text-white">Settings</h1>
+      <div className="mb-8 flex items-start justify-between flex-wrap gap-4">
+        <div>
+          <p className="text-[10px] font-bold text-white/25 tracking-widest uppercase mb-1">Account</p>
+          <h1 className="text-2xl sm:text-3xl font-black text-white">Settings</h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/"
+            className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2 text-sm text-white/45 hover:text-white hover:border-white/15 transition-colors font-medium"
+          >
+            <Home size={15} strokeWidth={1.7} />
+            Home
+          </Link>
+          <button
+            onClick={handleSignOut}
+            className="flex items-center gap-2 rounded-xl border border-[#EB505A]/25 bg-[#EB505A]/[0.06] px-4 py-2 text-sm text-[#EB505A] hover:bg-[#EB505A]/10 transition-colors font-bold"
+          >
+            <LogOut size={15} strokeWidth={1.7} />
+            Sign Out
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
