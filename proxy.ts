@@ -1,14 +1,15 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
 /**
- * Public routes — no auth required.
- * Everything else (games, scores, analysis, etc.) is protected.
+ * Public routes — accessible without signing in.
+ * Everything else requires a Clerk session.
  */
 const isPublicRoute = createRouteMatcher([
   "/",                            // landing page
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/trial(?!/checkout)(.*)",      // /trial and /trial?tier=... but NOT /trial/checkout
+  "/upgrade(.*)",                 // pricing page — public so anyone can view plans
   "/download(.*)",
   "/results(.*)",
   "/responsible-gambling(.*)",
