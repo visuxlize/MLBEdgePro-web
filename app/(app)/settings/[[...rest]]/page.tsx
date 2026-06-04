@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import { UserProfile, useClerk } from "@clerk/nextjs";
-import { Check, Zap, ChevronDown, LogOut, Home, ArrowLeft } from "lucide-react";
+import { Check, Zap, ChevronDown, LogOut, Home } from "lucide-react";
 import { useSubscription } from "@/lib/subscription";
 import { TeamLogoImg } from "@/components/web-tool/team-logo-img";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-// Team list (same as mobile app)
+// ── Team list ─────────────────────────────────────────────────────────────────
+
 const ALL_TEAMS = [
   { id: 108, name: "Los Angeles Angels" }, { id: 109, name: "Arizona Diamondbacks" },
   { id: 110, name: "Baltimore Orioles" },  { id: 111, name: "Boston Red Sox" },
@@ -27,7 +28,8 @@ const ALL_TEAMS = [
   { id: 147, name: "New York Yankees" },   { id: 158, name: "Milwaukee Brewers" },
 ].sort((a, b) => a.name.localeCompare(b.name));
 
-// Persisted in localStorage (simple, no backend needed for this preference)
+// ── Favorite team hook ────────────────────────────────────────────────────────
+
 function useFavoriteTeam() {
   const [teamId, setTeamIdState] = useState<number | null>(() => {
     if (typeof window === "undefined") return null;
@@ -53,17 +55,16 @@ function TeamPicker() {
 
   return (
     <div>
-      {/* Current selection */}
       {teamId ? (
         <div className="flex items-center gap-4 p-4 rounded-xl border border-[#FF7828]/25 bg-[#FF7828]/[0.05] mb-4">
           <TeamLogoImg teamId={teamId} name={teamName ?? ""} size={44} />
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <p className="text-[10px] text-[#FF7828]/60 font-bold tracking-widest uppercase mb-0.5">Selected Team</p>
-            <p className="text-white font-bold text-base">{teamName}</p>
+            <p className="text-white font-bold text-base truncate">{teamName}</p>
           </div>
           <button
             onClick={() => setTeam(null)}
-            className="text-white/25 hover:text-white/50 text-xs transition-colors"
+            className="text-white/25 hover:text-white/50 text-xs transition-colors shrink-0"
           >
             Remove
           </button>
@@ -72,7 +73,6 @@ function TeamPicker() {
         <p className="text-white/30 text-sm mb-4">No favorite team selected. Your team will be featured on the Today screen.</p>
       )}
 
-      {/* Toggle list */}
       <button
         onClick={() => setOpen((v) => !v)}
         className="flex items-center gap-2 text-sm font-semibold text-white/50 hover:text-white transition-colors mb-4"
@@ -82,7 +82,7 @@ function TeamPicker() {
       </button>
 
       {open && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-96 overflow-y-auto pr-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-72 overflow-y-auto pr-1">
           {ALL_TEAMS.map((team) => {
             const selected = team.id === teamId;
             return (
@@ -91,15 +91,15 @@ function TeamPicker() {
                 onClick={() => { setTeam(team.id); setOpen(false); }}
                 className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-colors ${
                   selected
-                    ? "border-[#FF7828]/40 bg-[#FF7828]/08"
+                    ? "border-[#FF7828]/40 bg-[#FF7828]/[0.08]"
                     : "border-white/[0.06] bg-[#111622] hover:border-white/[0.12]"
                 }`}
               >
-                <TeamLogoImg teamId={team.id} name={team.name} size={32} />
-                <span className={`text-sm flex-1 ${selected ? "text-white font-bold" : "text-white/60"}`}>
+                <TeamLogoImg teamId={team.id} name={team.name} size={30} />
+                <span className={`text-sm flex-1 min-w-0 truncate ${selected ? "text-white font-bold" : "text-white/60"}`}>
                   {team.name}
                 </span>
-                {selected && <Check size={14} className="text-[#FF7828] shrink-0" strokeWidth={2.5} />}
+                {selected && <Check size={13} className="text-[#FF7828] shrink-0" strokeWidth={2.5} />}
               </button>
             );
           })}
@@ -112,17 +112,16 @@ function TeamPicker() {
 // ── Subscription card ─────────────────────────────────────────────────────────
 
 function SubscriptionCard() {
-  const { isPro, plan, expiresAt } = useSubscription();
+  const { isPro, expiresAt } = useSubscription();
 
   return (
     <div className={`rounded-xl border p-5 ${
-      isPro
-        ? "border-[#FF7828]/25 bg-[#FF7828]/[0.05]"
-        : "border-white/[0.07] bg-[#111622]"
+      isPro ? "border-[#FF7828]/25 bg-[#FF7828]/[0.05]" : "border-white/[0.07] bg-[#111622]"
     }`}>
-      <div className="flex items-start justify-between mb-3">
-        <div>
-          <p className="text-[10px] font-bold tracking-widest uppercase mb-1" style={{ color: isPro ? "#FF7828" : "rgba(255,255,255,0.30)" }}>
+      <div className="flex items-start justify-between mb-3 gap-3">
+        <div className="min-w-0">
+          <p className="text-[10px] font-bold tracking-widest uppercase mb-1"
+            style={{ color: isPro ? "#FF7828" : "rgba(255,255,255,0.30)" }}>
             Current Plan
           </p>
           <p className="text-white font-black text-xl">{isPro ? "Edge Pro" : "Free Plan"}</p>
@@ -133,7 +132,7 @@ function SubscriptionCard() {
           )}
         </div>
         {isPro && (
-          <div className="flex items-center gap-1.5 rounded-full border border-[#FF7828]/30 bg-[#FF7828]/10 px-2.5 py-1">
+          <div className="flex items-center gap-1.5 rounded-full border border-[#FF7828]/30 bg-[#FF7828]/10 px-2.5 py-1 shrink-0">
             <Zap size={10} className="text-[#FF7828]" strokeWidth={2.5} />
             <span className="text-[9px] font-black text-[#FF7828] tracking-widest uppercase">Active</span>
           </div>
@@ -157,6 +156,29 @@ function SubscriptionCard() {
   );
 }
 
+// ── Action buttons (Home + Sign Out) ─────────────────────────────────────────
+
+function ActionButtons({ onSignOut, className = "" }: { onSignOut: () => void; className?: string }) {
+  return (
+    <div className={`flex items-center gap-2 ${className}`}>
+      <Link
+        href="/"
+        className="flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-white/45 hover:text-white hover:border-white/15 transition-colors font-medium"
+      >
+        <Home size={14} strokeWidth={1.7} />
+        <span className="hidden sm:inline">Home</span>
+      </Link>
+      <button
+        onClick={onSignOut}
+        className="flex items-center gap-1.5 rounded-xl border border-[#EB505A]/25 bg-[#EB505A]/[0.06] px-3 py-2 text-sm text-[#EB505A] hover:bg-[#EB505A]/10 transition-colors font-bold"
+      >
+        <LogOut size={14} strokeWidth={1.7} />
+        <span className="hidden sm:inline">Sign Out</span>
+      </button>
+    </div>
+  );
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
@@ -169,72 +191,60 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="px-5 sm:px-8 py-6 max-w-screen-xl mx-auto">
-      {/* Page heading only — no action buttons here */}
-      <div className="mb-8">
-        <p className="text-[10px] font-bold text-white/25 tracking-widest uppercase mb-1">Account</p>
-        <h1 className="text-2xl sm:text-3xl font-black text-white">Settings</h1>
+    <div className="px-4 sm:px-8 py-6 max-w-screen-xl mx-auto w-full">
+
+      {/* Page header — title left, action buttons right on mobile; title only on desktop */}
+      <div className="flex items-center justify-between gap-4 mb-8">
+        <div>
+          <p className="text-[10px] font-bold text-white/25 tracking-widest uppercase mb-1">Account</p>
+          <h1 className="text-2xl sm:text-3xl font-black text-white">Settings</h1>
+        </div>
+        {/* Mobile only — shown in header */}
+        <ActionButtons onSignOut={handleSignOut} className="lg:hidden" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 items-start">
-        {/* Left column */}
-        <div className="space-y-8 lg:pr-8">
-          {/* Subscription */}
+      {/* Two-column layout: stacks to single column on mobile */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-0 items-start">
+
+        {/* ── Left column ─────────────────────────────────────────────────── */}
+        <div className="space-y-6 lg:space-y-8 lg:pr-8">
+
           <section>
             <h2 className="text-xs font-bold text-white/30 tracking-widest uppercase mb-4">Subscription</h2>
             <SubscriptionCard />
           </section>
 
-          {/* Favorite team */}
           <section>
             <h2 className="text-xs font-bold text-white/30 tracking-widest uppercase mb-4">Favorite Team</h2>
-            <div className="rounded-xl border border-white/[0.07] bg-[#111622] p-5">
+            <div className="rounded-xl border border-white/[0.07] bg-[#111622] p-4 sm:p-5">
               <TeamPicker />
             </div>
           </section>
 
-          {/* Home + Sign Out — anchored below Favorite Team */}
-          <div className="flex items-center gap-3 pt-2">
-            <Link
-              href="/"
-              className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm text-white/45 hover:text-white hover:border-white/15 transition-colors font-medium"
-            >
-              <Home size={15} strokeWidth={1.7} />
-              Home
-            </Link>
-            <button
-              onClick={handleSignOut}
-              className="flex items-center gap-2 rounded-xl border border-[#EB505A]/25 bg-[#EB505A]/[0.06] px-4 py-2.5 text-sm text-[#EB505A] hover:bg-[#EB505A]/10 transition-colors font-bold"
-            >
-              <LogOut size={15} strokeWidth={1.7} />
-              Sign Out
-            </button>
-          </div>
+          {/* Desktop only — Home + Sign Out below Favorite Team */}
+          <ActionButtons onSignOut={handleSignOut} className="hidden lg:flex pt-2" />
         </div>
 
-        {/* Vertical divider — visible on large screens only */}
-        <div className="hidden lg:block absolute left-1/2 top-0 bottom-0 w-px bg-white/[0.06]" aria-hidden />
-
-        {/* Right column — Clerk UserProfile */}
+        {/* ── Right column — Clerk UserProfile ────────────────────────────── */}
         <section className="lg:pl-8 lg:border-l lg:border-white/[0.06]">
           <h2 className="text-xs font-bold text-white/30 tracking-widest uppercase mb-4">Profile</h2>
           <UserProfile
             routing="hash"
             appearance={{
               variables: {
-                colorPrimary: "#FF7828",
-                colorBackground: "#111622",
+                colorPrimary:         "#FF7828",
+                colorBackground:      "#111622",
                 colorInputBackground: "#191C22",
-                colorInputText: "#ffffff",
-                colorText: "#ffffff",
-                colorTextSecondary: "rgba(255,255,255,0.45)",
-                borderRadius: "0.875rem",
+                colorInputText:       "#ffffff",
+                colorText:            "#ffffff",
+                colorTextSecondary:   "rgba(255,255,255,0.45)",
+                borderRadius:         "0.875rem",
               },
               elements: {
-                card: "shadow-none border-0 bg-transparent p-0",
-                navbar: "hidden",
+                card:          "shadow-none border-0 bg-transparent p-0",
+                navbar:        "hidden",
                 pageScrollBox: "p-0",
-                rootBox: "w-full",
+                rootBox:       "w-full max-w-full",
               },
             }}
           />
@@ -243,4 +253,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-

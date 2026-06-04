@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { tier } = await req.json() as { tier: "fan" | "pro" };
+  const { tier, trial } = await req.json() as { tier: "fan" | "pro"; trial?: boolean };
 
   const priceId =
     tier === "pro"
@@ -72,8 +72,10 @@ export async function POST(req: Request) {
           clerk_user_id: userId,
           tier,
         },
+        // Trial period: Fan = 14 days, Pro = 3 days (only when trial flag is set)
+        ...(trial ? { trial_period_days: tier === "pro" ? 3 : 14 } : {}),
       },
-      success_url: `${origin}/games?upgrade=success&tier=${tier}`,
+      success_url: `https://mlbedgepro.dev/games?upgrade=success&tier=${tier}`,
       cancel_url:  `${origin}/upgrade`,
       allow_promotion_codes: true,
       billing_address_collection: "auto",

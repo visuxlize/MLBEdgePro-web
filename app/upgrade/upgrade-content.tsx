@@ -96,7 +96,7 @@ function UpgradeInner({ highlightTier }: { highlightTier: "fan" | "pro" | null }
       <div className="pointer-events-none fixed top-0 right-0 w-[600px] h-[600px] rounded-full bg-[#FF7828]/[0.05] blur-[120px]" />
       <div className="pointer-events-none fixed bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-[#818cf8]/[0.04] blur-[100px]" />
 
-      <div className="relative max-w-5xl mx-auto px-5 sm:px-8 py-12">
+      <div className="relative max-w-5xl mx-auto px-4 sm:px-8 py-8 sm:py-12 w-full">
         {/* Back */}
         <Link href="/games" className="inline-flex items-center gap-2 text-sm text-white/35 hover:text-white transition-colors mb-10">
           <ArrowLeft size={14} strokeWidth={2} />
@@ -293,14 +293,14 @@ function UpgradeInner({ highlightTier }: { highlightTier: "fan" | "pro" | null }
           transition={{ duration: 0.5, delay: 0.3 }}
           className="rounded-2xl border border-white/[0.07] overflow-hidden"
         >
-          <div className="grid grid-cols-[1fr_72px_72px_72px] border-b border-white/[0.07] bg-white/[0.02] px-6 py-3">
+          <div className="grid grid-cols-[1fr_48px_48px_48px] sm:grid-cols-[1fr_72px_72px_72px] border-b border-white/[0.07] bg-white/[0.02] px-4 sm:px-6 py-3">
             <span className="text-xs font-bold text-white/30 uppercase tracking-wider">Feature</span>
             <span className="text-xs font-bold text-white/30 uppercase tracking-wider text-center">Free</span>
             <span className="text-xs font-bold text-[#FF7828] uppercase tracking-wider text-center">Fan</span>
             <span className="text-xs font-bold text-[#818cf8] uppercase tracking-wider text-center">Pro</span>
           </div>
           {COMPARISON.map(([label, free, fan, pro]) => (
-            <div key={label} className="grid grid-cols-[1fr_72px_72px_72px] border-b border-white/[0.04] last:border-0 px-6 py-3.5">
+            <div key={label} className="grid grid-cols-[1fr_48px_48px_48px] sm:grid-cols-[1fr_72px_72px_72px] border-b border-white/[0.04] last:border-0 px-4 sm:px-6 py-3 sm:py-3.5">
               <span className="text-sm text-white/55">{label}</span>
               <div className="flex justify-center"><CheckIcon yes={free} /></div>
               <div className="flex justify-center"><CheckIcon yes={fan} color="#FF7828" /></div>
