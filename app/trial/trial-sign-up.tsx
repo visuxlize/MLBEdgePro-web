@@ -1,7 +1,11 @@
 "use client";
 
+import { useEffect } from "react";
 import { SignUp, ClerkLoaded } from "@clerk/nextjs";
 import { Zap, Star } from "lucide-react";
+
+// Key used to persist the chosen trial tier across the OAuth redirect
+const TRIAL_TIER_KEY = "mlbedge_pending_trial_tier";
 
 const CLERK_APPEARANCE = {
   variables: {
@@ -18,9 +22,6 @@ const CLERK_APPEARANCE = {
     card:            "shadow-[0_32px_80px_rgba(0,0,0,0.6)] border border-white/[0.07]",
     headerTitle:     "text-white font-black",
     headerSubtitle:  "text-white/45",
-    socialButtonsBlockButton: "hidden",
-    socialButtonsBlock:       "hidden",
-    dividerRow:               "hidden",
     formButtonPrimary:
       "bg-[#FF7828] hover:bg-[#FFA550] shadow-[0_6px_20px_rgba(255,120,40,0.40)]",
     footerActionLink: "text-[#FF7828] hover:text-[#FFA550]",
@@ -29,30 +30,39 @@ const CLERK_APPEARANCE = {
 
 const TIER_META = {
   fan: {
-    label:    "Fan",
-    trial:    "14-day free trial",
-    price:    "$4.99/mo after",
-    tagline:  "Props, Edge Report & matchup analysis",
-    color:    "#FF7828",
-    bg:       "rgba(255,120,40,0.08)",
-    border:   "rgba(255,120,40,0.25)",
-    Icon:     Zap,
+    label:   "Fan",
+    trial:   "14-day free trial",
+    price:   "$4.99/mo after",
+    tagline: "Props, Edge Report & matchup analysis",
+    color:   "#FF7828",
+    bg:      "rgba(255,120,40,0.08)",
+    border:  "rgba(255,120,40,0.25)",
+    Icon:    Zap,
   },
   pro: {
-    label:    "Pro",
-    trial:    "3-day free trial",
-    price:    "$14.99/mo after",
-    tagline:  "Spray charts, barrel rate & daily picks",
-    color:    "#818CF8",
-    bg:       "rgba(129,140,248,0.08)",
-    border:   "rgba(129,140,248,0.25)",
-    Icon:     Star,
+    label:   "Pro",
+    trial:   "3-day free trial",
+    price:   "$14.99/mo after",
+    tagline: "Spray charts, barrel rate & daily picks",
+    color:   "#818CF8",
+    bg:      "rgba(129,140,248,0.08)",
+    border:  "rgba(129,140,248,0.25)",
+    Icon:    Star,
   },
 } as const;
 
 export function TrialSignUp({ tier }: { tier: "fan" | "pro" }) {
   const meta = TIER_META[tier];
   const { Icon } = meta;
+
+  // Persist the tier BEFORE OAuth starts so it survives the redirect chain
+  useEffect(() => {
+    sessionStorage.setItem(TRIAL_TIER_KEY, tier);
+  }, [tier]);
+
+  // After sign-up Clerk redirects to /trial/checkout (no query params needed —
+  // the checkout page reads the tier from sessionStorage)
+  const checkoutUrl = "/trial/checkout";
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center px-4 py-16 bg-background overflow-hidden">
@@ -83,24 +93,20 @@ export function TrialSignUp({ tier }: { tier: "fan" | "pro" }) {
         </p>
       </div>
 
-      {/* Clerk SignUp — redirects to /trial/checkout?tier=... after completion */}
+      {/* Clerk SignUp */}
       <div className="relative z-10 w-full max-w-md">
         <ClerkLoaded>
           <SignUp
             appearance={CLERK_APPEARANCE}
-            forceRedirectUrl={`/trial/checkout?tier=${tier}`}
-            signInUrl={`/sign-in?redirect_url=/trial/checkout?tier=${tier}`}
+            forceRedirectUrl={checkoutUrl}
+            signInUrl="/sign-in"
           />
         </ClerkLoaded>
       </div>
 
       <p className="relative z-10 mt-6 text-xs text-white/20 text-center">
         Already have an account?{" "}
-        <a
-          href={`/sign-in?redirect_url=/trial/checkout?tier=${tier}`}
-          className="transition-colors"
-          style={{ color: meta.color }}
-        >
+        <a href="/sign-in" className="transition-colors" style={{ color: meta.color }}>
           Sign in
         </a>
       </p>

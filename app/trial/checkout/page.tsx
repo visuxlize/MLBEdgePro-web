@@ -6,12 +6,19 @@ import { useClerk } from "@clerk/nextjs";
 import { Loader2, Zap, Star, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
+const TRIAL_TIER_KEY = "mlbedge_pending_trial_tier";
 const FAN_PLAN_ID = process.env.NEXT_PUBLIC_CLERK_FAN_PLAN_ID;
 const PRO_PLAN_ID = process.env.NEXT_PUBLIC_CLERK_PRO_PLAN_ID;
 
 function TrialCheckoutInner() {
   const searchParams = useSearchParams();
-  const tier = (searchParams.get("tier") ?? "fan") as "fan" | "pro";
+
+  // Prefer URL query param; fall back to sessionStorage (set before OAuth redirect)
+  const tierFromUrl = searchParams.get("tier") as "fan" | "pro" | null;
+  const tierFromStorage = typeof window !== "undefined"
+    ? (sessionStorage.getItem(TRIAL_TIER_KEY) as "fan" | "pro" | null)
+    : null;
+  const tier = tierFromUrl ?? tierFromStorage ?? "fan";
   const router = useRouter();
   const clerk = useClerk();
   const [error, setError] = useState<string | null>(null);
@@ -28,6 +35,9 @@ function TrialCheckoutInner() {
     let cancelled = false;
 
     async function startCheckout() {
+      // Clear the pending tier now that we're in checkout
+      sessionStorage.removeItem(TRIAL_TIER_KEY);
+
       try {
         const billing = (clerk as any).billing;
 
