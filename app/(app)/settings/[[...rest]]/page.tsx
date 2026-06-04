@@ -170,32 +170,15 @@ export default function SettingsPage() {
 
   return (
     <div className="px-5 sm:px-8 py-6 max-w-screen-xl mx-auto">
-      <div className="mb-8 flex items-start justify-between flex-wrap gap-4">
-        <div>
-          <p className="text-[10px] font-bold text-white/25 tracking-widest uppercase mb-1">Account</p>
-          <h1 className="text-2xl sm:text-3xl font-black text-white">Settings</h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link
-            href="/"
-            className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2 text-sm text-white/45 hover:text-white hover:border-white/15 transition-colors font-medium"
-          >
-            <Home size={15} strokeWidth={1.7} />
-            Home
-          </Link>
-          <button
-            onClick={handleSignOut}
-            className="flex items-center gap-2 rounded-xl border border-[#EB505A]/25 bg-[#EB505A]/[0.06] px-4 py-2 text-sm text-[#EB505A] hover:bg-[#EB505A]/10 transition-colors font-bold"
-          >
-            <LogOut size={15} strokeWidth={1.7} />
-            Sign Out
-          </button>
-        </div>
+      {/* Page heading only — no action buttons here */}
+      <div className="mb-8">
+        <p className="text-[10px] font-bold text-white/25 tracking-widest uppercase mb-1">Account</p>
+        <h1 className="text-2xl sm:text-3xl font-black text-white">Settings</h1>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 items-start">
         {/* Left column */}
-        <div className="space-y-8">
+        <div className="space-y-8 lg:pr-8">
           {/* Subscription */}
           <section>
             <h2 className="text-xs font-bold text-white/30 tracking-widest uppercase mb-4">Subscription</h2>
@@ -209,10 +192,31 @@ export default function SettingsPage() {
               <TeamPicker />
             </div>
           </section>
+
+          {/* Home + Sign Out — anchored below Favorite Team */}
+          <div className="flex items-center gap-3 pt-2">
+            <Link
+              href="/"
+              className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm text-white/45 hover:text-white hover:border-white/15 transition-colors font-medium"
+            >
+              <Home size={15} strokeWidth={1.7} />
+              Home
+            </Link>
+            <button
+              onClick={handleSignOut}
+              className="flex items-center gap-2 rounded-xl border border-[#EB505A]/25 bg-[#EB505A]/[0.06] px-4 py-2.5 text-sm text-[#EB505A] hover:bg-[#EB505A]/10 transition-colors font-bold"
+            >
+              <LogOut size={15} strokeWidth={1.7} />
+              Sign Out
+            </button>
+          </div>
         </div>
 
-        {/* Right column — Clerk UserProfile (handles profile photo, email, password) */}
-        <section>
+        {/* Vertical divider — visible on large screens only */}
+        <div className="hidden lg:block absolute left-1/2 top-0 bottom-0 w-px bg-white/[0.06]" aria-hidden />
+
+        {/* Right column — Clerk UserProfile */}
+        <section className="lg:pl-8 lg:border-l lg:border-white/[0.06]">
           <h2 className="text-xs font-bold text-white/30 tracking-widest uppercase mb-4">Profile</h2>
           <UserProfile
             routing="hash"
@@ -239,3 +243,4 @@ export default function SettingsPage() {
     </div>
   );
 }
+
