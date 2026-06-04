@@ -1,11 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
 import { SignUp, ClerkLoaded } from "@clerk/nextjs";
 import { Zap, Star } from "lucide-react";
-
-// Key used to persist the chosen trial tier across the OAuth redirect
-const TRIAL_TIER_KEY = "mlbedge_pending_trial_tier";
 
 const CLERK_APPEARANCE = {
   variables: {
@@ -55,14 +51,13 @@ export function TrialSignUp({ tier }: { tier: "fan" | "pro" }) {
   const meta = TIER_META[tier];
   const { Icon } = meta;
 
-  // Persist the tier BEFORE OAuth starts so it survives the redirect chain
-  useEffect(() => {
-    sessionStorage.setItem(TRIAL_TIER_KEY, tier);
-  }, [tier]);
-
-  // After sign-up Clerk redirects to /trial/checkout (no query params needed —
-  // the checkout page reads the tier from sessionStorage)
-  const checkoutUrl = "/trial/checkout";
+  // After sign-up/OAuth, Clerk redirects to the server-side API route which
+  // immediately creates the Stripe checkout session and redirects to Stripe.
+  // Using /api/trial/fan (not /trial/checkout?tier=fan) because:
+  //   1. Clean path — no query params dropped by OAuth redirect chain
+  //   2. Server-side — no client JS race conditions
+  //   3. Immediate redirect to Stripe — no loading screen
+  const checkoutUrl = `/api/trial/${tier}`;
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center px-4 py-16 bg-background overflow-hidden">

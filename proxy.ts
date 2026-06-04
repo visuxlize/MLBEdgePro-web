@@ -13,7 +13,7 @@ const isProtectedRoute = createRouteMatcher([
   "/bet-tracker(.*)",
   "/settings(.*)",
   "/game(.*)",
-  "/trial/checkout(.*)",   // must be signed in to start Stripe checkout
+  "/trial/checkout(.*)",   // must be signed in to start checkout
 ]);
 
 export default clerkMiddleware(async (auth, req) => {

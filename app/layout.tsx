@@ -34,8 +34,8 @@ export default function RootLayout({
       publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
       signInUrl="/sign-in"
       signUpUrl="/sign-up"
-      afterSignInUrl="/games"
-      afterSignUpUrl="/games"
+      signInFallbackRedirectUrl="/games"
+      signUpFallbackRedirectUrl="/games"
     >
       <html lang="en" className="dark" suppressHydrationWarning>
         <body className="font-sans antialiased overflow-x-hidden">
