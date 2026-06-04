@@ -51,11 +51,10 @@ function CheckIcon({ yes, color }: { yes: boolean; color?: string }) {
   return <Check size={14} strokeWidth={2.5} style={{ color: color ?? "rgba(255,255,255,0.3)" }} />;
 }
 
-export function UpgradeContent() {
+// Isolated component so Suspense boundary only wraps the searchParams call
+function UpgradeInner({ highlightTier }: { highlightTier: "fan" | "pro" | null }) {
   const { isPro, isSuperPro, plan } = useSubscription();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const highlightTier = searchParams.get("tier") as "fan" | "pro" | null;
 
   const [loadingTier, setLoadingTier] = useState<"fan" | "pro" | null>(null);
 
@@ -291,4 +290,15 @@ export function UpgradeContent() {
       </div>
     </div>
   );
+}
+
+// Thin wrapper that reads searchParams — must be the only thing in Suspense
+function SearchParamsReader() {
+  const searchParams = useSearchParams();
+  const highlightTier = searchParams.get("tier") as "fan" | "pro" | null;
+  return <UpgradeInner highlightTier={highlightTier} />;
+}
+
+export function UpgradeContent() {
+  return <SearchParamsReader />;
 }
