@@ -3,7 +3,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { TRPCProvider } from "@/lib/trpc/client";
 import "./globals.css";
 
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://mlbedgepro.com";
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://mlbedgepro.dev";
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
@@ -30,7 +30,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      signInUrl="/sign-in"
+      signUpUrl="/sign-up"
+      afterSignInUrl="/games"
+      afterSignUpUrl="/games"
+    >
       <html lang="en" className="dark" suppressHydrationWarning>
         <body className="font-sans antialiased">
           <TRPCProvider>
