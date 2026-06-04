@@ -1,23 +1,23 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
 /**
- * Public routes — accessible without signing in.
- * Everything else requires a Clerk session.
+ * Routes that require the user to be signed in.
+ * Everything NOT in this list is public.
  */
-const isPublicRoute = createRouteMatcher([
-  "/",                            // landing page
-  "/sign-in(.*)",
-  "/sign-up(.*)",
-  "/trial(?!/checkout)(.*)",      // /trial and /trial?tier=... but NOT /trial/checkout
-  "/upgrade(.*)",                 // pricing page — public so anyone can view plans
-  "/download(.*)",
-  "/results(.*)",
-  "/responsible-gambling(.*)",
-  "/api/stripe/webhook(.*)",      // Stripe webhooks must be unauthenticated
+const isProtectedRoute = createRouteMatcher([
+  "/games(.*)",
+  "/scores(.*)",
+  "/analysis(.*)",
+  "/props(.*)",
+  "/hr-deep-dive(.*)",
+  "/bet-tracker(.*)",
+  "/settings(.*)",
+  "/game(.*)",
+  "/trial/checkout(.*)",   // must be signed in to start Stripe checkout
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
-  if (!isPublicRoute(req)) {
+  if (isProtectedRoute(req)) {
     await auth.protect();
   }
 });
