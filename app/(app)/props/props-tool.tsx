@@ -1,14 +1,17 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import type { ElementType } from "react";
 import {
   Check, Flame, Layers, Plus, Receipt, Trash2, X,
   Zap, TrendingUp, TrendingDown, Wind, Thermometer,
   Activity, ChevronRight, BookOpen,
-  Clock, Trophy, Shield, Target, LayoutDashboard, Settings2,
+  Clock, Trophy, Shield, Target, LayoutDashboard, Settings2, Bot,
 } from "lucide-react";
 import { playerHeadshotUrl, teamLogoUrl } from "@/lib/mlb/api";
+import type { AIPick } from "@/app/(app)/ai/page";
+
+const AI_SLIP_KEY = "edge-ai-pending-picks";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -1148,10 +1151,39 @@ function SlipPanel({ slip, onRemove, onClear, onOddsChange }: {
 // ── Main exported component ───────────────────────────────────────────────────
 
 export function PropsTool({ games, dailySlips }: { games: PropGame[]; dailySlips: DailySlip[] }) {
-  const [view, setView]           = useState<"dashboard" | "builder">("dashboard");
+  const [view, setView]             = useState<"dashboard" | "builder">("dashboard");
   const [selectedPk, setSelectedPk] = useState(games[0]?.gamePk);
   const [activeProp, setActiveProp] = useState<PropType>("HR");
   const [slip, setSlip]             = useState<SlipEntry[]>([]);
+  const [aiPicks, setAiPicks]       = useState<AIPick[]>([]);
+
+  // Load AI pending picks from localStorage
+  useEffect(() => {
+    function load() {
+      try {
+        const stored = JSON.parse(localStorage.getItem(AI_SLIP_KEY) || "[]") as AIPick[];
+        setAiPicks(stored);
+      } catch { setAiPicks([]); }
+    }
+    load();
+    window.addEventListener("ai-picks-updated", load);
+    return () => window.removeEventListener("ai-picks-updated", load);
+  }, []);
+
+  function importAiPicks() {
+    aiPicks.forEach((p, i) => {
+      const entry: SlipEntry = {
+        id: `ai-${p.playerId}-${p.propType}-${i}`,
+        description: p.description,
+        probability: p.probability,
+        odds: p.odds || "",
+      };
+      setSlip((cur) => cur.some((e) => e.description === entry.description) ? cur : [...cur, entry]);
+    });
+    localStorage.removeItem(AI_SLIP_KEY);
+    setAiPicks([]);
+    setView("builder");
+  }
 
   const selected = useMemo(
     () => games.find((g) => g.gamePk === selectedPk) ?? games[0],
@@ -1172,6 +1204,21 @@ export function PropsTool({ games, dailySlips }: { games: PropGame[]; dailySlips
 
   return (
     <div className="space-y-5">
+      {/* AI pending picks banner */}
+      {aiPicks.length > 0 && (
+        <button
+          onClick={importAiPicks}
+          className="w-full flex items-center gap-3 rounded-2xl border border-[#818cf8]/30 bg-[#818cf8]/08 px-4 py-3 hover:bg-[#818cf8]/14 transition-colors"
+        >
+          <Bot size={16} className="text-[#818cf8] shrink-0" strokeWidth={2} />
+          <div className="flex-1 text-left">
+            <p className="text-sm font-black text-white">Edge AI suggested {aiPicks.length} pick{aiPicks.length > 1 ? "s" : ""}</p>
+            <p className="text-[10px] text-white/40 mt-0.5">{aiPicks.map(p => p.playerName).join(", ")}</p>
+          </div>
+          <span className="text-xs font-bold text-[#818cf8] shrink-0">Add all to slip →</span>
+        </button>
+      )}
+
       {/* View toggle */}
       <div className="flex items-center gap-1 rounded-2xl border border-white/[0.07] bg-[#0D1117] p-1 w-full sm:w-80">
         {(["dashboard", "builder"] as const).map((v) => {

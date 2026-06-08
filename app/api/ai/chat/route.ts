@@ -55,7 +55,8 @@ function moneylineWinPct(homePitcher: PitcherSeasonStats, awayPitcher: PitcherSe
   return { home, away: 100 - home, confidence: diff >= 18 ? "HIGH" : diff >= 10 ? "MEDIUM" : "LOW" };
 }
 
-function topBatters(batters: RosterBatter[], pitcher: PitcherSeasonStats, propType: "HR" | "Hit", n = 3): string[] {
+// Returns rich batter data including IDs for AI structured picks output
+function topBattersCtx(batters: RosterBatter[], pitcher: PitcherSeasonStats, propType: "HR" | "Hit", n = 4) {
   return batters
     .map((b) => {
       const ab  = Math.max(b.stats.atBats, 1);
@@ -64,11 +65,10 @@ function topBatters(batters: RosterBatter[], pitcher: PitcherSeasonStats, propTy
       const pct = propType === "HR"
         ? hrNukePct(b.stats.homeRuns / ab, pitcher.era, ops)
         : hitPct(avg, pitcher.whip);
-      return { name: b.fullName, pct };
+      return { id: b.id, name: b.fullName, teamId: b.teamId, pct };
     })
     .sort((a, b) => b.pct - a.pct)
-    .slice(0, n)
-    .map((x) => `${x.name} ${x.pct}%`);
+    .slice(0, n);
 }
 
 async function buildGameContext(): Promise<string> {
@@ -100,29 +100,27 @@ async function buildGameContext(): Promise<string> {
         if (wx) block += ` | ${wx.tempF}°F, ${wx.windMph}mph ${wx.windDirection}, ${wx.conditions}`;
 
         if (hp) {
-          block += `\n  Home Pitcher: ${hpName} — ERA ${hp.era.toFixed(2)}, WHIP ${hp.whip.toFixed(2)}, K/9 ${hp.strikeoutsPer9Inn.toFixed(1)}, HR/9 ${hp.homeRunsPer9.toFixed(1)}`;
           const kp = kLineProp(hp);
-          block += ` | K Line: ${kp.line} (Over ${kp.overPct}%)`;
+          block += `\n  Home Pitcher: ${hpName} [pid:${game.teams.home.probablePitcher!.id}] — ERA ${hp.era.toFixed(2)}, WHIP ${hp.whip.toFixed(2)}, K/9 ${hp.strikeoutsPer9Inn.toFixed(1)} | K Line: ${kp.line} (Over ${kp.overPct}%)`;
           if (ab.length) {
             const fi = firstInningPct(hp, ab.slice(0,4).reduce((s,b) => s + (parseFloat(b.stats.avg)||0.245), 0) / Math.min(ab.length,4));
             block += ` | 1st Inn Over 0.5: ${fi}%`;
-            const hrPicks = topBatters(ab, hp, "HR", 2);
-            const hitPicks = topBatters(ab, hp, "Hit", 2);
-            if (hrPicks.length) block += `\n  Top HR vs ${hpName}: ${hrPicks.join(", ")}`;
-            if (hitPicks.length) block += `\n  Top Hit vs ${hpName}: ${hitPicks.join(", ")}`;
+            const hrPicks = topBattersCtx(ab, hp, "HR", 3);
+            const hitPicks = topBattersCtx(ab, hp, "Hit", 3);
+            if (hrPicks.length) block += `\n  HR vs ${hpName}: ${hrPicks.map(p=>`${p.name}[pid:${p.id},tid:${p.teamId}] ${p.pct}%`).join(" | ")}`;
+            if (hitPicks.length) block += `\n  Hit vs ${hpName}: ${hitPicks.map(p=>`${p.name}[pid:${p.id},tid:${p.teamId}] ${p.pct}%`).join(" | ")}`;
           }
         }
         if (ap) {
-          block += `\n  Away Pitcher: ${apName} — ERA ${ap.era.toFixed(2)}, WHIP ${ap.whip.toFixed(2)}, K/9 ${ap.strikeoutsPer9Inn.toFixed(1)}, HR/9 ${ap.homeRunsPer9.toFixed(1)}`;
           const kp = kLineProp(ap);
-          block += ` | K Line: ${kp.line} (Over ${kp.overPct}%)`;
+          block += `\n  Away Pitcher: ${apName} [pid:${game.teams.away.probablePitcher!.id}] — ERA ${ap.era.toFixed(2)}, WHIP ${ap.whip.toFixed(2)}, K/9 ${ap.strikeoutsPer9Inn.toFixed(1)} | K Line: ${kp.line} (Over ${kp.overPct}%)`;
           if (hb.length) {
             const fi = firstInningPct(ap, hb.slice(0,4).reduce((s,b) => s + (parseFloat(b.stats.avg)||0.245), 0) / Math.min(hb.length,4));
             block += ` | 1st Inn Over 0.5: ${fi}%`;
-            const hrPicks = topBatters(hb, ap, "HR", 2);
-            const hitPicks = topBatters(hb, ap, "Hit", 2);
-            if (hrPicks.length) block += `\n  Top HR vs ${apName}: ${hrPicks.join(", ")}`;
-            if (hitPicks.length) block += `\n  Top Hit vs ${apName}: ${hitPicks.join(", ")}`;
+            const hrPicks = topBattersCtx(hb, ap, "HR", 3);
+            const hitPicks = topBattersCtx(hb, ap, "Hit", 3);
+            if (hrPicks.length) block += `\n  HR vs ${apName}: ${hrPicks.map(p=>`${p.name}[pid:${p.id},tid:${p.teamId}] ${p.pct}%`).join(" | ")}`;
+            if (hitPicks.length) block += `\n  Hit vs ${apName}: ${hitPicks.map(p=>`${p.name}[pid:${p.id},tid:${p.teamId}] ${p.pct}%`).join(" | ")}`;
           }
         }
         if (hp && ap) {
@@ -216,16 +214,36 @@ USER BET HISTORY
 ${betHistory}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-HOW TO RESPOND
+RESPONSE STYLE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 - Be direct, specific, and data-driven. Reference real player names, pitchers, percentages.
-- When recommending bets, explain WHY using the actual numbers in context.
+- Use **bold** for player names, team names, pick labels, and key stats.
+- Use ## for section headers (e.g. ## Parlay Breakdown, ## Why This Works).
+- Use numbered or bulleted lists for multi-pick responses.
+- When recommending bets, explain WHY using the actual numbers from context.
 - Never say "I don't have access to" — you have all the data above.
 - Keep responses punchy and actionable. No filler. No excessive hedging.
-- For parlay recommendations, explain the combined logic not just list legs.
-- If the user's bet history shows patterns (e.g. always loses HR parlays), address it honestly.
-- Format with short headers when giving multiple picks. Use plain text — no markdown code blocks.
-- Disclaimer: remind them once (only if they're about to act) that all picks are model estimates for educational use.`;
+- If the user's bet history shows patterns, address it honestly.
+- Disclaimer: add one line at the very end only when recommending bets.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STRUCTURED PICKS — REQUIRED FORMAT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Whenever you recommend specific player or team props, append a [PICKS] block at the VERY END of your response (after all text). This powers the "Add to Slip" UI buttons.
+
+[PICKS]
+[
+  {"playerId":656941,"playerName":"Kyle Schwarber","teamId":143,"propType":"HR","probability":35,"pitcherName":"Patrick Corbin","description":"Kyle Schwarber HR vs Patrick Corbin","odds":"+800"},
+  {"playerId":592518,"playerName":"Yandy Díaz","teamId":139,"propType":"Hit","probability":82,"pitcherName":"Connelly Early","description":"Yandy Díaz 1+ Hit vs Early","odds":"-145"}
+]
+[/PICKS]
+
+Rules:
+- Use the exact [pid:X] IDs from the game context above for playerId
+- propType must be exactly one of: "HR", "Hit", "2+ Hits", "2+ Bases", "Pitcher K's", "1st Inn O/U", "Moneyline"
+- odds is your estimated American odds string (e.g. "+650", "-110")
+- Maximum 6 picks per block
+- ONLY include this block when you recommend specific player/team props. Skip it for general analysis, history questions, or educational explanations.`;
 
   const stream = streamChat(systemPrompt, messages);
 

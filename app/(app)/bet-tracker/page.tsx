@@ -1,13 +1,21 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, Trash2, Check, X, TrendingUp,
   BookOpen, Trophy, DollarSign, ChevronDown,
-  BarChart3, Clock,
+  BarChart3, Clock, Share2, Download, Zap,
 } from "lucide-react";
 import { PaywallGate } from "@/components/web-tool/paywall-gate";
+
+// ── Player ID helper ──────────────────────────────────────────────────────────
+function playerIdFromLegId(id: string): number | null {
+  const n = parseInt(id.split("-")[0], 10);
+  return isNaN(n) || n > 9999999 ? null : n;
+}
+const MLB_HEADSHOT = (id: number) =>
+  `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_213,q_auto:best/v1/people/${id}/headshot/67/current`;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -288,13 +296,200 @@ function NewSlipModal({ onSave, onClose }: { onSave: (slip: BetSlip) => void; on
   );
 }
 
+// ── Share card (JPEG export) ──────────────────────────────────────────────────
+
+function ShareModal({ slip, onClose }: { slip: BetSlip; onClose: () => void }) {
+  const cardRef   = useRef<HTMLDivElement>(null);
+  const [saving, setSaving] = useState(false);
+
+  const statusColor = slip.status === "won" ? "#50C882" : slip.status === "lost" ? "#EB505A" : "#FF7828";
+  const hasOdds     = slip.legs.some((l) => l.odds && l.odds.length > 1);
+  const decOdds     = parlayDecimalOdds(slip.legs);
+  const toWinAmt    = hasOdds ? calcToWin(slip.wager, slip.legs) : null;
+  const parlayOdds  = decOdds >= 2 ? `+${Math.round((decOdds - 1) * 100)}` : `-${Math.round(100 / (decOdds - 1))}`;
+  const cp          = combinedProb(slip.legs);
+
+  async function exportJpeg() {
+    if (!cardRef.current) return;
+    setSaving(true);
+    try {
+      const { toJpeg } = await import("html-to-image");
+      const dataUrl = await toJpeg(cardRef.current, {
+        quality: 0.95,
+        pixelRatio: 2,
+        backgroundColor: "#0A0E14",
+      });
+      const link = document.createElement("a");
+      link.href = dataUrl;
+      link.download = `mlbedgepro-slip-${slip.id.slice(0, 8)}.jpg`;
+      link.click();
+
+      // Also try Web Share API on mobile
+      if (navigator.share) {
+        const blob = await (await fetch(dataUrl)).blob();
+        const file = new File([blob], "mlbedgepro-slip.jpg", { type: "image/jpeg" });
+        await navigator.share({ files: [file], title: "My MLB Edge Pro Slip" }).catch(() => {});
+      }
+    } catch (e) {
+      console.error("Export failed", e);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.94 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.94 }}
+        className="w-full max-w-sm rounded-3xl border border-white/[0.08] bg-[#0A0E14] overflow-hidden shadow-2xl"
+      >
+        {/* Modal header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
+          <p className="text-sm font-black text-white">Share Slip</p>
+          <button onClick={onClose} className="w-8 h-8 rounded-xl bg-white/[0.05] flex items-center justify-center text-white/40 hover:text-white transition-colors">
+            <X size={15} />
+          </button>
+        </div>
+
+        {/* ── Share card — this exact div is exported as JPEG ── */}
+        <div ref={cardRef} className="p-5 bg-[#0A0E14]" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
+
+          {/* Branding header */}
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-2">
+              <div style={{ width: 26, height: 26, borderRadius: 8, background: "rgba(255,120,40,0.15)", border: "1px solid rgba(255,120,40,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Zap size={13} style={{ color: "#FF7828" }} strokeWidth={2.5} />
+              </div>
+              <span style={{ color: "#FFFFFF", fontSize: 14, fontWeight: 900 }}>
+                MLB Edge<span style={{ color: "#FF7828" }}> Pro</span>
+              </span>
+            </div>
+            <span style={{ color: "rgba(255,255,255,0.30)", fontSize: 10 }}>{formatDate(slip.createdAt)}</span>
+          </div>
+
+          {/* Title + status */}
+          <div className="flex items-center gap-2 mb-4">
+            <span style={{ color: "#FFFFFF", fontSize: 15, fontWeight: 900 }}>
+              {slip.legs.length}-Leg {slip.legs.length > 1 ? "Parlay" : "Straight"}
+            </span>
+            <span style={{
+              color: statusColor, fontSize: 9, fontWeight: 900, padding: "2px 7px",
+              borderRadius: 99, border: `1px solid ${statusColor}40`, background: `${statusColor}15`,
+              textTransform: "uppercase", letterSpacing: "0.06em",
+            }}>
+              {slip.status}
+            </span>
+          </div>
+
+          {/* Legs */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+            {slip.legs.map((leg, i) => {
+              const pid = playerIdFromLegId(leg.id);
+              const legColor = leg.probability >= 65 ? "#50C882" : leg.probability >= 40 ? "#FF7828" : "#EB505A";
+              return (
+                <div key={leg.id} style={{
+                  display: "flex", alignItems: "center", gap: 10,
+                  background: "rgba(255,255,255,0.03)", borderRadius: 12,
+                  border: "1px solid rgba(255,255,255,0.07)", padding: "10px 12px",
+                }}>
+                  {/* Number */}
+                  <div style={{ width: 20, height: 20, borderRadius: "50%", background: "rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 9, fontWeight: 900 }}>{i + 1}</span>
+                  </div>
+
+                  {/* Headshot */}
+                  {pid && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={MLB_HEADSHOT(pid)}
+                      alt=""
+                      crossOrigin="anonymous"
+                      style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", border: "1.5px solid rgba(255,255,255,0.10)", flexShrink: 0 }}
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                    />
+                  )}
+
+                  {/* Description */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ color: "#FFFFFF", fontSize: 12, fontWeight: 700, lineHeight: 1.3 }}>{leg.description}</p>
+                    <p style={{ color: "rgba(255,255,255,0.35)", fontSize: 10, marginTop: 2 }}>
+                      Model: {leg.probability}%
+                      {leg.odds && leg.odds.length > 1 ? ` · ${leg.odds}` : ""}
+                    </p>
+                  </div>
+
+                  {/* Prob badge */}
+                  <div style={{
+                    padding: "3px 8px", borderRadius: 8,
+                    border: `1px solid ${legColor}40`, background: `${legColor}18`,
+                    flexShrink: 0,
+                  }}>
+                    <span style={{ color: legColor, fontSize: 11, fontWeight: 900 }}>{leg.probability}%</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Divider */}
+          <div style={{ height: 1, background: "rgba(255,255,255,0.06)", marginBottom: 14 }} />
+
+          {/* Stats row */}
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 14 }}>
+            {[
+              { label: "WAGER",    value: `$${slip.wager}`,       color: "rgba(255,255,255,0.70)" },
+              { label: "TO WIN",   value: toWinAmt ? `$${toWinAmt.toFixed(2)}` : "—",  color: "#50C882" },
+              { label: "PARLAY",   value: hasOdds ? parlayOdds : "—", color: "#FF7828" },
+              { label: "COMBINED", value: `${cp}%`,               color: colorFor(cp) },
+            ].map(({ label, value, color }) => (
+              <div key={label} style={{ flex: 1, textAlign: "center" }}>
+                <p style={{ color: "rgba(255,255,255,0.25)", fontSize: 8, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 3 }}>{label}</p>
+                <p style={{ color, fontSize: 13, fontWeight: 900 }}>{value}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Footer */}
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 10 }}>
+            <p style={{ color: "rgba(255,255,255,0.20)", fontSize: 9, textAlign: "center" }}>
+              mlbedgepro.app · For educational use only · Not betting advice
+            </p>
+          </div>
+        </div>
+        {/* ── End share card ── */}
+
+        {/* Actions */}
+        <div className="px-5 pb-5 pt-4 border-t border-white/[0.06] flex gap-3">
+          <button
+            onClick={exportJpeg}
+            disabled={saving}
+            className="flex-1 h-11 rounded-2xl bg-[#FF7828] hover:bg-[#FFA550] text-white font-bold text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
+          >
+            {saving
+              ? <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+              : <Download size={15} strokeWidth={2.5} />
+            }
+            {saving ? "Exporting…" : "Save as JPEG"}
+          </button>
+          <button onClick={onClose} className="h-11 px-5 rounded-2xl border border-white/[0.08] text-white/40 hover:text-white text-sm font-bold transition-colors">
+            Close
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 // ── Slip card ─────────────────────────────────────────────────────────────────
 
-function SlipCard({ slip, onSettle, onDelete, onUpdate }: {
+function SlipCard({ slip, onSettle, onDelete, onUpdate, onShare }: {
   slip: BetSlip;
   onSettle: (id: string, status: "won" | "lost") => void;
   onDelete: (id: string) => void;
   onUpdate: (id: string, updated: Partial<BetSlip>) => void;
+  onShare: (slip: BetSlip) => void;
 }) {
   const [expanded, setExpanded]   = useState(false);
   const [legs, setLegs]           = useState<BetLeg[]>(slip.legs);
@@ -357,10 +552,20 @@ function SlipCard({ slip, onSettle, onDelete, onUpdate }: {
             <span>{formatDate(slip.createdAt)}</span>
           </div>
         </div>
-        <div className="text-right shrink-0">
+        <div className="flex flex-col items-end gap-1 shrink-0">
+          <div className="flex items-center gap-2">
+            {/* Share button */}
+            <button
+              onClick={(e) => { e.stopPropagation(); onShare(slip); }}
+              className="w-7 h-7 rounded-lg bg-white/[0.05] flex items-center justify-center text-white/30 hover:text-[#FF7828] hover:bg-[#FF7828]/10 transition-colors"
+              title="Share as image"
+            >
+              <Share2 size={12} strokeWidth={2} />
+            </button>
+            <ChevronDown size={14} className={`text-white/20 transition-transform ${expanded ? "rotate-180" : ""}`} />
+          </div>
           <p className="text-xl font-black" style={{ color: colorFor(cp) }}>{cp}%</p>
           <p className="text-[9px] text-white/25">model prob</p>
-          <ChevronDown size={14} className={`text-white/20 mt-1 mx-auto transition-transform ${expanded ? "rotate-180" : ""}`} />
         </div>
       </button>
 
@@ -576,6 +781,7 @@ export default function BetTrackerPage() {
   const [loading, setLoading]       = useState(true);
   const [showModal, setShowModal]   = useState(false);
   const [activeTab, setActiveTab]   = useState<TabType>("pending");
+  const [sharingSlip, setSharingSlip] = useState<BetSlip | null>(null);
 
   // Load from Supabase on mount
   useEffect(() => {
@@ -781,7 +987,7 @@ export default function BetTrackerPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, height: 0 }}
               >
-                <SlipCard slip={slip} onSettle={settleSlip} onDelete={deleteSlip} onUpdate={updateSlip} />
+                <SlipCard slip={slip} onSettle={settleSlip} onDelete={deleteSlip} onUpdate={updateSlip} onShare={setSharingSlip} />
               </motion.div>
             ))}
           </div>
@@ -792,9 +998,10 @@ export default function BetTrackerPage() {
         Bet history synced across all your devices via Supabase. For educational tracking only.
       </p>
 
-      {/* Modal */}
+      {/* Modals */}
       <AnimatePresence>
         {showModal && <NewSlipModal onSave={addSlip} onClose={() => setShowModal(false)} />}
+        {sharingSlip && <ShareModal slip={sharingSlip} onClose={() => setSharingSlip(null)} />}
       </AnimatePresence>
     </div>
     </PaywallGate>
