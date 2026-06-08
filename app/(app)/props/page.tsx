@@ -329,101 +329,177 @@ function buildBatterRows(
 
 // ── Daily slips (server-side) ─────────────────────────────────────────────────
 
+interface BuildLeg {
+  id: string;
+  desc: string;
+  pct: number;
+  playerId?: number;
+  teamId?: number;
+  propType: string;
+  gamePk: number;
+}
+
 function buildDailySlips(games: PropGame[]): DailySlip[] {
-  const hitLegs:     { id: string; desc: string; pct: number }[] = [];
-  const twoHitsLegs: { id: string; desc: string; pct: number }[] = [];
-  const hrLegs:      { id: string; desc: string; pct: number }[] = [];
-  const kLegs:       { id: string; desc: string; pct: number }[] = [];
+  const hitLegs:     BuildLeg[] = [];
+  const twoHitsLegs: BuildLeg[] = [];
+  const hrLegs:      BuildLeg[] = [];
+  const kOverLegs:   BuildLeg[] = [];
+  const kUnderLegs:  BuildLeg[] = [];
   const seen = new Set<string>();
 
   for (const g of games) {
     for (const r of g.props.Hit.slice(0, 8)) {
       const id = `${r.id}-Hit`;
-      if (!seen.has(id)) { seen.add(id); hitLegs.push({ id, desc: `${r.playerName} 1+ Hit vs ${r.pitcherName.split(" ").pop()}`, pct: r.pct }); }
+      if (!seen.has(id)) { seen.add(id); hitLegs.push({ id, desc: `${r.playerName} 1+ Hit vs ${r.pitcherName.split(" ").pop()}`, pct: r.pct, playerId: r.id, teamId: r.teamId, propType: "1+ Hit", gamePk: g.gamePk }); }
     }
-    for (const r of g.props["2+ Hits"].slice(0, 4)) {
+    for (const r of g.props["2+ Hits"].slice(0, 6)) {
       const id = `${r.id}-2Hits`;
-      if (!seen.has(id)) { seen.add(id); twoHitsLegs.push({ id, desc: `${r.playerName} 2+ Hits vs ${r.pitcherName.split(" ").pop()}`, pct: r.pct }); }
+      if (!seen.has(id)) { seen.add(id); twoHitsLegs.push({ id, desc: `${r.playerName} 2+ Hits vs ${r.pitcherName.split(" ").pop()}`, pct: r.pct, playerId: r.id, teamId: r.teamId, propType: "2+ Hits", gamePk: g.gamePk }); }
     }
-    for (const r of g.props.HR.slice(0, 4)) {
+    for (const r of g.props.HR.slice(0, 6)) {
       const id = `${r.id}-HR`;
-      if (!seen.has(id)) { seen.add(id); hrLegs.push({ id, desc: `${r.playerName} HR vs ${r.pitcherName.split(" ").pop()}`, pct: r.pct }); }
+      if (!seen.has(id)) { seen.add(id); hrLegs.push({ id, desc: `${r.playerName} HR vs ${r.pitcherName.split(" ").pop()}`, pct: r.pct, playerId: r.id, teamId: r.teamId, propType: "HR", gamePk: g.gamePk }); }
     }
-    for (const p of g.pitchers.filter((p) => p.overPct >= 55).slice(0, 1)) {
-      const id = `${p.id}-k-over`;
-      if (!seen.has(id)) { seen.add(id); kLegs.push({ id, desc: `${p.name} Over ${p.line} Ks`, pct: p.overPct }); }
+    for (const p of g.pitchers) {
+      const overId  = `${p.id}-k-over`;
+      const underId = `${p.id}-k-under`;
+      if (!seen.has(overId))  { seen.add(overId);  kOverLegs.push({ id: overId,  desc: `${p.name} Over ${p.line} Ks`,  pct: p.overPct,  playerId: p.id, propType: "Pitcher K's", gamePk: g.gamePk }); }
+      if (!seen.has(underId)) { seen.add(underId); kUnderLegs.push({ id: underId, desc: `${p.name} Under ${p.line} Ks`, pct: p.underPct, playerId: p.id, propType: "K Under",     gamePk: g.gamePk }); }
     }
   }
 
   hitLegs.sort((a, b) => b.pct - a.pct);
   twoHitsLegs.sort((a, b) => b.pct - a.pct);
   hrLegs.sort((a, b) => b.pct - a.pct);
-  kLegs.sort((a, b) => b.pct - a.pct);
+  kOverLegs.sort((a, b) => b.pct - a.pct);
+  kUnderLegs.sort((a, b) => b.pct - a.pct);
 
-  const safe     = hitLegs.filter((l) => l.pct >= 62);
-  const longshot = [
-    ...hrLegs.filter((l) => l.pct >= 13),
-    ...twoHitsLegs.filter((l) => l.pct >= 35 && l.pct < 62),
-  ].sort((a, b) => b.pct - a.pct);
+  const safeHits    = hitLegs.filter((l) => l.pct >= 62);
+  const midTwoHits  = twoHitsLegs.filter((l) => l.pct >= 30 && l.pct < 62);
+  const hotHRs      = hrLegs.filter((l) => l.pct >= 10);
+  const goodKOvers  = kOverLegs.filter((l) => l.pct >= 52);
+  const goodKUnders = kUnderLegs.filter((l) => l.pct >= 40);
 
-  const slips: DailySlip[] = [];
+  // Pick legs preferring one per game, then fill by probability
+  function spreadAcrossGames(legs: BuildLeg[], count: number): BuildLeg[] {
+    const result: BuildLeg[] = [];
+    const usedGames   = new Set<number>();
+    const usedPlayers = new Set<string>();
+    const playerKey = (l: BuildLeg) => l.desc.split(" vs ")[0];
 
-  function dedupeNames(arr: typeof hitLegs) {
-    const names = new Set<string>();
-    return arr.filter((l) => {
-      const name = l.desc.split(" ").slice(0, 2).join(" ");
-      if (names.has(name)) return false;
-      names.add(name);
-      return true;
-    });
+    for (const leg of legs) {
+      if (result.length >= count) break;
+      if (!usedGames.has(leg.gamePk) && !usedPlayers.has(playerKey(leg))) {
+        usedGames.add(leg.gamePk);
+        usedPlayers.add(playerKey(leg));
+        result.push(leg);
+      }
+    }
+    for (const leg of legs) {
+      if (result.length >= count) break;
+      if (!usedPlayers.has(playerKey(leg))) {
+        usedPlayers.add(playerKey(leg));
+        result.push(leg);
+      }
+    }
+    return result;
   }
 
-  function toLegs(arr: typeof hitLegs): DailySlipLeg[] {
-    return arr.map((l) => ({ id: l.id, description: l.desc, probability: l.pct }));
+  function mergeUnique(...arrs: BuildLeg[][]): BuildLeg[] {
+    const usedPlayers = new Set<string>();
+    const result: BuildLeg[] = [];
+    for (const arr of arrs) {
+      for (const leg of arr) {
+        const key = leg.desc.split(" vs ")[0];
+        if (!usedPlayers.has(key)) { usedPlayers.add(key); result.push(leg); }
+      }
+    }
+    return result;
   }
 
-  function combinedPct(arr: typeof hitLegs): number {
+  function toLegs(arr: BuildLeg[]): DailySlipLeg[] {
+    return arr.map((l) => ({ id: l.id, description: l.desc, probability: l.pct, playerId: l.playerId, teamId: l.teamId, propType: l.propType }));
+  }
+
+  function combinedPct(arr: BuildLeg[]): number {
     return arr.reduce((a, l) => a * (l.pct / 100), 1) * 100;
   }
 
-  function trySlip(id: string, label: string, tier: "safe" | "longshot", arr: typeof hitLegs, minLegs: number): DailySlip | null {
-    const unique = dedupeNames(arr);
-    if (unique.length < minLegs) return null;
-    const legs = unique.slice(0, minLegs);
-    return { id, label, tier, legs: toLegs(legs), combinedPct: combinedPct(legs) };
+  function makeSlip(id: string, label: string, tier: "safe" | "longshot", arr: BuildLeg[]): DailySlip | null {
+    if (!arr.length) return null;
+    return { id, label, tier, legs: toLegs(arr), combinedPct: combinedPct(arr) };
   }
 
-  // Safe slips
-  const s2 = trySlip("2-safe", "2-Leg Safe Pick", "safe", safe, 2);
+  const slips: DailySlip[] = [];
+
+  // ── SAFE: Hit props spread across games + Pitcher K Over blended in ──────
+
+  const s2 = makeSlip("2-safe", "2-Leg Safe Pick", "safe", spreadAcrossGames(safeHits, 2));
   if (s2) slips.push(s2);
 
-  const s3arr = dedupeNames([...safe.slice(0, 2), ...kLegs.slice(0, 1)]);
-  const s3 = s3arr.length >= 3
-    ? trySlip("3-safe", "3-Leg Safe Pick", "safe", s3arr, 3)
-    : trySlip("3-safe", "3-Leg Safe Pick", "safe", safe, 3);
+  const s3 = (() => {
+    const base = mergeUnique(spreadAcrossGames(safeHits, 2), goodKOvers.slice(0, 1));
+    if (base.length >= 3) return makeSlip("3-safe", "3-Leg Safe Pick", "safe", base.slice(0, 3));
+    const alt = spreadAcrossGames(safeHits, 3);
+    return alt.length >= 3 ? makeSlip("3-safe", "3-Leg Safe Pick", "safe", alt) : null;
+  })();
   if (s3) slips.push(s3);
 
-  const s4arr = dedupeNames([...safe.slice(0, 3), ...kLegs.slice(0, 1)]);
-  const s4 = s4arr.length >= 4
-    ? trySlip("4-safe", "4-Leg Safe Pick", "safe", s4arr, 4)
-    : trySlip("4-safe", "4-Leg Safe Pick", "safe", safe, 4);
+  const s4 = (() => {
+    const base = mergeUnique(spreadAcrossGames(safeHits, 3), goodKOvers.slice(0, 1));
+    if (base.length >= 4) return makeSlip("4-safe", "4-Leg Safe Pick", "safe", base.slice(0, 4));
+    const alt = spreadAcrossGames(safeHits, 4);
+    return alt.length >= 4 ? makeSlip("4-safe", "4-Leg Safe Pick", "safe", alt) : null;
+  })();
   if (s4) slips.push(s4);
 
-  const s5arr = dedupeNames([...safe.slice(0, 4), ...kLegs.slice(0, 1)]);
-  const s5 = s5arr.length >= 5
-    ? trySlip("5-safe", "5-Leg Safe Pick", "safe", s5arr, 5)
-    : trySlip("5-safe", "5-Leg Safe Pick", "safe", safe, 5);
+  const s5 = (() => {
+    const base = mergeUnique(spreadAcrossGames(safeHits, 4), goodKOvers.slice(0, 1));
+    if (base.length >= 5) return makeSlip("5-safe", "5-Leg Safe Pick", "safe", base.slice(0, 5));
+    const alt = spreadAcrossGames(safeHits, 5);
+    return alt.length >= 5 ? makeSlip("5-safe", "5-Leg Safe Pick", "safe", alt) : null;
+  })();
   if (s5) slips.push(s5);
 
-  // Long shot slips
-  const ls2 = trySlip("2-longshot", "2-Leg Long Shot", "longshot", longshot, 2);
-  if (ls2) slips.push(ls2);
-  const ls3 = trySlip("3-longshot", "3-Leg Long Shot", "longshot", longshot, 3);
-  if (ls3) slips.push(ls3);
-  const ls4 = trySlip("4-longshot", "4-Leg Long Shot", "longshot", longshot, 4);
-  if (ls4) slips.push(ls4);
-  const ls5 = trySlip("5-longshot", "5-Leg Long Shot", "longshot", longshot, 5);
-  if (ls5) slips.push(ls5);
+  // ── LONG SHOTS: HR + 2-Hit spread + K Under in 5-leg ────────────────────
+
+  const l2 = (() => {
+    const base = mergeUnique(spreadAcrossGames(hotHRs, 1), spreadAcrossGames(midTwoHits, 1));
+    if (base.length >= 2) return makeSlip("2-longshot", "2-Leg Long Shot", "longshot", base.slice(0, 2));
+    const combined = [...hotHRs, ...midTwoHits].sort((a, b) => b.pct - a.pct);
+    const alt = spreadAcrossGames(combined, 2);
+    return alt.length >= 2 ? makeSlip("2-longshot", "2-Leg Long Shot", "longshot", alt) : null;
+  })();
+  if (l2) slips.push(l2);
+
+  const l3 = (() => {
+    const base = mergeUnique(spreadAcrossGames(hotHRs, 1), spreadAcrossGames(midTwoHits, 2));
+    if (base.length >= 3) return makeSlip("3-longshot", "3-Leg Long Shot", "longshot", base.slice(0, 3));
+    const combined = [...hotHRs, ...midTwoHits].sort((a, b) => b.pct - a.pct);
+    const alt = spreadAcrossGames(combined, 3);
+    return alt.length >= 3 ? makeSlip("3-longshot", "3-Leg Long Shot", "longshot", alt) : null;
+  })();
+  if (l3) slips.push(l3);
+
+  const l4 = (() => {
+    const base = mergeUnique(spreadAcrossGames(hotHRs, 2), spreadAcrossGames(midTwoHits, 2));
+    if (base.length >= 4) return makeSlip("4-longshot", "4-Leg Long Shot", "longshot", base.slice(0, 4));
+    const combined = [...hotHRs, ...midTwoHits].sort((a, b) => b.pct - a.pct);
+    const alt = spreadAcrossGames(combined, 4);
+    return alt.length >= 4 ? makeSlip("4-longshot", "4-Leg Long Shot", "longshot", alt) : null;
+  })();
+  if (l4) slips.push(l4);
+
+  const l5 = (() => {
+    const base = mergeUnique(spreadAcrossGames(hotHRs, 2), spreadAcrossGames(midTwoHits, 2), goodKUnders.slice(0, 1));
+    if (base.length >= 5) return makeSlip("5-longshot", "5-Leg Long Shot", "longshot", base.slice(0, 5));
+    const combined = [...hotHRs, ...midTwoHits].sort((a, b) => b.pct - a.pct);
+    const alt = mergeUnique(spreadAcrossGames(combined, 4), goodKUnders.slice(0, 1));
+    if (alt.length >= 5) return makeSlip("5-longshot", "5-Leg Long Shot", "longshot", alt.slice(0, 5));
+    const alt2 = spreadAcrossGames(combined, 5);
+    return alt2.length >= 5 ? makeSlip("5-longshot", "5-Leg Long Shot", "longshot", alt2) : null;
+  })();
+  if (l5) slips.push(l5);
 
   return slips;
 }

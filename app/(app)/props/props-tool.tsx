@@ -5,9 +5,10 @@ import type { ElementType } from "react";
 import {
   Check, Flame, Layers, Plus, Receipt, Trash2, X,
   Zap, TrendingUp, TrendingDown, Wind, Thermometer,
-  Activity, ChevronRight, BookOpen,
+  Activity, ChevronRight, BookOpen, RefreshCw,
   Clock, Trophy, Shield, Target, LayoutDashboard, Settings2, Bot,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { playerHeadshotUrl, teamLogoUrl } from "@/lib/mlb/api";
 import { lookupOdds, type FanDuelOddsMap } from "@/lib/odds";
 import type { AIPick } from "@/app/(app)/ai/page";
@@ -96,6 +97,9 @@ export interface DailySlipLeg {
   id: string;
   description: string;
   probability: number;
+  playerId?: number;
+  teamId?: number;
+  propType?: string;
 }
 
 export interface DailySlip {
@@ -870,11 +874,27 @@ function DailySlipCard({ slip, onSave }: { slip: DailySlip; onSave: (s: DailySli
       </div>
 
       {/* Legs */}
-      <div className="px-4 py-3 space-y-1.5">
+      <div className="px-4 py-3 space-y-2">
         {slip.legs.map((leg) => (
-          <div key={leg.id} className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: propColor(leg.probability) }} />
-            <p className="flex-1 text-[11px] text-white/60 truncate">{leg.description}</p>
+          <div key={leg.id} className="flex items-center gap-2.5">
+            {leg.playerId ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={playerHeadshotUrl(leg.playerId)}
+                alt=""
+                className="w-7 h-7 rounded-full object-cover bg-white/5 border border-white/10 shrink-0"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+              />
+            ) : leg.teamId ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={teamLogoUrl(leg.teamId)} alt="" className="w-7 h-7 object-contain shrink-0" />
+            ) : (
+              <div className="w-1.5 h-1.5 rounded-full shrink-0 mt-0.5" style={{ backgroundColor: propColor(leg.probability) }} />
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] text-white/72 truncate font-semibold">{leg.description}</p>
+              {leg.propType && <p className="text-[9px] text-white/30 mt-0.5">{leg.propType}</p>}
+            </div>
             <span className="text-[11px] font-black shrink-0" style={{ color: propColor(leg.probability) }}>
               {leg.probability}%
             </span>
@@ -1152,11 +1172,20 @@ function SlipPanel({ slip, onRemove, onClear, onOddsChange }: {
 // ── Main exported component ───────────────────────────────────────────────────
 
 export function PropsTool({ games, dailySlips, fanDuelOdds = {} }: { games: PropGame[]; dailySlips: DailySlip[]; fanDuelOdds?: FanDuelOddsMap }) {
-  const [view, setView]             = useState<"dashboard" | "builder">("dashboard");
-  const [selectedPk, setSelectedPk] = useState(games[0]?.gamePk);
-  const [activeProp, setActiveProp] = useState<PropType>("HR");
-  const [slip, setSlip]             = useState<SlipEntry[]>([]);
-  const [aiPicks, setAiPicks]       = useState<AIPick[]>([]);
+  const router = useRouter();
+  const [view, setView]               = useState<"dashboard" | "builder">("dashboard");
+  const [selectedPk, setSelectedPk]   = useState(games[0]?.gamePk);
+  const [activeProp, setActiveProp]   = useState<PropType>("HR");
+  const [slip, setSlip]               = useState<SlipEntry[]>([]);
+  const [aiPicks, setAiPicks]         = useState<AIPick[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = useCallback(() => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    router.refresh();
+    setTimeout(() => setIsRefreshing(false), 2000);
+  }, [router, isRefreshing]);
 
   // Load AI pending picks from localStorage
   useEffect(() => {
@@ -1237,26 +1266,45 @@ export function PropsTool({ games, dailySlips, fanDuelOdds = {} }: { games: Prop
         </button>
       )}
 
-      {/* View toggle */}
-      <div className="flex items-center gap-1 rounded-2xl border border-white/[0.07] bg-[#0D1117] p-1 w-full sm:w-80">
-        {(["dashboard", "builder"] as const).map((v) => {
-          const isActive = view === v;
-          const Icon = v === "dashboard" ? LayoutDashboard : Settings2;
-          return (
-            <button
-              key={v}
-              onClick={() => setView(v)}
-              className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2 px-4 text-xs font-bold transition-all ${
-                isActive
-                  ? "bg-[#FF7828] text-white shadow-sm"
-                  : "text-white/40 hover:text-white/70"
-              }`}
-            >
-              <Icon size={12} strokeWidth={2.5} />
-              {v === "dashboard" ? "Dashboard" : "Builder"}
-            </button>
-          );
-        })}
+      {/* View toggle + refresh */}
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 rounded-2xl border border-white/[0.07] bg-[#0D1117] p-1 w-full sm:w-80">
+          {(["dashboard", "builder"] as const).map((v) => {
+            const isActive = view === v;
+            const Icon = v === "dashboard" ? LayoutDashboard : Settings2;
+            return (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2 px-4 text-xs font-bold transition-all ${
+                  isActive
+                    ? "bg-[#FF7828] text-white shadow-sm"
+                    : "text-white/40 hover:text-white/70"
+                }`}
+              >
+                <Icon size={12} strokeWidth={2.5} />
+                {v === "dashboard" ? "Dashboard" : "Builder"}
+              </button>
+            );
+          })}
+        </div>
+        {view === "dashboard" && (
+          <button
+            onClick={handleRefresh}
+            title="Refresh picks"
+            className={`flex items-center justify-center w-10 h-10 rounded-xl border transition-colors shrink-0 ${
+              isRefreshing
+                ? "border-[#FF7828]/40 bg-[#FF7828]/08"
+                : "border-white/[0.07] bg-[#0D1117] hover:border-white/[0.14]"
+            }`}
+          >
+            <RefreshCw
+              size={15}
+              strokeWidth={2}
+              className={isRefreshing ? "text-[#FF7828] animate-spin" : "text-white/40"}
+            />
+          </button>
+        )}
       </div>
 
       {/* Dashboard view */}
