@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useCallback, useEffect } from "react";
+import { refreshPropsAction } from "./actions";
 import type { ElementType } from "react";
 import {
   Check, Flame, Layers, Plus, Receipt, Trash2, X,
@@ -96,6 +97,7 @@ export interface MoneylinePropData {
 export interface DailySlipLeg {
   id: string;
   description: string;
+  playerName?: string;
   probability: number;
   playerId?: number;
   teamId?: number;
@@ -834,9 +836,9 @@ function DailySlipCard({ slip, onSave }: { slip: DailySlip; onSave: (s: DailySli
   const [saved, setSaved]   = useState(false);
   const [error, setError]   = useState<string | null>(null);
 
-  const isSafe     = slip.tier === "safe";
-  const tierColor  = isSafe ? "#50C882" : "#FF7828";
-  const TierIcon   = isSafe ? Shield : Target;
+  const isSafe    = slip.tier === "safe";
+  const tierColor = isSafe ? "#50C882" : "#FF7828";
+  const TierIcon  = isSafe ? Shield : Target;
 
   async function handleSave() {
     setSaving(true);
@@ -853,67 +855,80 @@ function DailySlipCard({ slip, onSave }: { slip: DailySlip; onSave: (s: DailySli
   }
 
   return (
-    <div className="rounded-2xl border bg-[#111622] overflow-hidden"
+    <div className="rounded-2xl border bg-[#0D1117] overflow-hidden flex flex-col"
       style={{ borderColor: `${tierColor}22` }}>
+
       {/* Header */}
-      <div className="px-4 py-3 border-b border-white/[0.05] flex items-center justify-between">
-        <div>
-          <p className="text-sm font-black text-white">{slip.label}</p>
-          <div className="flex items-center gap-1.5 mt-0.5">
-            <TierIcon size={10} style={{ color: tierColor }} strokeWidth={2.5} />
-            <span className="text-[10px] font-bold" style={{ color: tierColor }}>
-              {isSafe ? "Safe Pick" : "Long Shot"}
-            </span>
-            <span className="text-white/20 text-[10px]">· {slip.legs.length} legs</span>
-          </div>
-        </div>
-        <div className="text-right">
-          <p className="text-xl font-black" style={{ color: tierColor }}>{slip.combinedPct.toFixed(1)}%</p>
-          <p className="text-[9px] text-white/25 uppercase tracking-wider">combined</p>
-        </div>
-      </div>
-
-      {/* Legs */}
-      <div className="px-4 py-3 space-y-2">
-        {slip.legs.map((leg) => (
-          <div key={leg.id} className="flex items-center gap-2.5">
-            {leg.playerId ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={playerHeadshotUrl(leg.playerId)}
-                alt=""
-                className="w-7 h-7 rounded-full object-cover bg-white/5 border border-white/10 shrink-0"
-                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-              />
-            ) : leg.teamId ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={teamLogoUrl(leg.teamId)} alt="" className="w-7 h-7 object-contain shrink-0" />
-            ) : (
-              <div className="w-1.5 h-1.5 rounded-full shrink-0 mt-0.5" style={{ backgroundColor: propColor(leg.probability) }} />
-            )}
-            <div className="flex-1 min-w-0">
-              <p className="text-[11px] text-white/72 truncate font-semibold">{leg.description}</p>
-              {leg.propType && <p className="text-[9px] text-white/30 mt-0.5">{leg.propType}</p>}
+      <div className="px-5 pt-4 pb-3.5 border-b"
+        style={{ borderBottomColor: `${tierColor}14`, backgroundColor: `${tierColor}06` }}>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-sm font-black text-white">{slip.label}</p>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <TierIcon size={10} style={{ color: tierColor }} strokeWidth={2.5} />
+              <span className="text-[10px] font-bold" style={{ color: tierColor }}>
+                {isSafe ? "Safe Pick" : "Long Shot"}
+              </span>
+              <span className="text-white/20 text-[10px]">· {slip.legs.length} legs</span>
             </div>
-            <span className="text-[11px] font-black shrink-0" style={{ color: propColor(leg.probability) }}>
-              {leg.probability}%
-            </span>
           </div>
-        ))}
+          <div className="text-right shrink-0">
+            <p className="text-2xl font-black leading-none" style={{ color: tierColor }}>{slip.combinedPct.toFixed(1)}%</p>
+            <p className="text-[9px] text-white/25 uppercase tracking-wider mt-0.5">combined</p>
+          </div>
+        </div>
       </div>
 
-      {/* Save button */}
-      <div className="px-4 pb-4">
+      {/* Legs — fills remaining space so cards in a grid stay equal height */}
+      <div className="flex-1 divide-y divide-white/[0.04]">
+        {slip.legs.map((leg) => {
+          const color = propColor(leg.probability);
+          return (
+            <div key={leg.id} className="flex items-center gap-3 px-4 py-3.5">
+              {/* Avatar */}
+              <div className="shrink-0 w-9 h-9 rounded-full overflow-hidden bg-white/[0.05] border border-white/[0.08] flex items-center justify-center">
+                {leg.playerId ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={playerHeadshotUrl(leg.playerId)}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = "0"; }}
+                  />
+                ) : leg.teamId ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={teamLogoUrl(leg.teamId)} alt="" className="w-5 h-5 object-contain" />
+                ) : (
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
+                )}
+              </div>
+              {/* Two-line text */}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-black text-white leading-tight truncate">
+                  {leg.playerName ?? leg.description}
+                </p>
+                <p className="text-[11px] mt-0.5 font-medium truncate" style={{ color: `${color}b0` }}>
+                  {leg.propType ?? leg.description}
+                </p>
+              </div>
+              <span className="text-sm font-black shrink-0" style={{ color }}>{leg.probability}%</span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Save button — always at the bottom, visually separated */}
+      <div className="px-4 py-3.5 border-t border-white/[0.06] shrink-0">
         {error && <p className="text-[10px] text-[#EB505A] mb-1.5">{error}</p>}
         <button
           onClick={handleSave}
           disabled={saving || saved}
-          className={`w-full h-9 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all border ${
+          className={`w-full h-10 rounded-xl font-bold text-[13px] flex items-center justify-center gap-2 transition-all border ${
             saved
               ? "border-[#50C882]/40 bg-[#50C882]/10 text-[#50C882]"
               : isSafe
-              ? "border-[#50C882]/30 bg-[#50C882]/10 text-[#50C882] hover:bg-[#50C882]/18 disabled:opacity-60"
-              : "border-[#FF7828]/30 bg-[#FF7828]/10 text-[#FF7828] hover:bg-[#FF7828]/18 disabled:opacity-60"
+              ? "border-[#50C882]/30 bg-[#50C882]/10 text-[#50C882] hover:bg-[#50C882]/20 disabled:opacity-60"
+              : "border-[#FF7828]/30 bg-[#FF7828]/10 text-[#FF7828] hover:bg-[#FF7828]/20 disabled:opacity-60"
           }`}
         >
           {saved ? (
@@ -930,6 +945,16 @@ function DailySlipCard({ slip, onSave }: { slip: DailySlip; onSave: (s: DailySli
 }
 
 function DashboardView({ slips, onSwitchBuilder }: { slips: DailySlip[]; onSwitchBuilder: () => void }) {
+  const availableCounts = useMemo(
+    () => [...new Set(slips.map((s) => s.legs.length))].sort((a, b) => a - b),
+    [slips],
+  );
+  const [legCount, setLegCount] = useState<number>(2);
+
+  const effectiveLegCount = availableCounts.includes(legCount) ? legCount : (availableCounts[0] ?? 2);
+  const currentSafe      = slips.find((s) => s.tier === "safe"     && s.legs.length === effectiveLegCount);
+  const currentLongshot  = slips.find((s) => s.tier === "longshot" && s.legs.length === effectiveLegCount);
+
   async function saveDailySlip(slip: DailySlip) {
     const res = await fetch("/api/bet-slips", {
       method: "POST",
@@ -944,9 +969,6 @@ function DashboardView({ slips, onSwitchBuilder }: { slips: DailySlip[]; onSwitc
     });
     if (!res.ok) throw new Error("Failed");
   }
-
-  const safeSlips     = slips.filter((s) => s.tier === "safe");
-  const longshotSlips = slips.filter((s) => s.tier === "longshot");
 
   if (slips.length === 0) {
     return (
@@ -965,36 +987,65 @@ function DashboardView({ slips, onSwitchBuilder }: { slips: DailySlip[]; onSwitc
   }
 
   return (
-    <div className="space-y-8">
-      {/* Safe section */}
-      {safeSlips.length > 0 && (
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-0.5 h-4 rounded-full bg-[#50C882]" />
-            <Shield size={13} className="text-[#50C882]" strokeWidth={2.5} />
-            <p className="text-xs font-black text-[#50C882] tracking-wider uppercase">Safe Picks</p>
-            <p className="text-[10px] text-white/25">High-probability parlays</p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-            {safeSlips.map((s) => <DailySlipCard key={s.id} slip={s} onSave={saveDailySlip} />)}
-          </div>
+    <div className="space-y-5">
+      {/* Parlay size selector */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <p className="text-[10px] font-bold text-white/25 tracking-widest uppercase shrink-0">Parlay size</p>
+        <div className="flex items-center gap-1.5">
+          {[2, 3, 4, 5, 6].map((n) => {
+            const avail  = availableCounts.includes(n);
+            const active = n === effectiveLegCount;
+            return (
+              <button
+                key={n}
+                onClick={() => avail && setLegCount(n)}
+                disabled={!avail}
+                className={`w-10 h-8 rounded-xl text-xs font-black transition-all border ${
+                  active
+                    ? "border-[#FF7828]/50 bg-[#FF7828]/15 text-[#FF7828]"
+                    : avail
+                    ? "border-white/[0.07] bg-[#111622] text-white/50 hover:text-white hover:border-white/[0.14]"
+                    : "border-white/[0.03] bg-transparent text-white/15 cursor-not-allowed"
+                }`}
+              >
+                {n}
+              </button>
+            );
+          })}
+          <span className="text-[11px] text-white/25 ml-1">legs</span>
         </div>
-      )}
+      </div>
 
-      {/* Long shot section */}
-      {longshotSlips.length > 0 && (
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-0.5 h-4 rounded-full bg-[#FF7828]" />
-            <Target size={13} className="text-[#FF7828]" strokeWidth={2.5} />
-            <p className="text-xs font-black text-[#FF7828] tracking-wider uppercase">Long Shots</p>
-            <p className="text-[10px] text-white/25">Higher risk, higher reward</p>
+      {/* Two-column picks grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 items-start">
+        {currentSafe && (
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-0.5 h-4 rounded-full bg-[#50C882]" />
+              <Shield size={11} className="text-[#50C882]" strokeWidth={2.5} />
+              <p className="text-[10px] font-black text-[#50C882] tracking-wider uppercase">Safe Pick</p>
+              <p className="text-[10px] text-white/20">High-probability</p>
+            </div>
+            <DailySlipCard slip={currentSafe} onSave={saveDailySlip} />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-            {longshotSlips.map((s) => <DailySlipCard key={s.id} slip={s} onSave={saveDailySlip} />)}
+        )}
+        {currentLongshot && (
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-0.5 h-4 rounded-full bg-[#FF7828]" />
+              <Target size={11} className="text-[#FF7828]" strokeWidth={2.5} />
+              <p className="text-[10px] font-black text-[#FF7828] tracking-wider uppercase">Long Shot</p>
+              <p className="text-[10px] text-white/20">Higher risk, higher reward</p>
+            </div>
+            <DailySlipCard slip={currentLongshot} onSave={saveDailySlip} />
           </div>
-        </div>
-      )}
+        )}
+        {!currentSafe && !currentLongshot && (
+          <div className="sm:col-span-2 rounded-2xl border border-white/[0.06] bg-[#111622] py-12 text-center">
+            <p className="text-white/30 text-sm">No {effectiveLegCount}-leg picks available today</p>
+          </div>
+        )}
+      </div>
 
       <p className="text-[11px] text-white/15 text-center pt-2">
         Parlays built from model probabilities · For educational use only
@@ -1180,11 +1231,15 @@ export function PropsTool({ games, dailySlips, fanDuelOdds = {} }: { games: Prop
   const [aiPicks, setAiPicks]         = useState<AIPick[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const handleRefresh = useCallback(() => {
+  const handleRefresh = useCallback(async () => {
     if (isRefreshing) return;
     setIsRefreshing(true);
-    router.refresh();
-    setTimeout(() => setIsRefreshing(false), 2000);
+    try {
+      await refreshPropsAction();
+      router.refresh();
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 1500);
+    }
   }, [router, isRefreshing]);
 
   // Load AI pending picks from localStorage
@@ -1283,7 +1338,7 @@ export function PropsTool({ games, dailySlips, fanDuelOdds = {} }: { games: Prop
                 }`}
               >
                 <Icon size={12} strokeWidth={2.5} />
-                {v === "dashboard" ? "Dashboard" : "Builder"}
+                {v === "dashboard" ? "Predicted Picks" : "Builder"}
               </button>
             );
           })}

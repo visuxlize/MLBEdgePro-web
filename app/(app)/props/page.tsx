@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { unstable_noStore as noStore } from "next/cache";
 import { Layers, RefreshCw } from "lucide-react";
 import {
   fetchPitcherStats,
@@ -332,6 +333,7 @@ function buildBatterRows(
 interface BuildLeg {
   id: string;
   desc: string;
+  playerName: string;
   pct: number;
   playerId?: number;
   teamId?: number;
@@ -350,21 +352,21 @@ function buildDailySlips(games: PropGame[]): DailySlip[] {
   for (const g of games) {
     for (const r of g.props.Hit.slice(0, 8)) {
       const id = `${r.id}-Hit`;
-      if (!seen.has(id)) { seen.add(id); hitLegs.push({ id, desc: `${r.playerName} 1+ Hit vs ${r.pitcherName.split(" ").pop()}`, pct: r.pct, playerId: r.id, teamId: r.teamId, propType: "1+ Hit", gamePk: g.gamePk }); }
+      if (!seen.has(id)) { seen.add(id); hitLegs.push({ id, desc: `${r.playerName} 1+ Hit`, playerName: r.playerName, pct: r.pct, playerId: r.id, teamId: r.teamId, propType: "1+ Hit", gamePk: g.gamePk }); }
     }
     for (const r of g.props["2+ Hits"].slice(0, 6)) {
       const id = `${r.id}-2Hits`;
-      if (!seen.has(id)) { seen.add(id); twoHitsLegs.push({ id, desc: `${r.playerName} 2+ Hits vs ${r.pitcherName.split(" ").pop()}`, pct: r.pct, playerId: r.id, teamId: r.teamId, propType: "2+ Hits", gamePk: g.gamePk }); }
+      if (!seen.has(id)) { seen.add(id); twoHitsLegs.push({ id, desc: `${r.playerName} 2+ Hits`, playerName: r.playerName, pct: r.pct, playerId: r.id, teamId: r.teamId, propType: "2+ Hits", gamePk: g.gamePk }); }
     }
     for (const r of g.props.HR.slice(0, 6)) {
       const id = `${r.id}-HR`;
-      if (!seen.has(id)) { seen.add(id); hrLegs.push({ id, desc: `${r.playerName} HR vs ${r.pitcherName.split(" ").pop()}`, pct: r.pct, playerId: r.id, teamId: r.teamId, propType: "HR", gamePk: g.gamePk }); }
+      if (!seen.has(id)) { seen.add(id); hrLegs.push({ id, desc: `${r.playerName} HR`, playerName: r.playerName, pct: r.pct, playerId: r.id, teamId: r.teamId, propType: "HR", gamePk: g.gamePk }); }
     }
     for (const p of g.pitchers) {
       const overId  = `${p.id}-k-over`;
       const underId = `${p.id}-k-under`;
-      if (!seen.has(overId))  { seen.add(overId);  kOverLegs.push({ id: overId,  desc: `${p.name} Over ${p.line} Ks`,  pct: p.overPct,  playerId: p.id, propType: "Pitcher K's", gamePk: g.gamePk }); }
-      if (!seen.has(underId)) { seen.add(underId); kUnderLegs.push({ id: underId, desc: `${p.name} Under ${p.line} Ks`, pct: p.underPct, playerId: p.id, propType: "K Under",     gamePk: g.gamePk }); }
+      if (!seen.has(overId))  { seen.add(overId);  kOverLegs.push({ id: overId,  desc: `${p.name} Over ${p.line} Ks`,  playerName: p.name, pct: p.overPct,  playerId: p.id, propType: "Pitcher K's", gamePk: g.gamePk }); }
+      if (!seen.has(underId)) { seen.add(underId); kUnderLegs.push({ id: underId, desc: `${p.name} Under ${p.line} Ks`, playerName: p.name, pct: p.underPct, playerId: p.id, propType: "K Under",     gamePk: g.gamePk }); }
     }
   }
 
@@ -385,20 +387,19 @@ function buildDailySlips(games: PropGame[]): DailySlip[] {
     const result: BuildLeg[] = [];
     const usedGames   = new Set<number>();
     const usedPlayers = new Set<string>();
-    const playerKey = (l: BuildLeg) => l.desc.split(" vs ")[0];
 
     for (const leg of legs) {
       if (result.length >= count) break;
-      if (!usedGames.has(leg.gamePk) && !usedPlayers.has(playerKey(leg))) {
+      if (!usedGames.has(leg.gamePk) && !usedPlayers.has(leg.playerName)) {
         usedGames.add(leg.gamePk);
-        usedPlayers.add(playerKey(leg));
+        usedPlayers.add(leg.playerName);
         result.push(leg);
       }
     }
     for (const leg of legs) {
       if (result.length >= count) break;
-      if (!usedPlayers.has(playerKey(leg))) {
-        usedPlayers.add(playerKey(leg));
+      if (!usedPlayers.has(leg.playerName)) {
+        usedPlayers.add(leg.playerName);
         result.push(leg);
       }
     }
@@ -410,15 +411,14 @@ function buildDailySlips(games: PropGame[]): DailySlip[] {
     const result: BuildLeg[] = [];
     for (const arr of arrs) {
       for (const leg of arr) {
-        const key = leg.desc.split(" vs ")[0];
-        if (!usedPlayers.has(key)) { usedPlayers.add(key); result.push(leg); }
+        if (!usedPlayers.has(leg.playerName)) { usedPlayers.add(leg.playerName); result.push(leg); }
       }
     }
     return result;
   }
 
   function toLegs(arr: BuildLeg[]): DailySlipLeg[] {
-    return arr.map((l) => ({ id: l.id, description: l.desc, probability: l.pct, playerId: l.playerId, teamId: l.teamId, propType: l.propType }));
+    return arr.map((l) => ({ id: l.id, description: l.desc, playerName: l.playerName, probability: l.pct, playerId: l.playerId, teamId: l.teamId, propType: l.propType }));
   }
 
   function combinedPct(arr: BuildLeg[]): number {
@@ -501,12 +501,34 @@ function buildDailySlips(games: PropGame[]): DailySlip[] {
   })();
   if (l5) slips.push(l5);
 
+  // ── 6-leg picks ────────────────────────────────────────────────────────────
+
+  const s6 = (() => {
+    const base = mergeUnique(spreadAcrossGames(safeHits, 5), goodKOvers.slice(0, 1));
+    if (base.length >= 6) return makeSlip("6-safe", "6-Leg Safe Pick", "safe", base.slice(0, 6));
+    const alt = spreadAcrossGames(safeHits, 6);
+    return alt.length >= 6 ? makeSlip("6-safe", "6-Leg Safe Pick", "safe", alt) : null;
+  })();
+  if (s6) slips.push(s6);
+
+  const l6 = (() => {
+    const base = mergeUnique(spreadAcrossGames(hotHRs, 2), spreadAcrossGames(midTwoHits, 3), goodKUnders.slice(0, 1));
+    if (base.length >= 6) return makeSlip("6-longshot", "6-Leg Long Shot", "longshot", base.slice(0, 6));
+    const combined = [...hotHRs, ...midTwoHits].sort((a, b) => b.pct - a.pct);
+    const alt = mergeUnique(spreadAcrossGames(combined, 5), goodKUnders.slice(0, 1));
+    if (alt.length >= 6) return makeSlip("6-longshot", "6-Leg Long Shot", "longshot", alt.slice(0, 6));
+    const alt2 = spreadAcrossGames(combined, 6);
+    return alt2.length >= 6 ? makeSlip("6-longshot", "6-Leg Long Shot", "longshot", alt2) : null;
+  })();
+  if (l6) slips.push(l6);
+
   return slips;
 }
 
 // ── Game data builder ─────────────────────────────────────────────────────────
 
 async function buildPropGames(): Promise<{ games: PropGame[]; dailySlips: DailySlip[] }> {
+  noStore(); // opt out of data cache so refresh button always fetches fresh MLB stats
   const games        = await fetchTodaysGames();
   const withPitchers = games.filter((g) => g.teams.away.probablePitcher || g.teams.home.probablePitcher);
 
@@ -650,7 +672,7 @@ export default function PropsPage() {
       <PaywallGate
         feature="Prop Builder"
         benefits={[
-          "Dashboard: pre-built 2–5 leg safe & long shot parlays",
+          "Predicted Picks: pre-built 2–6 leg safe & long shot parlays",
           "HR Nuke model with HOT & DUE badges",
           "1st Inning Over/Under 0.5 runs",
           "Moneyline win predictions",
