@@ -831,6 +831,88 @@ function parlayToWin(wager: number, legs: SlipEntry[]): number {
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
+// ── Animated pick slot (handles swipe-out / swipe-in on save) ────────────────
+
+function AnimatedCardSlot({
+  variants,
+  exitDirection,
+  tier,
+  onSave,
+}: {
+  variants: DailySlip[];
+  exitDirection: "left" | "right";
+  tier: "safe" | "longshot";
+  onSave: (slip: DailySlip) => Promise<void>;
+}) {
+  const [index, setIndex]   = useState(0);
+  const [phase, setPhase]   = useState<"visible" | "exiting" | "reset" | "entering">("visible");
+  const hasAlternates       = variants.length > 1;
+
+  const isSafe       = tier === "safe";
+  const headerColor  = isSafe ? "#50C882" : "#FF7828";
+  const HeaderIcon   = isSafe ? Shield : Target;
+  const headerLabel  = isSafe ? "Safe Pick" : "Long Shot";
+  const headerSub    = isSafe ? "High-probability" : "Higher risk, higher reward";
+
+  const currentSlip  = variants.length > 0 ? variants[index % variants.length] : null;
+
+  const wrapStyle: React.CSSProperties = {
+    transform:
+      phase === "exiting"
+        ? exitDirection === "left" ? "translateX(-115%)" : "translateX(115%)"
+        : phase === "reset"
+        ? exitDirection === "left" ? "translateX(115%)"  : "translateX(-115%)"
+        : "translateX(0)",
+    opacity:    phase === "exiting" || phase === "reset" ? 0 : 1,
+    transition: phase === "reset"
+      ? "none"
+      : "transform 0.34s cubic-bezier(0.4,0,0.2,1), opacity 0.28s ease",
+  };
+
+  async function handleSave(slip: DailySlip) {
+    await onSave(slip);
+
+    if (!hasAlternates) return;
+
+    setPhase("exiting");
+    setTimeout(() => {
+      setIndex((i) => (i + 1) % variants.length);
+      setPhase("reset");
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          setPhase("entering");
+          setTimeout(() => setPhase("visible"), 360);
+        }),
+      );
+    }, 340);
+  }
+
+  if (!currentSlip) return null;
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-0.5 h-4 rounded-full" style={{ backgroundColor: headerColor }} />
+        <HeaderIcon size={11} strokeWidth={2.5} style={{ color: headerColor }} />
+        <p className="text-[10px] font-black tracking-wider uppercase" style={{ color: headerColor }}>{headerLabel}</p>
+        <p className="text-[10px] text-white/20">{headerSub}</p>
+        {hasAlternates && (
+          <span className="ml-auto text-[9px] text-white/15 tabular-nums">
+            {(index % variants.length) + 1}/{variants.length}
+          </span>
+        )}
+      </div>
+      <div style={{ overflow: "hidden", borderRadius: "1rem" }}>
+        <div style={wrapStyle}>
+          <DailySlipCard slip={currentSlip} onSave={() => handleSave(currentSlip)} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Daily slip card ───────────────────────────────────────────────────────────
+
 function DailySlipCard({ slip, onSave }: { slip: DailySlip; onSave: (s: DailySlip) => Promise<void> }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved]   = useState(false);
@@ -944,7 +1026,15 @@ function DailySlipCard({ slip, onSave }: { slip: DailySlip; onSave: (s: DailySli
   );
 }
 
-function DashboardView({ slips, onSwitchBuilder }: { slips: DailySlip[]; onSwitchBuilder: () => void }) {
+function DashboardView({
+  slips,
+  onSwitchBuilder,
+  isRefreshing = false,
+}: {
+  slips: DailySlip[];
+  onSwitchBuilder: () => void;
+  isRefreshing?: boolean;
+}) {
   const availableCounts = useMemo(
     () => [...new Set(slips.map((s) => s.legs.length))].sort((a, b) => a - b),
     [slips],
@@ -952,8 +1042,8 @@ function DashboardView({ slips, onSwitchBuilder }: { slips: DailySlip[]; onSwitc
   const [legCount, setLegCount] = useState<number>(2);
 
   const effectiveLegCount = availableCounts.includes(legCount) ? legCount : (availableCounts[0] ?? 2);
-  const currentSafe      = slips.find((s) => s.tier === "safe"     && s.legs.length === effectiveLegCount);
-  const currentLongshot  = slips.find((s) => s.tier === "longshot" && s.legs.length === effectiveLegCount);
+  const safeVariants      = slips.filter((s) => s.tier === "safe"     && s.legs.length === effectiveLegCount);
+  const longshotVariants  = slips.filter((s) => s.tier === "longshot" && s.legs.length === effectiveLegCount);
 
   async function saveDailySlip(slip: DailySlip) {
     const res = await fetch("/api/bet-slips", {
@@ -987,7 +1077,10 @@ function DashboardView({ slips, onSwitchBuilder }: { slips: DailySlip[]; onSwitc
   }
 
   return (
-    <div className="space-y-5">
+    <div
+      className="space-y-5 transition-opacity duration-500"
+      style={{ opacity: isRefreshing ? 0.35 : 1, pointerEvents: isRefreshing ? "none" : undefined }}
+    >
       {/* Parlay size selector */}
       <div className="flex items-center gap-3 flex-wrap">
         <p className="text-[10px] font-bold text-white/25 tracking-widest uppercase shrink-0">Parlay size</p>
@@ -1016,31 +1109,27 @@ function DashboardView({ slips, onSwitchBuilder }: { slips: DailySlip[]; onSwitc
         </div>
       </div>
 
-      {/* Two-column picks grid */}
+      {/* Picks grid — animated slots */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 items-start">
-        {currentSafe && (
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-0.5 h-4 rounded-full bg-[#50C882]" />
-              <Shield size={11} className="text-[#50C882]" strokeWidth={2.5} />
-              <p className="text-[10px] font-black text-[#50C882] tracking-wider uppercase">Safe Pick</p>
-              <p className="text-[10px] text-white/20">High-probability</p>
-            </div>
-            <DailySlipCard slip={currentSafe} onSave={saveDailySlip} />
-          </div>
-        )}
-        {currentLongshot && (
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-0.5 h-4 rounded-full bg-[#FF7828]" />
-              <Target size={11} className="text-[#FF7828]" strokeWidth={2.5} />
-              <p className="text-[10px] font-black text-[#FF7828] tracking-wider uppercase">Long Shot</p>
-              <p className="text-[10px] text-white/20">Higher risk, higher reward</p>
-            </div>
-            <DailySlipCard slip={currentLongshot} onSave={saveDailySlip} />
-          </div>
-        )}
-        {!currentSafe && !currentLongshot && (
+        {safeVariants.length > 0 ? (
+          <AnimatedCardSlot
+            key={`safe-${effectiveLegCount}`}
+            variants={safeVariants}
+            exitDirection="left"
+            tier="safe"
+            onSave={saveDailySlip}
+          />
+        ) : null}
+        {longshotVariants.length > 0 ? (
+          <AnimatedCardSlot
+            key={`longshot-${effectiveLegCount}`}
+            variants={longshotVariants}
+            exitDirection="right"
+            tier="longshot"
+            onSave={saveDailySlip}
+          />
+        ) : null}
+        {safeVariants.length === 0 && longshotVariants.length === 0 && (
           <div className="sm:col-span-2 rounded-2xl border border-white/[0.06] bg-[#111622] py-12 text-center">
             <p className="text-white/30 text-sm">No {effectiveLegCount}-leg picks available today</p>
           </div>
@@ -1363,7 +1452,13 @@ export function PropsTool({ games, dailySlips, fanDuelOdds = {} }: { games: Prop
       </div>
 
       {/* Dashboard view */}
-      {view === "dashboard" && <DashboardView slips={dailySlips} onSwitchBuilder={() => setView("builder")} />}
+      {view === "dashboard" && (
+        <DashboardView
+          slips={dailySlips}
+          onSwitchBuilder={() => setView("builder")}
+          isRefreshing={isRefreshing}
+        />
+      )}
 
       {/* Builder view */}
       {view === "builder" && (

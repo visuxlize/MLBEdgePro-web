@@ -376,13 +376,32 @@ function buildDailySlips(games: PropGame[]): DailySlip[] {
   kOverLegs.sort((a, b) => b.pct - a.pct);
   kUnderLegs.sort((a, b) => b.pct - a.pct);
 
-  const safeHits    = hitLegs.filter((l) => l.pct >= 62);
-  const midTwoHits  = twoHitsLegs.filter((l) => l.pct >= 30 && l.pct < 62);
-  const hotHRs      = hrLegs.filter((l) => l.pct >= 10);
+  // Shuffle players within the same probability tier (±4 pts) so each render
+  // surfaces a different player from an equally good group.
+  function shuffleWithinTiers(legs: BuildLeg[], band = 4): BuildLeg[] {
+    if (legs.length <= 1) return legs;
+    const out: BuildLeg[] = [];
+    let i = 0;
+    while (i < legs.length) {
+      let j = i + 1;
+      while (j < legs.length && legs[j].pct >= legs[i].pct - band) j++;
+      const group = legs.slice(i, j);
+      for (let k = group.length - 1; k > 0; k--) {
+        const r = Math.floor(Math.random() * (k + 1));
+        [group[k], group[r]] = [group[r], group[k]];
+      }
+      out.push(...group);
+      i = j;
+    }
+    return out;
+  }
+
+  const safeHits    = shuffleWithinTiers(hitLegs.filter((l) => l.pct >= 62));
+  const midTwoHits  = shuffleWithinTiers(twoHitsLegs.filter((l) => l.pct >= 30 && l.pct < 62));
+  const hotHRs      = shuffleWithinTiers(hrLegs.filter((l) => l.pct >= 10));
   const goodKOvers  = kOverLegs.filter((l) => l.pct >= 52);
   const goodKUnders = kUnderLegs.filter((l) => l.pct >= 40);
 
-  // Pick legs preferring one per game, then fill by probability
   function spreadAcrossGames(legs: BuildLeg[], count: number): BuildLeg[] {
     const result: BuildLeg[] = [];
     const usedGames   = new Set<number>();
@@ -407,11 +426,11 @@ function buildDailySlips(games: PropGame[]): DailySlip[] {
   }
 
   function mergeUnique(...arrs: BuildLeg[][]): BuildLeg[] {
-    const usedPlayers = new Set<string>();
+    const used = new Set<string>();
     const result: BuildLeg[] = [];
     for (const arr of arrs) {
       for (const leg of arr) {
-        if (!usedPlayers.has(leg.playerName)) { usedPlayers.add(leg.playerName); result.push(leg); }
+        if (!used.has(leg.playerName)) { used.add(leg.playerName); result.push(leg); }
       }
     }
     return result;
@@ -426,102 +445,84 @@ function buildDailySlips(games: PropGame[]): DailySlip[] {
   }
 
   function makeSlip(id: string, label: string, tier: "safe" | "longshot", arr: BuildLeg[]): DailySlip | null {
-    if (!arr.length) return null;
+    if (arr.length === 0) return null;
     return { id, label, tier, legs: toLegs(arr), combinedPct: combinedPct(arr) };
   }
 
+  // Build 3 non-overlapping variants per (tier, legCount) so the client can
+  // cycle through them when a pick is saved.
+  function buildSafeVariants(count: number): DailySlip[] {
+    const variants: DailySlip[] = [];
+    const globalUsed = new Set<string>();
+
+    for (let v = 0; v < 3; v++) {
+      const avail = safeHits.filter((l) => !globalUsed.has(l.playerName));
+      const kBoost = goodKOvers.filter((l) => !globalUsed.has(l.playerName));
+
+      let picks: BuildLeg[] = [];
+      if (count >= 3 && kBoost.length > 0) {
+        const hits = spreadAcrossGames(avail, count - 1);
+        picks = mergeUnique(hits, kBoost.slice(0, 1)).slice(0, count);
+      }
+      if (picks.length < count) {
+        picks = spreadAcrossGames(avail, count);
+      }
+
+      if (picks.length >= count) {
+        const slip = makeSlip(`${count}-safe-v${v}`, `${count}-Leg Safe Pick`, "safe", picks.slice(0, count));
+        if (slip) { variants.push(slip); picks.slice(0, count).forEach((l) => globalUsed.add(l.playerName)); }
+      }
+    }
+    return variants;
+  }
+
+  function buildLongshotVariants(count: number): DailySlip[] {
+    const variants: DailySlip[] = [];
+    const globalUsed = new Set<string>();
+
+    for (let v = 0; v < 3; v++) {
+      const availHR  = hotHRs.filter((l) => !globalUsed.has(l.playerName));
+      const avail2H  = midTwoHits.filter((l) => !globalUsed.has(l.playerName));
+      const availKU  = goodKUnders.filter((l) => !globalUsed.has(l.playerName));
+
+      let picks: BuildLeg[] = [];
+
+      if (count === 2) {
+        picks = mergeUnique(spreadAcrossGames(availHR, 1), spreadAcrossGames(avail2H, 1)).slice(0, 2);
+      } else if (count <= 4) {
+        const hrCount  = Math.max(1, Math.floor(count / 2));
+        const hrs      = spreadAcrossGames(availHR, hrCount);
+        const usedHR   = new Set(hrs.map((l) => l.playerName));
+        const twos     = spreadAcrossGames(avail2H.filter((l) => !usedHR.has(l.playerName)), count - hrCount);
+        picks = mergeUnique(hrs, twos).slice(0, count);
+      } else {
+        const hrs   = spreadAcrossGames(availHR, 2);
+        const used  = new Set(hrs.map((l) => l.playerName));
+        const twos  = spreadAcrossGames(avail2H.filter((l) => !used.has(l.playerName)), count - 2 - (availKU.length > 0 ? 1 : 0));
+        [...twos].forEach((l) => used.add(l.playerName));
+        const kus   = availKU.filter((l) => !used.has(l.playerName)).slice(0, 1);
+        picks = mergeUnique(hrs, twos, kus).slice(0, count);
+      }
+
+      // Fallback to combined pool if we didn't get enough
+      if (picks.length < count) {
+        const combined = mergeUnique(availHR, avail2H);
+        picks = spreadAcrossGames(combined, count);
+      }
+
+      if (picks.length >= count) {
+        const slip = makeSlip(`${count}-longshot-v${v}`, `${count}-Leg Long Shot`, "longshot", picks.slice(0, count));
+        if (slip) { variants.push(slip); picks.slice(0, count).forEach((l) => globalUsed.add(l.playerName)); }
+      }
+    }
+    return variants;
+  }
+
   const slips: DailySlip[] = [];
-
-  // ── SAFE: Hit props spread across games + Pitcher K Over blended in ──────
-
-  const s2 = makeSlip("2-safe", "2-Leg Safe Pick", "safe", spreadAcrossGames(safeHits, 2));
-  if (s2) slips.push(s2);
-
-  const s3 = (() => {
-    const base = mergeUnique(spreadAcrossGames(safeHits, 2), goodKOvers.slice(0, 1));
-    if (base.length >= 3) return makeSlip("3-safe", "3-Leg Safe Pick", "safe", base.slice(0, 3));
-    const alt = spreadAcrossGames(safeHits, 3);
-    return alt.length >= 3 ? makeSlip("3-safe", "3-Leg Safe Pick", "safe", alt) : null;
-  })();
-  if (s3) slips.push(s3);
-
-  const s4 = (() => {
-    const base = mergeUnique(spreadAcrossGames(safeHits, 3), goodKOvers.slice(0, 1));
-    if (base.length >= 4) return makeSlip("4-safe", "4-Leg Safe Pick", "safe", base.slice(0, 4));
-    const alt = spreadAcrossGames(safeHits, 4);
-    return alt.length >= 4 ? makeSlip("4-safe", "4-Leg Safe Pick", "safe", alt) : null;
-  })();
-  if (s4) slips.push(s4);
-
-  const s5 = (() => {
-    const base = mergeUnique(spreadAcrossGames(safeHits, 4), goodKOvers.slice(0, 1));
-    if (base.length >= 5) return makeSlip("5-safe", "5-Leg Safe Pick", "safe", base.slice(0, 5));
-    const alt = spreadAcrossGames(safeHits, 5);
-    return alt.length >= 5 ? makeSlip("5-safe", "5-Leg Safe Pick", "safe", alt) : null;
-  })();
-  if (s5) slips.push(s5);
-
-  // ── LONG SHOTS: HR + 2-Hit spread + K Under in 5-leg ────────────────────
-
-  const l2 = (() => {
-    const base = mergeUnique(spreadAcrossGames(hotHRs, 1), spreadAcrossGames(midTwoHits, 1));
-    if (base.length >= 2) return makeSlip("2-longshot", "2-Leg Long Shot", "longshot", base.slice(0, 2));
-    const combined = [...hotHRs, ...midTwoHits].sort((a, b) => b.pct - a.pct);
-    const alt = spreadAcrossGames(combined, 2);
-    return alt.length >= 2 ? makeSlip("2-longshot", "2-Leg Long Shot", "longshot", alt) : null;
-  })();
-  if (l2) slips.push(l2);
-
-  const l3 = (() => {
-    const base = mergeUnique(spreadAcrossGames(hotHRs, 1), spreadAcrossGames(midTwoHits, 2));
-    if (base.length >= 3) return makeSlip("3-longshot", "3-Leg Long Shot", "longshot", base.slice(0, 3));
-    const combined = [...hotHRs, ...midTwoHits].sort((a, b) => b.pct - a.pct);
-    const alt = spreadAcrossGames(combined, 3);
-    return alt.length >= 3 ? makeSlip("3-longshot", "3-Leg Long Shot", "longshot", alt) : null;
-  })();
-  if (l3) slips.push(l3);
-
-  const l4 = (() => {
-    const base = mergeUnique(spreadAcrossGames(hotHRs, 2), spreadAcrossGames(midTwoHits, 2));
-    if (base.length >= 4) return makeSlip("4-longshot", "4-Leg Long Shot", "longshot", base.slice(0, 4));
-    const combined = [...hotHRs, ...midTwoHits].sort((a, b) => b.pct - a.pct);
-    const alt = spreadAcrossGames(combined, 4);
-    return alt.length >= 4 ? makeSlip("4-longshot", "4-Leg Long Shot", "longshot", alt) : null;
-  })();
-  if (l4) slips.push(l4);
-
-  const l5 = (() => {
-    const base = mergeUnique(spreadAcrossGames(hotHRs, 2), spreadAcrossGames(midTwoHits, 2), goodKUnders.slice(0, 1));
-    if (base.length >= 5) return makeSlip("5-longshot", "5-Leg Long Shot", "longshot", base.slice(0, 5));
-    const combined = [...hotHRs, ...midTwoHits].sort((a, b) => b.pct - a.pct);
-    const alt = mergeUnique(spreadAcrossGames(combined, 4), goodKUnders.slice(0, 1));
-    if (alt.length >= 5) return makeSlip("5-longshot", "5-Leg Long Shot", "longshot", alt.slice(0, 5));
-    const alt2 = spreadAcrossGames(combined, 5);
-    return alt2.length >= 5 ? makeSlip("5-longshot", "5-Leg Long Shot", "longshot", alt2) : null;
-  })();
-  if (l5) slips.push(l5);
-
-  // ── 6-leg picks ────────────────────────────────────────────────────────────
-
-  const s6 = (() => {
-    const base = mergeUnique(spreadAcrossGames(safeHits, 5), goodKOvers.slice(0, 1));
-    if (base.length >= 6) return makeSlip("6-safe", "6-Leg Safe Pick", "safe", base.slice(0, 6));
-    const alt = spreadAcrossGames(safeHits, 6);
-    return alt.length >= 6 ? makeSlip("6-safe", "6-Leg Safe Pick", "safe", alt) : null;
-  })();
-  if (s6) slips.push(s6);
-
-  const l6 = (() => {
-    const base = mergeUnique(spreadAcrossGames(hotHRs, 2), spreadAcrossGames(midTwoHits, 3), goodKUnders.slice(0, 1));
-    if (base.length >= 6) return makeSlip("6-longshot", "6-Leg Long Shot", "longshot", base.slice(0, 6));
-    const combined = [...hotHRs, ...midTwoHits].sort((a, b) => b.pct - a.pct);
-    const alt = mergeUnique(spreadAcrossGames(combined, 5), goodKUnders.slice(0, 1));
-    if (alt.length >= 6) return makeSlip("6-longshot", "6-Leg Long Shot", "longshot", alt.slice(0, 6));
-    const alt2 = spreadAcrossGames(combined, 6);
-    return alt2.length >= 6 ? makeSlip("6-longshot", "6-Leg Long Shot", "longshot", alt2) : null;
-  })();
-  if (l6) slips.push(l6);
-
+  for (const count of [2, 3, 4, 5, 6]) {
+    slips.push(...buildSafeVariants(count));
+    slips.push(...buildLongshotVariants(count));
+  }
   return slips;
 }
 
