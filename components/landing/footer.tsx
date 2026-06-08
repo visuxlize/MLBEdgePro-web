@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Github, Twitter } from "lucide-react";
+import { Github } from "lucide-react";
 import { Container } from "./container";
 
 function DiamondLogo() {
@@ -31,9 +31,6 @@ export function LandingFooter() {
             <div className="flex items-center gap-3 mt-5">
               <a href="https://github.com/visuxlize" target="_blank" rel="noopener noreferrer" className="text-white/25 hover:text-white transition-colors">
                 <Github size={17} strokeWidth={1.6} />
-              </a>
-              <a href="#" className="text-white/25 hover:text-white transition-colors">
-                <Twitter size={17} strokeWidth={1.6} />
               </a>
             </div>
           </div>

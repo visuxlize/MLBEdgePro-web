@@ -12,7 +12,19 @@ const FAQ = [
   },
   {
     q: "What does Edge Pro include?",
-    a: "Edge Pro ($4.99/month) unlocks the full tool: HR/Hit/2+ Hit props, pitcher strikeout projections, the Edge Report (AI-ranked value bets), full batter vs pitcher matchup analysis, and the Prop Builder for building and saving multi-leg slips.",
+    a: "Edge Pro ($4.99/month) unlocks the full analytical suite: HR/Hit/2+ Hit props with Hot and Due badges powered by our HR Nuke model, pitcher strikeout projections, 1st Inning Over/Under predictions, Moneyline picks, the Edge Report (AI-ranked value bets), full batter vs pitcher matchup analysis, and the Prop Builder for building and saving multi-leg slips.",
+  },
+  {
+    q: "What is the Props Dashboard?",
+    a: "The Props Dashboard is an Edge Pro feature that auto-generates ready-to-use bet slips for the day — 2-leg, 3-leg, 4-leg, and 5-leg parlays in both Safe and Long Shot tiers. Each slip is built by the model based on today's games and can be saved directly to your Bet Tracker with one tap.",
+  },
+  {
+    q: "What are the 'Hot' and 'Due' badges on HR props?",
+    a: "'Hot' means the model rates that player's HR matchup as particularly strong today — high probability based on batter power, pitcher vulnerability, park factors, and weather. 'Due' means the player's recent drought + historical pace suggest they're statistically overdue for a home run. Use both signals together for the highest-confidence spots.",
+  },
+  {
+    q: "What is the 1st Inning Over/Under?",
+    a: "The 1st Inning O/U predicts whether a game will see at least 1 run scored in the first inning (Over 0.5). The model weighs the starting pitcher's 1st-inning ERA and strand rate against the opposing leadoff lineup's on-base ability. It's a fast-resolving prop popular for live betting.",
   },
   {
     q: "Can I cancel anytime?",
@@ -20,7 +32,7 @@ const FAQ = [
   },
   {
     q: "Is the web app the same as the mobile app?",
-    a: "The web app has the same core analysis engine and data. The iOS app is currently in development — join the waitlist on the Download page to be notified when it launches.",
+    a: "The web app has the same core analysis engine and data. The iOS app is available — download it from the Download page for the full mobile experience including push notifications and offline access.",
   },
   {
     q: "How accurate are the predictions?",
