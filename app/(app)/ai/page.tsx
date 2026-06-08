@@ -136,7 +136,6 @@ function EdgeAIChat() {
   const [messages, setMessages]     = useState<ChatMessage[]>([]);
   const [input, setInput]           = useState("");
   const [streaming, setStreaming]   = useState(false);
-  const [error, setError]           = useState<string | null>(null);
   const bottomRef                   = useRef<HTMLDivElement>(null);
   const inputRef                    = useRef<HTMLTextAreaElement>(null);
   const abortRef                    = useRef<AbortController | null>(null);
@@ -149,7 +148,6 @@ function EdgeAIChat() {
     const trimmed = text.trim();
     if (!trimmed || streaming) return;
 
-    setError(null);
     const userMsg: ChatMessage = { id: crypto.randomUUID(), role: "user", content: trimmed };
     const assistantId = crypto.randomUUID();
 
@@ -176,8 +174,16 @@ function EdgeAIChat() {
       });
 
       if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: "Unknown error" }));
-        throw new Error(err.error ?? "Request failed");
+        // Show friendly message instead of raw API error
+        setMessages((prev) =>
+          prev.map((m) => m.id === assistantId
+            ? { ...m, content: "Still in development — check back later when it is ready!" }
+            : m
+          ),
+        );
+        setStreaming(false);
+        abortRef.current = null;
+        return;
       }
 
       const reader  = res.body!.getReader();
@@ -195,11 +201,14 @@ function EdgeAIChat() {
       }
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") {
-        // user cancelled
-      } else {
-        const msg = err instanceof Error ? err.message : "Something went wrong";
-        setError(msg);
         setMessages((prev) => prev.filter((m) => m.id !== assistantId));
+      } else {
+        setMessages((prev) =>
+          prev.map((m) => m.id === assistantId
+            ? { ...m, content: "Still in development — check back later when it is ready!" }
+            : m
+          ),
+        );
       }
     } finally {
       setStreaming(false);
@@ -219,7 +228,6 @@ function EdgeAIChat() {
     abortRef.current?.abort();
     setMessages([]);
     setInput("");
-    setError(null);
     setStreaming(false);
   }
 
@@ -236,7 +244,7 @@ function EdgeAIChat() {
           </div>
           <div>
             <p className="text-sm font-black text-white">Edge AI</p>
-            <p className="text-[10px] text-white/35">Powered by Claude · Real-time MLB data</p>
+            <p className="text-[10px] text-white/35">Powered by Groq / Claude · Real-time MLB data</p>
           </div>
         </div>
         {!isEmpty && (
@@ -315,11 +323,7 @@ function EdgeAIChat() {
           </>
         )}
 
-        {error && (
-          <div className="rounded-xl border border-[#EB505A]/25 bg-[#EB505A]/08 px-4 py-3 text-xs text-[#EB505A]">
-            {error}
-          </div>
-        )}
+
 
         <div ref={bottomRef} />
       </div>
