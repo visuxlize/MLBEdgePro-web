@@ -96,6 +96,7 @@ async function fetchEventOdds(eventId: string): Promise<OddsApiEventOdds | null>
     "batter_hits",
     "pitcher_strikeouts",
     "h2h",
+    "totals",
   ].join(",");
 
   const res = await fetch(
@@ -164,6 +165,10 @@ export async function fetchFanDuelOddsMap(): Promise<FanDuelOddsMap> {
                 const existing = map[oddsKey(entityName, "Pitcher K's")];
                 if (!existing) {
                   map[oddsKey(entityName, "Pitcher K's")] = fmtAmerican(outcome.price);
+                  // Also store the actual K line (e.g. 6.5) separately
+                  if (outcome.point !== undefined) {
+                    map[`${oddsKey(entityName, "Pitcher K's")}:line`] = String(outcome.point);
+                  }
                 }
               }
               break;
@@ -171,6 +176,16 @@ export async function fetchFanDuelOddsMap(): Promise<FanDuelOddsMap> {
             case "h2h":
               // Team moneyline — `name` is the team name
               map[oddsKey(outcome.name, "Moneyline")] = fmtAmerican(outcome.price);
+              break;
+
+            case "totals":
+              // Game total — store the Over line once per game
+              if (outcome.name === "Over" && outcome.point !== undefined) {
+                const totalKey = `${normName(data.away_team)}-${normName(data.home_team)}:Total Runs:line`;
+                if (!map[totalKey]) {
+                  map[totalKey] = String(outcome.point);
+                }
+              }
               break;
           }
         }
@@ -193,4 +208,31 @@ export function lookupOdds(
   propType: string,
 ): string {
   return map[oddsKey(playerOrTeamName, propType)] ?? "";
+}
+
+/**
+ * Look up the actual sportsbook line (e.g. 6.5 Ks) for a player prop.
+ * Returns null if FanDuel didn't have this market.
+ */
+export function lookupLine(
+  map: FanDuelOddsMap,
+  playerName: string,
+  propType: string,
+): number | null {
+  const v = map[`${oddsKey(playerName, propType)}:line`];
+  return v !== undefined ? parseFloat(v) : null;
+}
+
+/**
+ * Look up the FanDuel game total O/U line (e.g. 8.5 runs).
+ * awayTeam and homeTeam should be full team names from the MLB API.
+ * Returns null if not found.
+ */
+export function lookupGameTotal(
+  map: FanDuelOddsMap,
+  awayTeam: string,
+  homeTeam: string,
+): number | null {
+  const v = map[`${normName(awayTeam)}-${normName(homeTeam)}:Total Runs:line`];
+  return v !== undefined ? parseFloat(v) : null;
 }

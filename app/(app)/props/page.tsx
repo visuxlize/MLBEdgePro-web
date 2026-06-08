@@ -10,7 +10,7 @@ import {
   type RosterBatter,
 } from "@/lib/mlb/api";
 import { PaywallGate } from "@/components/web-tool/paywall-gate";
-import { fetchFanDuelOddsMap, type FanDuelOddsMap } from "@/lib/odds";
+import { fetchFanDuelOddsMap, lookupLine, lookupGameTotal } from "@/lib/odds";
 import {
   PropsTool,
   type PropGame,
@@ -121,6 +121,13 @@ function buildFirstInningProp(
   overPct = Math.min(72, Math.max(25, Math.round(overPct)));
   return { overPct, underPct: 100 - overPct };
 }
+
+// Fallback league-average stats when a pitcher's stats aren't available yet
+const LEAGUE_AVG_PITCHER: PitcherSeasonStats = {
+  wins: 0, losses: 0, era: 4.50, whip: 1.30, strikeOuts: 0,
+  inningsPitched: "5.0", gamesStarted: 1, strikeoutsPer9Inn: 8.5,
+  homeRunsPer9: 1.1, walksPer9Inn: 3.3, homeRuns: 0, baseOnBalls: 0,
+};
 
 // Moneyline: win prediction from pitcher matchup
 function buildMoneylinePrediction(
@@ -528,9 +535,12 @@ function buildDailySlips(games: PropGame[]): DailySlip[] {
 
 // ── Game data builder ─────────────────────────────────────────────────────────
 
-async function buildPropGames(): Promise<{ games: PropGame[]; dailySlips: DailySlip[] }> {
+async function buildPropGames(): Promise<{ games: PropGame[]; dailySlips: DailySlip[]; fanDuelOdds: Record<string, string> }> {
   noStore(); // opt out of data cache so refresh button always fetches fresh MLB stats
-  const games        = await fetchTodaysGames();
+  const [games, fanDuelOdds] = await Promise.all([
+    fetchTodaysGames(),
+    fetchFanDuelOddsMap(),
+  ]);
   const withPitchers = games.filter((g) => g.teams.away.probablePitcher || g.teams.home.probablePitcher);
 
   const propGames = await Promise.all(
@@ -554,45 +564,42 @@ async function buildPropGames(): Promise<{ games: PropGame[]; dailySlips: DailyS
 
       const runsData = totalRunsProp(homePitcherStats, awayPitcherStats, homeBatters, awayBatters, game.venue.name, weather);
 
-      // First Inning O/U
-      const firstInning: FirstInningPropData[] = [];
-      if (game.teams.away.probablePitcher && awayPitcherStats) {
-        const fi = buildFirstInningProp(awayPitcherStats, homeBatters);
-        firstInning.push({
-          pitcherId:   game.teams.away.probablePitcher.id,
-          pitcherName: awayPName,
-          pitcherTeam: game.teams.away.team.name,
-          opponent:    game.teams.home.team.name,
-          era:         awayPitcherStats.era.toFixed(2),
-          whip:        awayPitcherStats.whip.toFixed(2),
-          wins:        awayPitcherStats.wins,
-          losses:      awayPitcherStats.losses,
-          overPct:     fi.overPct,
-          underPct:    fi.underPct,
-        });
-      }
-      if (game.teams.home.probablePitcher && homePitcherStats) {
-        const fi = buildFirstInningProp(homePitcherStats, awayBatters);
-        firstInning.push({
-          pitcherId:   game.teams.home.probablePitcher.id,
-          pitcherName: homePName,
-          pitcherTeam: game.teams.home.team.name,
-          opponent:    game.teams.away.team.name,
-          era:         homePitcherStats.era.toFixed(2),
-          whip:        homePitcherStats.whip.toFixed(2),
-          wins:        homePitcherStats.wins,
-          losses:      homePitcherStats.losses,
-          overPct:     fi.overPct,
-          underPct:    fi.underPct,
-        });
-      }
+      // First Inning O/U — combined per-game (one card per matchup)
+      // Top half: away team bats vs home pitcher → P(any away run)
+      // Bot half: home team bats vs away pitcher → P(any home run)
+      // Combined: P(run in full 1st) = 1 - P(no top run) × P(no bot run)
+      const topFirstPct = homePitcherStats
+        ? buildFirstInningProp(homePitcherStats, awayBatters).overPct / 100
+        : 0.38;
+      const botFirstPct = awayPitcherStats
+        ? buildFirstInningProp(awayPitcherStats, homeBatters).overPct / 100
+        : 0.38;
+      const combinedOver1stPct = Math.min(80, Math.max(20,
+        Math.round(100 * (1 - (1 - topFirstPct) * (1 - botFirstPct))),
+      ));
+      const firstInning: FirstInningPropData | null =
+        (game.teams.away.probablePitcher || game.teams.home.probablePitcher)
+          ? {
+              gamePk:          game.gamePk,
+              awayTeam:        game.teams.away.team.name,
+              awayTeamId:      game.teams.away.team.id,
+              homeTeam:        game.teams.home.team.name,
+              homeTeamId:      game.teams.home.team.id,
+              awayPitcherName: awayPName,
+              homePitcherName: homePName,
+              awayPitcherEra:  awayPitcherStats?.era.toFixed(2) ?? "—",
+              homePitcherEra:  homePitcherStats?.era.toFixed(2) ?? "—",
+              overPct:         combinedOver1stPct,
+              underPct:        100 - combinedOver1stPct,
+            }
+          : null;
 
-      // Moneyline
+      // Moneyline — always produce a prediction; use league-average when stats unavailable
       const moneyline: MoneylinePropData | null =
-        homePitcherStats && awayPitcherStats
+        (game.teams.home.probablePitcher || game.teams.away.probablePitcher)
           ? buildMoneylinePrediction(
-              homePitcherStats,
-              awayPitcherStats,
+              homePitcherStats ?? LEAGUE_AVG_PITCHER,
+              awayPitcherStats ?? LEAGUE_AVG_PITCHER,
               game.teams.home.team.name,
               game.teams.away.team.name,
               game.teams.home.team.id,
@@ -615,10 +622,10 @@ async function buildPropGames(): Promise<{ games: PropGame[]; dailySlips: DailyS
         },
         pitchers: [
           ...(game.teams.away.probablePitcher && awayPitcherStats
-            ? [{ id: game.teams.away.probablePitcher.id, name: awayPName, teamName: game.teams.away.team.name, opponent: game.teams.home.team.name, era: awayPitcherStats.era.toFixed(2), whip: awayPitcherStats.whip.toFixed(2), wins: awayPitcherStats.wins, losses: awayPitcherStats.losses, ...pitcherKLineProp(awayPitcherStats) }]
+            ? [{ id: game.teams.away.probablePitcher.id, name: awayPName, teamName: game.teams.away.team.name, opponent: game.teams.home.team.name, era: awayPitcherStats.era.toFixed(2), whip: awayPitcherStats.whip.toFixed(2), wins: awayPitcherStats.wins, losses: awayPitcherStats.losses, ...pitcherKLineProp(awayPitcherStats), bookLine: lookupLine(fanDuelOdds, awayPName, "Pitcher K's") ?? undefined }]
             : []),
           ...(game.teams.home.probablePitcher && homePitcherStats
-            ? [{ id: game.teams.home.probablePitcher.id, name: homePName, teamName: game.teams.home.team.name, opponent: game.teams.away.team.name, era: homePitcherStats.era.toFixed(2), whip: homePitcherStats.whip.toFixed(2), wins: homePitcherStats.wins, losses: homePitcherStats.losses, ...pitcherKLineProp(homePitcherStats) }]
+            ? [{ id: game.teams.home.probablePitcher.id, name: homePName, teamName: game.teams.home.team.name, opponent: game.teams.away.team.name, era: homePitcherStats.era.toFixed(2), whip: homePitcherStats.whip.toFixed(2), wins: homePitcherStats.wins, losses: homePitcherStats.losses, ...pitcherKLineProp(homePitcherStats), bookLine: lookupLine(fanDuelOdds, homePName, "Pitcher K's") ?? undefined }]
             : []),
         ],
         totalRuns: {
@@ -629,6 +636,7 @@ async function buildPropGames(): Promise<{ games: PropGame[]; dailySlips: DailyS
           homePitcher: { name: homePName, era: homePitcherStats?.era ?? null, whip: homePitcherStats?.whip ?? null, k9: homePitcherStats?.strikeoutsPer9Inn ?? null, wins: homePitcherStats?.wins ?? 0, losses: homePitcherStats?.losses ?? 0 },
           venue:   game.venue.name,
           weather: weather ?? null,
+          bookLine: lookupGameTotal(fanDuelOdds, game.teams.away.team.name, game.teams.home.team.name) ?? undefined,
         },
         firstInning,
         moneyline,
@@ -637,17 +645,14 @@ async function buildPropGames(): Promise<{ games: PropGame[]; dailySlips: DailyS
   );
 
   const dailySlips = buildDailySlips(propGames);
-  return { games: propGames, dailySlips };
+  return { games: propGames, dailySlips, fanDuelOdds };
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 async function PropsContent() {
-  // Fetch game data + FanDuel odds in parallel
-  const [{ games, dailySlips }, fanDuelOdds] = await Promise.all([
-    buildPropGames(),
-    fetchFanDuelOddsMap(),
-  ]);
+  // buildPropGames fetches MLB data + FanDuel odds in parallel internally
+  const { games, dailySlips, fanDuelOdds } = await buildPropGames();
   if (!games.length) {
     return (
       <div className="flex flex-col items-center justify-center py-20">

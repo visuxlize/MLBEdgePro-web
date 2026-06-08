@@ -46,6 +46,7 @@ export interface PitcherProp {
   line: number;
   overPct: number;
   underPct: number;
+  bookLine?: number;
 }
 
 export interface TotalRunsProp {
@@ -67,17 +68,19 @@ export interface TotalRunsProp {
   homePitcher: { name: string; era: number | null; whip: number | null; k9: number | null; wins: number; losses: number };
   venue: string;
   weather: { tempF: number; windMph: number; windDirection: string; conditions: string; humidity: number } | null;
+  bookLine?: number;
 }
 
 export interface FirstInningPropData {
-  pitcherId: number;
-  pitcherName: string;
-  pitcherTeam: string;
-  opponent: string;
-  era: string;
-  whip: string;
-  wins: number;
-  losses: number;
+  gamePk: number;
+  awayTeam: string;
+  awayTeamId: number;
+  homeTeam: string;
+  homeTeamId: number;
+  awayPitcherName: string;
+  homePitcherName: string;
+  awayPitcherEra: string;
+  homePitcherEra: string;
   overPct: number;
   underPct: number;
 }
@@ -122,7 +125,7 @@ export interface PropGame {
   props: Record<"HR" | "Hit" | "2+ Hits" | "2+ Bases", PropRow[]>;
   pitchers: PitcherProp[];
   totalRuns: TotalRunsProp;
-  firstInning: FirstInningPropData[];
+  firstInning: FirstInningPropData | null;
   moneyline: MoneylinePropData | null;
 }
 
@@ -417,19 +420,26 @@ function PitcherKCard({ pitcher, slip, onAdd }: {
         </div>
         <div className="mt-4 flex items-center justify-between rounded-xl border border-[#fbbf24]/20 bg-[#fbbf24]/[0.06] px-4 py-3">
           <div>
-            <p className="text-[10px] font-bold tracking-widest text-white/30 uppercase">Projected Line</p>
-            <p className="text-3xl font-black text-[#fbbf24] mt-0.5">{pitcher.line} Ks</p>
+            <p className="text-[10px] font-bold tracking-widest text-white/30 uppercase">
+              {pitcher.bookLine !== undefined ? "FanDuel Line" : "Projected Line"}
+            </p>
+            <p className="text-3xl font-black text-[#fbbf24] mt-0.5">
+              {pitcher.bookLine !== undefined ? pitcher.bookLine : pitcher.line} Ks
+            </p>
+            {pitcher.bookLine !== undefined && (
+              <p className="text-[9px] text-white/25 mt-0.5">Model proj: {pitcher.projectedKs} Ks</p>
+            )}
           </div>
           <div className="text-right">
-            <p className="text-[10px] font-bold tracking-widest text-white/30 uppercase">Avg / Start</p>
-            <p className="text-xl font-black text-white mt-0.5">{pitcher.projectedKs}</p>
+            <p className="text-[10px] font-bold tracking-widest text-white/30 uppercase">K/9 Rate</p>
+            <p className="text-xl font-black text-white mt-0.5">{pitcher.k9}</p>
           </div>
         </div>
       </div>
       <div className="p-5 space-y-3">
         {[
-          { id: overId,  label: `Over ${pitcher.line} Ks`,  pct: pitcher.overPct,  color: "#50C882", inSlip: overIn,  Icon: TrendingUp  },
-          { id: underId, label: `Under ${pitcher.line} Ks`, pct: pitcher.underPct, color: "#EB505A", inSlip: underIn, Icon: TrendingDown },
+          { id: overId,  label: `Over ${pitcher.bookLine ?? pitcher.line} Ks`,  pct: pitcher.overPct,  color: "#50C882", inSlip: overIn,  Icon: TrendingUp  },
+          { id: underId, label: `Under ${pitcher.bookLine ?? pitcher.line} Ks`, pct: pitcher.underPct, color: "#EB505A", inSlip: underIn, Icon: TrendingDown },
         ].map((item) => (
           <div key={item.id} className="rounded-xl border border-white/[0.05] bg-[#0D1117] p-3.5">
             <div className="flex items-center justify-between gap-3 mb-2">
@@ -467,24 +477,25 @@ function PitcherKCard({ pitcher, slip, onAdd }: {
 function FirstInningCard({ data, slip, onAdd }: {
   data: FirstInningPropData; slip: SlipEntry[]; onAdd: (e: SlipEntry) => void;
 }) {
-  const overId  = `${data.pitcherId}-1st-over`;
-  const underId = `${data.pitcherId}-1st-under`;
+  const overId  = `${data.gamePk}-1st-over`;
+  const underId = `${data.gamePk}-1st-under`;
   const overIn  = slip.some((e) => e.id === overId);
   const underIn = slip.some((e) => e.id === underId);
 
   return (
     <div className="rounded-2xl border border-white/[0.07] bg-[#111622] overflow-hidden">
       <div className="px-5 pt-5 pb-4 border-b border-white/[0.05]">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1.5">
               <span className="inline-flex items-center gap-1 rounded-full border border-[#a78bfa]/35 bg-[#a78bfa]/12 px-2 py-0.5 text-[9px] font-black text-[#a78bfa] tracking-wider uppercase">
                 <Clock size={8} strokeWidth={2.5} />
-                1st Inning
+                1st Inning O/U
               </span>
             </div>
-            <p className="text-base font-black text-white">{data.pitcherName}</p>
-            <p className="text-xs text-white/35">{data.pitcherTeam} vs {data.opponent}</p>
+            <p className="text-base font-black text-white">
+              {abbr(data.awayTeam)} <span className="text-white/30 font-normal">@</span> {abbr(data.homeTeam)}
+            </p>
           </div>
           <div className="text-right">
             <p className="text-[10px] font-bold tracking-widest text-white/30 uppercase mb-1">Line</p>
@@ -493,15 +504,20 @@ function FirstInningCard({ data, slip, onAdd }: {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-2 mt-4">
+        {/* Both pitchers side by side */}
+        <div className="grid grid-cols-2 gap-3">
           {[
-            { v: data.era,  l: "ERA",  c: "#FF7828" },
-            { v: data.whip, l: "WHIP", c: "#818cf8" },
-            { v: `${data.wins}-${data.losses}`, l: "W-L", c: "#50C882" },
-          ].map(({ v, l, c }) => (
-            <div key={l} className="rounded-xl border border-white/[0.05] bg-[#0D1117] p-2.5 text-center">
-              <p className="text-sm font-black" style={{ color: c }}>{v}</p>
-              <p className="text-[8px] text-white/25 uppercase tracking-wider mt-0.5">{l}</p>
+            { pitcher: data.awayPitcherName, era: data.awayPitcherEra, team: abbr(data.awayTeam), label: "Away starter" },
+            { pitcher: data.homePitcherName, era: data.homePitcherEra, team: abbr(data.homeTeam), label: "Home starter" },
+          ].map(({ pitcher, era, team, label }) => (
+            <div key={team} className="rounded-xl border border-white/[0.05] bg-[#0D1117] p-3">
+              <p className="text-[9px] text-white/30 uppercase tracking-wider mb-0.5">{label}</p>
+              <p className="text-xs font-black text-white truncate">{pitcher}</p>
+              <p className="text-[10px] text-white/35 mb-2">{team}</p>
+              <div className="flex items-center gap-1">
+                <span className="text-sm font-black" style={{ color: era === "—" ? "rgba(255,255,255,0.3)" : "#FF7828" }}>{era}</span>
+                <span className="text-[9px] font-bold text-white/25">ERA</span>
+              </div>
             </div>
           ))}
         </div>
@@ -509,8 +525,8 @@ function FirstInningCard({ data, slip, onAdd }: {
 
       <div className="p-5 space-y-3">
         {[
-          { id: overId,  label: "Over 0.5 Runs",  pct: data.overPct,  color: "#50C882", inSlip: overIn,  Icon: TrendingUp,  desc: `${data.pitcherTeam} vs ${data.opponent} Over 0.5 1st Inn` },
-          { id: underId, label: "Under 0.5 Runs", pct: data.underPct, color: "#EB505A", inSlip: underIn, Icon: TrendingDown, desc: `${data.pitcherTeam} vs ${data.opponent} Under 0.5 1st Inn` },
+          { id: overId,  label: "Over 0.5 Runs",  pct: data.overPct,  color: "#50C882", inSlip: overIn,  Icon: TrendingUp,  desc: `${abbr(data.awayTeam)} @ ${abbr(data.homeTeam)} Over 0.5 1st Inn` },
+          { id: underId, label: "Under 0.5 Runs", pct: data.underPct, color: "#EB505A", inSlip: underIn, Icon: TrendingDown, desc: `${abbr(data.awayTeam)} @ ${abbr(data.homeTeam)} Under 0.5 1st Inn` },
         ].map((item) => (
           <div key={item.id} className="rounded-xl border border-white/[0.05] bg-[#0D1117] p-3.5">
             <div className="flex items-center justify-between gap-3 mb-2">
@@ -676,8 +692,13 @@ function TotalRunsCard({ data, slip, onAdd }: {
             </div>
           </div>
           <div className="text-right">
-            <p className="text-[10px] font-bold text-white/30 tracking-widest uppercase mb-1">O/U Line</p>
-            <p className="text-4xl font-black text-white">{data.line}</p>
+            <p className="text-[10px] font-bold text-white/30 tracking-widest uppercase mb-1">
+              {data.bookLine !== undefined ? "FanDuel Line" : "O/U Line"}
+            </p>
+            <p className="text-4xl font-black text-white">{data.bookLine ?? data.line}</p>
+            {data.bookLine !== undefined && (
+              <p className="text-[9px] text-white/25 mt-0.5">Model: {data.line}</p>
+            )}
             <div className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full border"
               style={{ color: leanClr, borderColor: `${leanClr}40`, backgroundColor: `${leanClr}15` }}>
               <span className="text-xs font-black">LEAN {lean}</span>
@@ -776,8 +797,8 @@ function TotalRunsCard({ data, slip, onAdd }: {
       <div className="rounded-2xl border border-white/[0.07] bg-[#111622] p-5 space-y-3">
         <p className="text-[10px] font-bold text-white/25 tracking-widest uppercase">Add to Slip</p>
         {[
-          { id: overId,  label: `Over ${data.line}`,  pct: data.overPct,  color: "#50C882", inSlip: overIn,  Icon: TrendingUp  },
-          { id: underId, label: `Under ${data.line}`, pct: data.underPct, color: "#EB505A", inSlip: underIn, Icon: TrendingDown },
+          { id: overId,  label: `Over ${data.bookLine ?? data.line}`,  pct: data.overPct,  color: "#50C882", inSlip: overIn,  Icon: TrendingUp  },
+          { id: underId, label: `Under ${data.bookLine ?? data.line}`, pct: data.underPct, color: "#EB505A", inSlip: underIn, Icon: TrendingDown },
         ].map((item) => (
           <div key={item.id} className="rounded-xl border border-white/[0.05] bg-[#0D1117] p-4">
             <div className="flex items-center justify-between gap-3 mb-2">
@@ -1518,20 +1539,25 @@ export function PropsTool({ games, dailySlips, fanDuelOdds = {} }: { games: Prop
 
             {/* 1st Inning O/U */}
             {activeProp === "1st Inn O/U" && (
-              selected.firstInning.length === 0
+              !selected.firstInning
                 ? <div className="rounded-2xl border border-white/[0.07] bg-[#111622] py-16 text-center">
                     <p className="text-sm text-white/30">No confirmed pitchers for this matchup.</p>
                   </div>
-                : <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                    {selected.firstInning.map((d) => <FirstInningCard key={d.pitcherId} data={d} slip={slip} onAdd={addToSlip} />)}
-                  </div>
+                : <FirstInningCard data={selected.firstInning} slip={slip} onAdd={addToSlip} />
             )}
 
             {/* Moneyline */}
             {activeProp === "Moneyline" && (
               !selected.moneyline
-                ? <div className="rounded-2xl border border-white/[0.07] bg-[#111622] py-16 text-center">
-                    <p className="text-sm text-white/30">Both starting pitchers must be confirmed for moneyline prediction.</p>
+                ? <div className="rounded-2xl border border-white/[0.07] bg-[#111622] py-16 text-center flex flex-col items-center gap-3">
+                    <p className="text-sm text-white/30">Prediction unavailable for this matchup.</p>
+                    <button
+                      onClick={handleRefresh}
+                      className="flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2 text-xs font-bold text-white/50 hover:text-white hover:border-white/[0.14] transition-colors"
+                    >
+                      <RefreshCw size={12} strokeWidth={2} />
+                      Refresh to load
+                    </button>
                   </div>
                 : <MoneylineCard data={selected.moneyline} slip={slip} onAdd={addToSlip} />
             )}
