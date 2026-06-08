@@ -9,6 +9,7 @@ import {
   type RosterBatter,
 } from "@/lib/mlb/api";
 import { PaywallGate } from "@/components/web-tool/paywall-gate";
+import { fetchFanDuelOddsMap, type FanDuelOddsMap } from "@/lib/odds";
 import {
   PropsTool,
   type PropGame,
@@ -543,7 +544,11 @@ async function buildPropGames(): Promise<{ games: PropGame[]; dailySlips: DailyS
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 async function PropsContent() {
-  const { games, dailySlips } = await buildPropGames();
+  // Fetch game data + FanDuel odds in parallel
+  const [{ games, dailySlips }, fanDuelOdds] = await Promise.all([
+    buildPropGames(),
+    fetchFanDuelOddsMap(),
+  ]);
   if (!games.length) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
@@ -552,7 +557,7 @@ async function PropsContent() {
       </div>
     );
   }
-  return <PropsTool games={games} dailySlips={dailySlips} />;
+  return <PropsTool games={games} dailySlips={dailySlips} fanDuelOdds={fanDuelOdds} />;
 }
 
 export default function PropsPage() {

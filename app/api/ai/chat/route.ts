@@ -10,6 +10,7 @@ import {
   type RosterBatter,
 } from "@/lib/mlb/api";
 import { createClient } from "@/lib/supabase/server";
+import { fetchFanDuelOddsMap, lookupOdds } from "@/lib/odds";
 
 // ── Context builders ──────────────────────────────────────────────────────────
 
@@ -71,7 +72,7 @@ function topBattersCtx(batters: RosterBatter[], pitcher: PitcherSeasonStats, pro
     .slice(0, n);
 }
 
-async function buildGameContext(): Promise<string> {
+async function buildGameContext(oddsMap: Record<string, string>): Promise<string> {
   const games = await fetchTodaysGames();
   const withPitchers = games.filter(
     (g) => g.teams.away.probablePitcher || g.teams.home.probablePitcher,
@@ -107,25 +108,28 @@ async function buildGameContext(): Promise<string> {
             block += ` | 1st Inn Over 0.5: ${fi}%`;
             const hrPicks = topBattersCtx(ab, hp, "HR", 3);
             const hitPicks = topBattersCtx(ab, hp, "Hit", 3);
-            if (hrPicks.length) block += `\n  HR vs ${hpName}: ${hrPicks.map(p=>`${p.name}[pid:${p.id},tid:${p.teamId}] ${p.pct}%`).join(" | ")}`;
-            if (hitPicks.length) block += `\n  Hit vs ${hpName}: ${hitPicks.map(p=>`${p.name}[pid:${p.id},tid:${p.teamId}] ${p.pct}%`).join(" | ")}`;
+            if (hrPicks.length) block += `\n  HR vs ${hpName}: ${hrPicks.map(p=>{const o=lookupOdds(oddsMap,p.name,"HR"); return `${p.name}[pid:${p.id},tid:${p.teamId}] ${p.pct}%${o?` FD:${o}`:""}`}).join(" | ")}`;
+            if (hitPicks.length) block += `\n  Hit vs ${hpName}: ${hitPicks.map(p=>{const o=lookupOdds(oddsMap,p.name,"Hit"); return `${p.name}[pid:${p.id},tid:${p.teamId}] ${p.pct}%${o?` FD:${o}`:""}`}).join(" | ")}`;
           }
         }
         if (ap) {
           const kp = kLineProp(ap);
-          block += `\n  Away Pitcher: ${apName} [pid:${game.teams.away.probablePitcher!.id}] — ERA ${ap.era.toFixed(2)}, WHIP ${ap.whip.toFixed(2)}, K/9 ${ap.strikeoutsPer9Inn.toFixed(1)} | K Line: ${kp.line} (Over ${kp.overPct}%)`;
+          const kOdds = lookupOdds(oddsMap, apName, "Pitcher K's");
+          block += `\n  Away Pitcher: ${apName} [pid:${game.teams.away.probablePitcher!.id}] — ERA ${ap.era.toFixed(2)}, WHIP ${ap.whip.toFixed(2)}, K/9 ${ap.strikeoutsPer9Inn.toFixed(1)} | K Line: ${kp.line} (Over ${kp.overPct}%${kOdds?` FD:${kOdds}`:""})`;
           if (hb.length) {
             const fi = firstInningPct(ap, hb.slice(0,4).reduce((s,b) => s + (parseFloat(b.stats.avg)||0.245), 0) / Math.min(hb.length,4));
             block += ` | 1st Inn Over 0.5: ${fi}%`;
             const hrPicks = topBattersCtx(hb, ap, "HR", 3);
             const hitPicks = topBattersCtx(hb, ap, "Hit", 3);
-            if (hrPicks.length) block += `\n  HR vs ${apName}: ${hrPicks.map(p=>`${p.name}[pid:${p.id},tid:${p.teamId}] ${p.pct}%`).join(" | ")}`;
-            if (hitPicks.length) block += `\n  Hit vs ${apName}: ${hitPicks.map(p=>`${p.name}[pid:${p.id},tid:${p.teamId}] ${p.pct}%`).join(" | ")}`;
+            if (hrPicks.length) block += `\n  HR vs ${apName}: ${hrPicks.map(p=>{const o=lookupOdds(oddsMap,p.name,"HR"); return `${p.name}[pid:${p.id},tid:${p.teamId}] ${p.pct}%${o?` FD:${o}`:""}`}).join(" | ")}`;
+            if (hitPicks.length) block += `\n  Hit vs ${apName}: ${hitPicks.map(p=>{const o=lookupOdds(oddsMap,p.name,"Hit"); return `${p.name}[pid:${p.id},tid:${p.teamId}] ${p.pct}%${o?` FD:${o}`:""}`}).join(" | ")}`;
           }
         }
         if (hp && ap) {
           const ml = moneylineWinPct(hp, ap);
-          block += `\n  Moneyline Model: ${homeTeam} ${ml.home}% vs ${awayTeam} ${ml.away}% (${ml.confidence} conf.)`;
+          const homeML = lookupOdds(oddsMap, homeTeam, "Moneyline");
+          const awayML = lookupOdds(oddsMap, awayTeam, "Moneyline");
+          block += `\n  Moneyline: ${homeTeam} ${ml.home}%${homeML?` FD:${homeML}`:""} vs ${awayTeam} ${ml.away}%${awayML?` FD:${awayML}`:""} (${ml.confidence} conf.)`;
         }
 
         lines.push(block);
@@ -191,15 +195,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No messages provided" }, { status: 400 });
   }
 
-  // Build context in parallel
-  const [gameContext, betHistory] = await Promise.all([
-    buildGameContext(),
+  // Build context in parallel (odds fetched alongside game data)
+  const [oddsMap, betHistory] = await Promise.all([
+    fetchFanDuelOddsMap(),
     buildBetHistoryContext(userId),
   ]);
+  const gameContext = await buildGameContext(oddsMap);
 
   const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
 
-  const systemPrompt = `You are Edge AI — MLB Edge Pro's embedded analyst, powered by Claude. You have real-time access to today's full game slate, prop probabilities, HR Nuke matchup grades, 1st inning predictions, moneyline models, and this user's personal bet history.
+  const systemPrompt = `You are Edge AI — MLB Edge Pro's embedded analyst, powered by Claude. You have real-time access to today's full game slate, prop probabilities, HR Nuke matchup grades, 1st inning predictions, moneyline models, live FanDuel odds (marked FD: in the context), and this user's personal bet history.
 
 TODAY: ${today}
 
@@ -241,7 +246,7 @@ Whenever you recommend specific player or team props, append a [PICKS] block at 
 Rules:
 - Use the exact [pid:X] IDs from the game context above for playerId
 - propType must be exactly one of: "HR", "Hit", "2+ Hits", "2+ Bases", "Pitcher K's", "1st Inn O/U", "Moneyline"
-- odds is your estimated American odds string (e.g. "+650", "-110")
+- odds: use the real FanDuel odds from the "FD:" markers in the context when available; otherwise estimate
 - Maximum 6 picks per block
 - ONLY include this block when you recommend specific player/team props. Skip it for general analysis, history questions, or educational explanations.`;
 

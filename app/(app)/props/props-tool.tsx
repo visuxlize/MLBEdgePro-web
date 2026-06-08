@@ -9,6 +9,7 @@ import {
   Clock, Trophy, Shield, Target, LayoutDashboard, Settings2, Bot,
 } from "lucide-react";
 import { playerHeadshotUrl, teamLogoUrl } from "@/lib/mlb/api";
+import { lookupOdds, type FanDuelOddsMap } from "@/lib/odds";
 import type { AIPick } from "@/app/(app)/ai/page";
 
 const AI_SLIP_KEY = "edge-ai-pending-picks";
@@ -1150,7 +1151,7 @@ function SlipPanel({ slip, onRemove, onClear, onOddsChange }: {
 
 // ── Main exported component ───────────────────────────────────────────────────
 
-export function PropsTool({ games, dailySlips }: { games: PropGame[]; dailySlips: DailySlip[] }) {
+export function PropsTool({ games, dailySlips, fanDuelOdds = {} }: { games: PropGame[]; dailySlips: DailySlip[]; fanDuelOdds?: FanDuelOddsMap }) {
   const [view, setView]             = useState<"dashboard" | "builder">("dashboard");
   const [selectedPk, setSelectedPk] = useState(games[0]?.gamePk);
   const [activeProp, setActiveProp] = useState<PropType>("HR");
@@ -1191,7 +1192,24 @@ export function PropsTool({ games, dailySlips }: { games: PropGame[]; dailySlips
   );
 
   function addToSlip(entry: SlipEntry) {
-    setSlip((cur) => cur.some((e) => e.id === entry.id) ? cur : [...cur, entry]);
+    // Enrich with real FanDuel odds if we have them and the entry has no odds yet
+    const enriched: SlipEntry = entry.odds
+      ? entry
+      : (() => {
+          // Extract player/team name from the description for odds lookup
+          // Description format: "Player Name PropType vs Pitcher" or "Team Moneyline Win"
+          const namePart = entry.description.split(" vs ")[0]
+            .replace(/ HR$| Hit$| 1\+ Hit$| 2\+ Hits$| 2\+ Bases$| Moneyline Win$/, "")
+            .trim();
+          const propType = entry.id.includes("-k-") ? "Pitcher K's"
+            : entry.id.includes("-runs-") ? "Total Runs"
+            : entry.id.includes("-1st-") ? "1st Inn O/U"
+            : entry.id.includes("-ml-") ? "Moneyline"
+            : (entry.description.match(/HR|Hit|2\+ Hits|2\+ Bases/) ?? [""])[0] || "";
+          const realOdds = lookupOdds(fanDuelOdds, namePart, propType);
+          return realOdds ? { ...entry, odds: realOdds } : entry;
+        })();
+    setSlip((cur) => cur.some((e) => e.id === enriched.id) ? cur : [...cur, enriched]);
   }
 
   const updateOdds = useCallback((id: string, odds: string) => {

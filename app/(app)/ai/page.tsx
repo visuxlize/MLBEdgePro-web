@@ -8,7 +8,7 @@ import {
   Plus, Check, ChevronRight, Zap,
 } from "lucide-react";
 import { PaywallGate } from "@/components/web-tool/paywall-gate";
-import { playerHeadshotUrl } from "@/lib/mlb/api";
+import { playerHeadshotUrl, teamLogoUrl } from "@/lib/mlb/api";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -177,18 +177,28 @@ function PickCard({ pick }: { pick: AIPick }) {
 
   return (
     <div className="flex items-center gap-3 rounded-xl border border-white/[0.08] bg-[#0D1117] p-2.5">
-      {/* Headshot */}
-      <div className="w-10 h-10 rounded-full overflow-hidden border border-white/10 bg-white/5 shrink-0">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={playerHeadshotUrl(pick.playerId)}
-          alt={pick.playerName}
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            (e.currentTarget as HTMLImageElement).style.display = "none";
-          }}
-        />
-      </div>
+      {/* Headshot or team logo */}
+      {pick.propType === "Moneyline" ? (
+        <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0 overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={teamLogoUrl(pick.teamId)}
+            alt={pick.playerName}
+            className="w-7 h-7 object-contain"
+            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+          />
+        </div>
+      ) : (
+        <div className="w-10 h-10 rounded-full overflow-hidden border border-white/10 bg-white/5 shrink-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={playerHeadshotUrl(pick.playerId)}
+            alt={pick.playerName}
+            className="w-full h-full object-cover"
+            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+          />
+        </div>
+      )}
 
       {/* Info */}
       <div className="flex-1 min-w-0">

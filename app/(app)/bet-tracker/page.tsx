@@ -436,17 +436,15 @@ function ShareModal({ slip, onClose }: { slip: BetSlip; onClose: () => void }) {
           {/* Divider */}
           <div style={{ height: 1, background: "rgba(255,255,255,0.06)", marginBottom: 14 }} />
 
-          {/* Stats row */}
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 14 }}>
+          {/* Stats row — picks only, no wager/to-win */}
+          <div style={{ display: "flex", justifyContent: "center", gap: 32, marginBottom: 14 }}>
             {[
-              { label: "WAGER",    value: `$${slip.wager.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,       color: "rgba(255,255,255,0.70)" },
-              { label: "TO WIN",   value: toWinAmt ? `$${toWinAmt.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—",  color: "#50C882" },
-              { label: "PARLAY",   value: hasOdds ? parlayOdds : "—", color: "#FF7828" },
-              { label: "COMBINED", value: `${cp}%`,               color: colorFor(cp) },
+              { label: "PARLAY ODDS", value: hasOdds ? parlayOdds : "—", color: "#FF7828" },
+              { label: "COMBINED",    value: `${cp}%`,                    color: colorFor(cp) },
             ].map(({ label, value, color }) => (
-              <div key={label} style={{ flex: 1, textAlign: "center" }}>
+              <div key={label} style={{ textAlign: "center" }}>
                 <p style={{ color: "rgba(255,255,255,0.25)", fontSize: 8, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 3 }}>{label}</p>
-                <p style={{ color, fontSize: 13, fontWeight: 900 }}>{value}</p>
+                <p style={{ color, fontSize: 16, fontWeight: 900 }}>{value}</p>
               </div>
             ))}
           </div>
