@@ -1,54 +1,88 @@
-const ANTHROPIC_MESSAGES_URL = "https://api.anthropic.com/v1/messages";
-const DEFAULT_CLAUDE_MODEL = "claude-3-5-sonnet-20241022";
+import Anthropic from "@anthropic-ai/sdk";
 
-function anthropicApiKey(): string | null {
-  return (
+export const EDGE_AI_MODEL = "claude-sonnet-4-6";
+
+function getClient(): Anthropic {
+  const apiKey =
     process.env.ANTHROPIC_API_KEY ??
     process.env.CLAUDE_API_KEY ??
-    process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY ??
-    null
-  );
+    null;
+  if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not configured");
+  return new Anthropic({ apiKey });
 }
 
 export function hasAnthropicKey(): boolean {
-  return anthropicApiKey() !== null;
+  return !!(process.env.ANTHROPIC_API_KEY ?? process.env.CLAUDE_API_KEY);
 }
+
+// ── One-shot JSON generation (used by edge-score, hr-nuke, daily-picks) ───────
 
 function stripJsonFence(text: string): string {
   return text.trim().replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
 }
 
 export async function generateJSON<T>(prompt: string): Promise<T> {
-  const key = anthropicApiKey();
-  if (!key) throw new Error("ANTHROPIC_API_KEY not configured");
-
-  const res = await fetch(ANTHROPIC_MESSAGES_URL, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": key,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: process.env.ANTHROPIC_MODEL ?? DEFAULT_CLAUDE_MODEL,
-      max_tokens: 1400,
-      temperature: 0.2,
-      system: "You are an elite MLB betting analyst. Return valid JSON only, with no markdown.",
-      messages: [{ role: "user", content: prompt }],
-    }),
-    next: { revalidate: 0 },
+  const client = getClient();
+  const msg = await client.messages.create({
+    model: process.env.ANTHROPIC_MODEL ?? "claude-3-5-sonnet-20241022",
+    max_tokens: 1400,
+    temperature: 0.2,
+    system: "You are an elite MLB betting analyst. Return valid JSON only, with no markdown.",
+    messages: [{ role: "user", content: prompt }],
   });
 
-  if (!res.ok) {
-    const detail = await res.text().catch(() => "");
-    throw new Error(`Claude analysis failed (${res.status}): ${detail.slice(0, 220)}`);
-  }
-
-  const data = await res.json();
-  const text = (data.content ?? [])
-    .filter((part: { type?: string; text?: string }) => part.type === "text" && part.text)
-    .map((part: { text: string }) => part.text)
+  const text = msg.content
+    .filter((b): b is Anthropic.TextBlock => b.type === "text")
+    .map((b) => b.text)
     .join("\n");
 
   return JSON.parse(stripJsonFence(text)) as T;
+}
+
+// ── Streaming chat (used by Edge AI) ─────────────────────────────────────────
+
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+/**
+ * Returns a ReadableStream that emits text chunks as they arrive from Claude.
+ * Designed for use in Next.js App Router streaming route handlers.
+ */
+export function streamChat(
+  systemPrompt: string,
+  messages: ChatMessage[],
+  maxTokens = 1200,
+): ReadableStream<Uint8Array> {
+  const client = getClient();
+  const encoder = new TextEncoder();
+
+  return new ReadableStream<Uint8Array>({
+    async start(controller) {
+      try {
+        const stream = client.messages.stream({
+          model: EDGE_AI_MODEL,
+          max_tokens: maxTokens,
+          temperature: 0.4,
+          system: systemPrompt,
+          messages,
+        });
+
+        for await (const event of stream) {
+          if (
+            event.type === "content_block_delta" &&
+            event.delta.type === "text_delta"
+          ) {
+            controller.enqueue(encoder.encode(event.delta.text));
+          }
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "AI stream error";
+        controller.enqueue(encoder.encode(`\n\n[Error: ${msg}]`));
+      } finally {
+        controller.close();
+      }
+    },
+  });
 }
