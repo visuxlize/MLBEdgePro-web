@@ -439,8 +439,8 @@ function ShareModal({ slip, onClose }: { slip: BetSlip; onClose: () => void }) {
           {/* Stats row */}
           <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 14 }}>
             {[
-              { label: "WAGER",    value: `$${slip.wager}`,       color: "rgba(255,255,255,0.70)" },
-              { label: "TO WIN",   value: toWinAmt ? `$${toWinAmt.toFixed(2)}` : "—",  color: "#50C882" },
+              { label: "WAGER",    value: `$${slip.wager.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,       color: "rgba(255,255,255,0.70)" },
+              { label: "TO WIN",   value: toWinAmt ? `$${toWinAmt.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—",  color: "#50C882" },
               { label: "PARLAY",   value: hasOdds ? parlayOdds : "—", color: "#FF7828" },
               { label: "COMBINED", value: `${cp}%`,               color: colorFor(cp) },
             ].map(({ label, value, color }) => (
@@ -454,7 +454,7 @@ function ShareModal({ slip, onClose }: { slip: BetSlip; onClose: () => void }) {
           {/* Footer */}
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 10 }}>
             <p style={{ color: "rgba(255,255,255,0.20)", fontSize: 9, textAlign: "center" }}>
-              mlbedgepro.app · For educational use only · Not betting advice
+              MLBEdgePro.dev · For educational use only · Not betting advice
             </p>
           </div>
         </div>
