@@ -1,14 +1,11 @@
 "use client";
 
 import { useEffect, useState, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import { useClerk } from "@clerk/nextjs";
+import { useSearchParams } from "next/navigation";
 import { Loader2, Zap, Star, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
 const TRIAL_TIER_KEY = "mlbedge_pending_trial_tier";
-const FAN_PLAN_ID = process.env.NEXT_PUBLIC_CLERK_FAN_PLAN_ID;
-const PRO_PLAN_ID = process.env.NEXT_PUBLIC_CLERK_PRO_PLAN_ID;
 
 function TrialCheckoutInner() {
   const searchParams = useSearchParams();
@@ -19,19 +16,14 @@ function TrialCheckoutInner() {
     ? (sessionStorage.getItem(TRIAL_TIER_KEY) as "fan" | "pro" | null)
     : null;
   const tier = tierFromUrl ?? tierFromStorage ?? "fan";
-  const router = useRouter();
-  const clerk = useClerk();
   const [error, setError] = useState<string | null>(null);
 
   const isFan = tier === "fan";
   const color = isFan ? "#FF7828" : "#818CF8";
   const Icon = isFan ? Zap : Star;
   const trialDays = isFan ? "14" : "3";
-  const planId = isFan ? FAN_PLAN_ID : PRO_PLAN_ID;
 
   useEffect(() => {
-    if (!clerk.loaded) return;
-
     let cancelled = false;
 
     async function startCheckout() {
@@ -39,19 +31,6 @@ function TrialCheckoutInner() {
       sessionStorage.removeItem(TRIAL_TIER_KEY);
 
       try {
-        const billing = (clerk as any).billing;
-
-        // ── Path A: Clerk Billing available + plan ID set ────────────────
-        if (billing && planId) {
-          await billing.startCheckout({
-            planId,
-            planPeriod: "month",
-          });
-          if (!cancelled) router.push(`/games?upgrade=success&tier=${tier}`);
-          return;
-        }
-
-        // ── Path B: Fall back to Stripe checkout API ─────────────────────
         const res = await fetch("/api/stripe/checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -61,7 +40,6 @@ function TrialCheckoutInner() {
         if (!res.ok) throw new Error(data.error ?? `Error ${res.status}`);
         if (!data.url) throw new Error("No checkout URL returned");
         window.location.href = data.url;
-
       } catch (err: any) {
         if (!cancelled) {
           setError(err.message ?? "Something went wrong. Please try again.");
@@ -71,7 +49,7 @@ function TrialCheckoutInner() {
 
     startCheckout();
     return () => { cancelled = true; };
-  }, [clerk.loaded]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (error) {
     return (

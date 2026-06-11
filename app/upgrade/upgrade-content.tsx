@@ -1,9 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
-import { useClerk } from "@clerk/nextjs";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Check, Minus, Zap, Star, ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
@@ -52,14 +50,8 @@ function CheckIcon({ yes, color }: { yes: boolean; color?: string }) {
   return <Check size={14} strokeWidth={2.5} style={{ color: color ?? "rgba(255,255,255,0.3)" }} />;
 }
 
-// Isolated component so Suspense boundary only wraps the searchParams call
-const FAN_PLAN_ID = process.env.NEXT_PUBLIC_CLERK_FAN_PLAN_ID!;
-const PRO_PLAN_ID = process.env.NEXT_PUBLIC_CLERK_PRO_PLAN_ID!;
-
 function UpgradeInner({ highlightTier }: { highlightTier: "fan" | "pro" | null }) {
   const { isPro, isSuperPro, plan } = useSubscription();
-  const router = useRouter();
-  const clerk = useClerk();
 
   const [loadingTier, setLoadingTier] = useState<"fan" | "pro" | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
@@ -68,23 +60,16 @@ function UpgradeInner({ highlightTier }: { highlightTier: "fan" | "pro" | null }
     setLoadingTier(tier);
     setCheckoutError(null);
     try {
-      const planId = tier === "fan" ? FAN_PLAN_ID : PRO_PLAN_ID;
-
-      if (!planId) {
-        throw new Error("Plan not configured. Please contact support.");
-      }
-
-      const billing = (clerk as any).billing;
-      if (!billing) {
-        throw new Error("Billing not available. Please refresh and try again.");
-      }
-
-      await billing.startCheckout({
-        planId,
-        planPeriod: "month",
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tier }),
       });
-
-      router.push(`/games?upgrade=success&tier=${tier}`);
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        throw new Error(data.error ?? "Failed to start checkout. Please try again.");
+      }
+      window.location.href = data.url;
     } catch (err: any) {
       setCheckoutError(err.message ?? "Something went wrong. Please try again.");
       setLoadingTier(null);
