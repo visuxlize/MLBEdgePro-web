@@ -231,7 +231,7 @@ function GameCard({ game }: { game: Game }) {
       <div className="relative h-16 overflow-hidden">
         {stadiumUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={stadiumUrl} alt="" className="w-full h-full object-cover object-top opacity-40" />
+          <img src={stadiumUrl} alt="" className="w-full h-full object-cover object-top opacity-40" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
         ) : (
           <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${awayColor}20, ${homeColor}20)` }} />
         )}

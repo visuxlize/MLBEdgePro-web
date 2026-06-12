@@ -240,7 +240,7 @@ function EdgeCard({ data }: { data: GameWithScore }) {
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={teamLogoUrl(away.team.id)} alt="" width={28} height={28} className="w-7 h-7 object-contain" />
+            <img src={teamLogoUrl(away.team.id)} alt="" width={28} height={28} className="w-7 h-7 object-contain" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
             <div>
               <p className="text-sm font-bold text-white">
                 {away.team.name.split(" ").pop()} <span className="text-white/25 font-normal">@</span> {home.team.name.split(" ").pop()}

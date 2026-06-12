@@ -19,8 +19,18 @@ const securityHeaders = [
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://clerk.mlbedgepro.dev https://*.clerk.accounts.dev https://js.stripe.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' data: https://fonts.gstatic.com",
-      "img-src 'self' data: blob: https://www.mlbstatic.com https://img.mlbstatic.com",
-      "connect-src 'self' https://*.clerk.accounts.dev https://clerk.mlbedgepro.dev https://api.stripe.com wss://*.clerk.accounts.dev",
+      // Expanded img-src: MLB assets, ESPN stadiums, WC flags, Google/Clerk avatars
+      "img-src 'self' data: blob:" +
+        " https://www.mlbstatic.com" +
+        " https://img.mlbstatic.com" +
+        " https://a.espncdn.com" +
+        " https://flagcdn.com" +
+        " https://lh3.googleusercontent.com" +
+        " https://img.clerk.com" +
+        " https://*.clerk.com" +
+        " https://*.clerk.accounts.dev" +
+        " https://images.clerk.dev",
+      "connect-src 'self' https://*.clerk.accounts.dev https://clerk.mlbedgepro.dev https://api.stripe.com wss://*.clerk.accounts.dev https://statsapi.mlb.com https://api.the-odds-api.com",
       "frame-src https://js.stripe.com https://hooks.stripe.com",
       "frame-ancestors 'none'",
     ].join("; "),
@@ -35,6 +45,11 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "www.mlbstatic.com" },
       { protocol: "https", hostname: "img.mlbstatic.com" },
+      { protocol: "https", hostname: "a.espncdn.com" },
+      { protocol: "https", hostname: "flagcdn.com" },
+      { protocol: "https", hostname: "lh3.googleusercontent.com" },
+      { protocol: "https", hostname: "img.clerk.com" },
+      { protocol: "https", hostname: "images.clerk.dev" },
     ],
     unoptimized: false,
   },

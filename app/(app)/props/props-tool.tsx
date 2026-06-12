@@ -192,7 +192,7 @@ function GameSelector({ games, selectedPk, onSelect }: {
         className="w-full flex items-center gap-3 rounded-2xl border border-white/[0.07] bg-[#111622] px-4 py-3.5 hover:border-white/[0.12] transition-colors"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={teamLogoUrl(selected.away.id)} alt="" className="w-7 h-7 object-contain shrink-0" />
+        <img src={teamLogoUrl(selected.away.id)} alt="" className="w-7 h-7 object-contain shrink-0" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
         <div className="flex-1 text-left min-w-0">
           <p className="text-sm font-black text-white">
             {abbr(selected.away.name)} <span className="text-white/30 font-normal">@</span> {abbr(selected.home.name)}
@@ -208,7 +208,7 @@ function GameSelector({ games, selectedPk, onSelect }: {
             "bg-[#FF7828]/15 text-[#FF7828]"
           }`}>{gameTimeLabel(selected)}</span>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={teamLogoUrl(selected.home.id)} alt="" className="w-7 h-7 object-contain" />
+          <img src={teamLogoUrl(selected.home.id)} alt="" className="w-7 h-7 object-contain" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
           <ChevronRight size={14} className={`text-white/30 transition-transform ${open ? "rotate-90" : ""}`} strokeWidth={2} />
         </div>
       </button>
@@ -225,7 +225,7 @@ function GameSelector({ games, selectedPk, onSelect }: {
                 className={`w-full flex items-center gap-3 px-4 py-3.5 hover:bg-white/[0.04] transition-colors text-left border-b border-white/[0.04] last:border-0 ${active ? "bg-[#FF7828]/[0.06]" : ""}`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={teamLogoUrl(g.away.id)} alt="" className="w-6 h-6 object-contain shrink-0" />
+                <img src={teamLogoUrl(g.away.id)} alt="" className="w-6 h-6 object-contain shrink-0" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                 <div className="flex-1 min-w-0">
                   <p className={`text-sm font-bold truncate ${active ? "text-[#FF7828]" : "text-white"}`}>
                     {abbr(g.away.name)} @ {abbr(g.home.name)}
@@ -242,7 +242,7 @@ function GameSelector({ games, selectedPk, onSelect }: {
                     {gameTimeLabel(g)}
                   </span>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={teamLogoUrl(g.home.id)} alt="" className="w-6 h-6 object-contain" />
+                  <img src={teamLogoUrl(g.home.id)} alt="" className="w-6 h-6 object-contain" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                 </div>
               </button>
             );
@@ -609,7 +609,7 @@ function MoneylineCard({ data, slip, onAdd }: {
             <div key={t.id}>
               <div className="flex items-center gap-3 mb-2">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={teamLogoUrl(t.teamId)} alt="" className="w-7 h-7 object-contain shrink-0" />
+                <img src={teamLogoUrl(t.teamId)} alt="" className="w-7 h-7 object-contain shrink-0" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                 <p className="flex-1 text-sm font-black text-white">{abbr(t.team)}</p>
                 {t.isWinner && (
                   <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full border border-[#50C882]/35 bg-[#50C882]/12 text-[#50C882]">
@@ -1000,7 +1000,7 @@ function DailySlipCard({ slip, onSave }: { slip: DailySlip; onSave: (s: DailySli
                   />
                 ) : leg.teamId ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={teamLogoUrl(leg.teamId)} alt="" className="w-5 h-5 object-contain" />
+                  <img src={teamLogoUrl(leg.teamId)} alt="" className="w-5 h-5 object-contain" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                 ) : (
                   <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
                 )}

@@ -122,7 +122,7 @@ export function AppSidebar() {
           >
             {user?.imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={user.imageUrl} alt="" className="h-full w-full object-cover" />
+              <img src={user.imageUrl} alt="" className="h-full w-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
             ) : (
               <span className="flex h-full w-full items-center justify-center text-xs font-black text-white/45">
                 {user?.firstName?.[0] ?? user?.emailAddresses?.[0]?.emailAddress?.[0]?.toUpperCase() ?? "M"}

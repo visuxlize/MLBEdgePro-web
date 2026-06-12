@@ -545,7 +545,7 @@ function ChampionBanner({ teamId, onDismiss }: { teamId: string; onDismiss: () =
         <p className="text-xs font-black text-[#FBBF24] tracking-widest uppercase mb-2">🏆 World Cup Champion</p>
         <div className="flex items-center justify-center gap-3 mb-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={flagUrl(team.countryCode)} alt={team.shortName} className="w-10 h-10 rounded-full object-cover border-2 border-[#FBBF24]/40" />
+          <img src={flagUrl(team.countryCode)} alt={team.shortName} className="w-10 h-10 rounded-full object-cover border-2 border-[#FBBF24]/40" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
           <p className="text-3xl font-black text-white">{team.name}</p>
         </div>
         <p className="text-sm text-white/40 mb-6">Prediction based on ELO ratings</p>
@@ -604,7 +604,7 @@ function MobileMatchCard({
       <div className="w-8 h-8 rounded-full overflow-hidden border border-white/10 shrink-0 bg-white/5">
         {team ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={flagUrl(team.countryCode)} alt={team.shortName} className="w-full h-full object-cover" />
+          <img src={flagUrl(team.countryCode)} alt={team.shortName} className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <span className="text-[9px] text-white/20 font-bold">TBD</span>

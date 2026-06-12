@@ -94,7 +94,7 @@ function PitcherCard({
         </div>
         <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full overflow-hidden border border-[#0D1117]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={teamLogoUrl(teamId)} alt="" className="w-full h-full object-contain bg-white/5" />
+          <img src={teamLogoUrl(teamId)} alt="" className="w-full h-full object-contain bg-white/5" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
         </div>
       </div>
       <div className={side === "home" ? "text-right" : ""}>
@@ -233,7 +233,7 @@ async function GameDetailContent({ gamePk }: { gamePk: number }) {
       <div className="relative h-[260px] sm:h-[320px] overflow-hidden">
         {stadiumUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={stadiumUrl} alt={game.venue.name} className="absolute inset-0 w-full h-full object-cover" />
+          <img src={stadiumUrl} alt={game.venue.name} className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
         ) : (
           <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${awayColor}40, ${homeColor}40)` }} />
         )}
@@ -262,7 +262,7 @@ async function GameDetailContent({ gamePk }: { gamePk: number }) {
           <div className="flex items-center gap-3">
             <div className="w-12 h-12">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={teamLogoUrl(away.team.id)} alt="" className="w-full h-full object-contain" />
+              <img src={teamLogoUrl(away.team.id)} alt="" className="w-full h-full object-contain" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
             </div>
             <div>
               <p className="text-white font-black text-xl">{TEAM_ABBR[away.team.id] ?? away.team.name.split(" ").pop()}</p>
@@ -280,7 +280,7 @@ async function GameDetailContent({ gamePk }: { gamePk: number }) {
             </div>
             <div className="w-12 h-12">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={teamLogoUrl(home.team.id)} alt="" className="w-full h-full object-contain" />
+              <img src={teamLogoUrl(home.team.id)} alt="" className="w-full h-full object-contain" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
             </div>
           </div>
         </div>
