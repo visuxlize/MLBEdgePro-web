@@ -26,6 +26,7 @@ const PRO_FEATURES = [
   "Barrel Rate & Exit Velocity Analysis",
   "Confident daily picks",
   "Batter power & pitcher vulnerability",
+  "⚽ FIFA World Cup 2026 Analysis (Limited Time)",
 ];
 
 const COMPARISON: [string, boolean, boolean, boolean][] = [
@@ -43,6 +44,7 @@ const COMPARISON: [string, boolean, boolean, boolean][] = [
   ["Wall Clearance Analysis",  false, false, true ],
   ["Carry Conditions",         false, false, true ],
   ["Pitch → Spray Connection", false, false, true ],
+  ["⚽ World Cup Analysis",    false, false, true ],
 ];
 
 function CheckIcon({ yes, color }: { yes: boolean; color?: string }) {
@@ -221,12 +223,16 @@ function UpgradeInner({ highlightTier }: { highlightTier: "fan" | "pro" | null }
           >
             <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full bg-[#818cf8]/8 blur-3xl pointer-events-none" />
 
-            <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center justify-between mb-3">
               <p className="text-xs font-bold text-[#818cf8] tracking-widest uppercase">Pro</p>
               <div className="flex items-center gap-1.5 rounded-full border border-[#818cf8]/30 bg-[#818cf8]/10 px-2.5 py-1">
                 <Star size={9} className="text-[#818cf8]" strokeWidth={2.5} />
                 <span className="text-[9px] font-black text-[#818cf8] tracking-widest uppercase">Best Value</span>
               </div>
+            </div>
+            <div className="flex items-center gap-1.5 mb-4 rounded-lg border border-[#FBBF24]/25 bg-[#FBBF24]/10 px-2.5 py-1.5">
+              <span className="text-sm">⚽</span>
+              <span className="text-[10px] font-black text-[#FBBF24] tracking-wide uppercase">FIFA World Cup 2026 — Limited Time Access</span>
             </div>
 
             <div className="flex items-baseline gap-1 mb-1">

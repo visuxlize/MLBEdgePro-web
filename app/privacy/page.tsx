@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { ArrowLeft, Zap } from "lucide-react";
 
-const LAST_UPDATED = "May 28, 2026";
-const VERSION = "1.1";
+const LAST_UPDATED = "June 12, 2026";
+const VERSION = "1.2";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (

@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { ArrowLeft, Zap } from "lucide-react";
 
-const LAST_UPDATED = "May 28, 2026";
-const VERSION = "1.1";
+const LAST_UPDATED = "June 12, 2026";
+const VERSION = "1.2";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -75,6 +75,7 @@ export default function TermsPage() {
           <Bullet>AI-assisted game predictions and analytical insights for informational purposes.</Bullet>
           <Bullet>Weather data to assess stadium conditions and their potential impact on games.</Bullet>
           <Bullet>A Prop Builder tool that lets users track hypothetical betting slips, log wager details, and record outcomes for personal analysis.</Bullet>
+          <Bullet>Limited-time FIFA World Cup 2026 analysis and predictive content for Pro subscribers (available while the event is active).</Bullet>
         </Section>
 
         <Section title="2a. Prop Builder & Slip Tracking">
@@ -85,6 +86,12 @@ export default function TermsPage() {
           <Bullet>Win/loss data you record may be used — in anonymized, aggregated form — to improve the App's predictive models.</Bullet>
           <Bullet>MLB Edge Pro is not a sportsbook and does not facilitate actual wagering. Recording a slip does not constitute placing a real bet.</Bullet>
           <Bullet>You are solely responsible for any actual bets you place on third-party platforms such as FanDuel.</Bullet>
+        </Section>
+
+        <Section title="2b. FIFA World Cup 2026 Content (Limited Time)">
+          <Body>
+            {`MLB Edge Pro offers FIFA World Cup 2026 analytical content as a limited-time feature for active Pro-tier subscribers. This content includes match predictions, bracket analysis, head-to-head comparisons, and World Cup betting market insights.\n\nThis feature is provided on an as-available basis and may be removed or modified at any time without prior notice once the 2026 FIFA World Cup tournament concludes. Access is contingent on maintaining an active Pro subscription. World Cup content is subject to the same disclaimers as all other analytical content — it is for informational and entertainment purposes only and does not constitute betting advice.`}
+          </Body>
         </Section>
 
         <Section title="3. Not a Gambling Platform">
