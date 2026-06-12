@@ -555,6 +555,195 @@ function ChampionBanner({ teamId, onDismiss }: { teamId: string; onDismiss: () =
   );
 }
 
+// ── useIsMobile ───────────────────────────────────────────────────────────────
+
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < breakpoint);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, [breakpoint]);
+  return isMobile;
+}
+
+// ── Mobile Match Card (full-width) ────────────────────────────────────────────
+
+function MobileMatchCard({
+  match, showProb, onSetWinner,
+}: {
+  match: BracketMatch;
+  showProb: boolean;
+  onSetWinner: (id: string, side: "top" | "bottom") => void;
+}) {
+  const topTeam    = match.topTeamId    ? WC_TEAMS[match.topTeamId]    : null;
+  const bottomTeam = match.bottomTeamId ? WC_TEAMS[match.bottomTeamId] : null;
+  const isLive     = match.status === "live";
+  const isCompleted = match.status === "completed";
+  const isFinal    = match.round === "final";
+
+  const TeamRow = ({
+    team, score, pens, isWinner, isLoser, side, prob,
+  }: {
+    team: typeof topTeam;
+    score: number | null;
+    pens: number | null;
+    isWinner: boolean;
+    isLoser: boolean;
+    side: "top" | "bottom";
+    prob?: number;
+  }) => (
+    <button
+      onClick={() => team && !isCompleted && onSetWinner(match.id, side)}
+      disabled={!team || isCompleted}
+      className={`w-full flex items-center gap-3 px-4 py-3 transition-colors ${
+        isWinner ? "bg-[#FBBF24]/10" : isLoser ? "opacity-40" : "hover:bg-white/[0.04] active:bg-white/[0.06]"
+      } disabled:cursor-default`}
+    >
+      <div className="w-8 h-8 rounded-full overflow-hidden border border-white/10 shrink-0 bg-white/5">
+        {team ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={flagUrl(team.countryCode)} alt={team.shortName} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <span className="text-[9px] text-white/20 font-bold">TBD</span>
+          </div>
+        )}
+      </div>
+      <span className={`flex-1 text-sm font-bold text-left truncate ${isWinner ? "text-[#FBBF24]" : isLoser ? "text-white/30" : team ? "text-white/85" : "text-white/25 italic"}`}>
+        {team?.name ?? "TBD"}
+      </span>
+      {showProb && prob !== undefined && team && (
+        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0" style={{ background: `${BLUE}15`, color: BLUE }}>
+          {Math.round(prob * 100)}%
+        </span>
+      )}
+      {score !== null && (
+        <span className={`text-lg font-black min-w-[24px] text-center shrink-0 ${isWinner ? "text-[#FBBF24]" : "text-white/50"}`}>
+          {score}{pens !== null ? <span className="text-xs text-white/30">({pens})</span> : null}
+        </span>
+      )}
+      {isWinner && <Check size={14} className="text-[#FBBF24] shrink-0" strokeWidth={2.5} />}
+    </button>
+  );
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-2xl overflow-hidden border"
+      style={{
+        borderColor: isLive ? `${BLUE}50` : isFinal ? `${GOLD}50` : "rgba(255,255,255,0.07)",
+        background: isFinal ? "linear-gradient(135deg, #1A1505, #0E0E16)" : "#0D1420",
+        boxShadow: isLive ? `0 0 16px ${BLUE}25` : isFinal ? `0 0 16px ${GOLD}20` : "none",
+      }}
+    >
+      {(isLive || match.city) && (
+        <div className="flex items-center gap-2 px-4 pt-2.5 pb-1">
+          {isLive && (
+            <motion.span animate={{ opacity: [1, 0.4, 1] }} transition={{ duration: 1.2, repeat: Infinity }}
+              className="flex items-center gap-1 text-[10px] font-black text-[#38BDF8]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#38BDF8]" />LIVE
+            </motion.span>
+          )}
+          {match.city && (
+            <span className="text-[10px] text-white/25 flex items-center gap-1 ml-auto">
+              <MapPin size={9} strokeWidth={2} />{match.city} · {match.time}
+            </span>
+          )}
+        </div>
+      )}
+      <TeamRow team={topTeam} score={match.topScore} pens={match.topPens}
+        isWinner={match.winner === "top"} isLoser={match.winner === "bottom"}
+        side="top" prob={match.topWinProb} />
+      <div className="h-px bg-white/[0.06] mx-4" />
+      <TeamRow team={bottomTeam} score={match.bottomScore} pens={match.bottomPens}
+        isWinner={match.winner === "bottom"} isLoser={match.winner === "top"}
+        side="bottom" prob={match.topWinProb !== undefined ? 1 - match.topWinProb : undefined} />
+    </motion.div>
+  );
+}
+
+// ── Mobile Bracket View ───────────────────────────────────────────────────────
+
+const MOBILE_ROUNDS: { key: RoundKey; label: string; short: string }[] = [
+  { key: "r32",   label: "Round of 32",   short: "R32"   },
+  { key: "r16",   label: "Round of 16",   short: "R16"   },
+  { key: "qf",    label: "Quarter-Final", short: "QF"    },
+  { key: "sf",    label: "Semi-Final",    short: "SF"    },
+  { key: "final", label: "Final",         short: "Final" },
+];
+
+function MobileBracketView({
+  bracket, showProb, onSetWinner,
+}: {
+  bracket: BracketState;
+  showProb: boolean;
+  onSetWinner: (id: string, side: "top" | "bottom") => void;
+}) {
+  const [activeRound, setActiveRound] = useState<RoundKey>("r32");
+
+  const matchIds = bracket.rounds[activeRound] ?? [];
+  const matches  = matchIds.map((id) => bracket.matches[id]).filter(Boolean);
+
+  return (
+    <div className="space-y-3">
+      {/* Round tabs — scrollable */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 hide-scrollbar">
+        {MOBILE_ROUNDS.map(({ key, short }) => {
+          const roundMatchIds = bracket.rounds[key] ?? [];
+          const done = roundMatchIds.filter((id) => bracket.matches[id]?.status === "completed").length;
+          const total = roundMatchIds.length;
+          const isActive = activeRound === key;
+          return (
+            <button
+              key={key}
+              onClick={() => setActiveRound(key)}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+                isActive
+                  ? "bg-[#FBBF24]/15 text-[#FBBF24] border border-[#FBBF24]/30"
+                  : "text-white/35 border border-white/[0.08] hover:text-white"
+              }`}
+            >
+              {short}
+              {total > 0 && (
+                <span className={`text-[9px] font-normal ${isActive ? "text-[#FBBF24]/60" : "text-white/25"}`}>
+                  {done}/{total}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Round title */}
+      <p className="text-[10px] text-white/25 uppercase tracking-widest font-bold">
+        {ROUND_LABELS[activeRound]}
+      </p>
+
+      {/* Match cards */}
+      <div className="space-y-2.5">
+        {matches.length > 0 ? (
+          matches.map((match) => (
+            <MobileMatchCard
+              key={match.id}
+              match={match}
+              showProb={showProb}
+              onSetWinner={onSetWinner}
+            />
+          ))
+        ) : (
+          <div className="text-center py-10">
+            <Trophy size={32} className="text-white/10 mx-auto mb-3" strokeWidth={1.2} />
+            <p className="text-sm text-white/30">Advance teams to see this round</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export function LiveAnimatedBracket() {
@@ -565,6 +754,7 @@ export function LiveAnimatedBracket() {
   const [isPredicting, setIsPredicting]   = useState(false);
   const [showChampion, setShowChampion]   = useState(false);
   const [view, setView] = useState<"full" | "upper" | "lower">("full");
+  const isMobile = useIsMobile(900);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const matchRefs    = useRef(new Map<string, HTMLDivElement>());
@@ -630,22 +820,24 @@ export function LiveAnimatedBracket() {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* View toggle */}
-          <div className="flex items-center gap-0.5 rounded-xl border border-white/[0.08] bg-white/[0.03] p-0.5">
-            {(["full", "upper", "lower"] as const).map((v) => (
-              <button
-                key={v}
-                onClick={() => setView(v)}
-                className={`px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-colors ${
-                  view === v
-                    ? "bg-[#FBBF24]/15 text-[#FBBF24]"
-                    : "text-white/30 hover:text-white"
-                }`}
-              >
-                {v === "full" ? "Full" : v === "upper" ? "Half A" : "Half B"}
-              </button>
-            ))}
-          </div>
+          {/* View toggle — desktop only */}
+          {!isMobile && (
+            <div className="flex items-center gap-0.5 rounded-xl border border-white/[0.08] bg-white/[0.03] p-0.5">
+              {(["full", "upper", "lower"] as const).map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setView(v)}
+                  className={`px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-colors ${
+                    view === v
+                      ? "bg-[#FBBF24]/15 text-[#FBBF24]"
+                      : "text-white/30 hover:text-white"
+                  }`}
+                >
+                  {v === "full" ? "Full" : v === "upper" ? "Half A" : "Half B"}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Predictor toggle */}
           <motion.button
@@ -738,8 +930,17 @@ export function LiveAnimatedBracket() {
         )}
       </AnimatePresence>
 
-      {/* ── Bracket container ────────────────────────────────────────────────── */}
-      <div className="overflow-x-auto pb-4 rounded-2xl">
+      {/* ── Mobile bracket view ─────────────────────────────────────────────── */}
+      {isMobile && (
+        <MobileBracketView
+          bracket={bracket}
+          showProb={showProb}
+          onSetWinner={handleSetWinner}
+        />
+      )}
+
+      {/* ── Desktop bracket container ────────────────────────────────────────── */}
+      {!isMobile && <div className="overflow-x-auto pb-4 rounded-2xl -mx-4 sm:-mx-6 px-4 sm:px-6">
         <div
           ref={containerRef}
           className="relative inline-flex items-start gap-0"
@@ -819,24 +1020,34 @@ export function LiveAnimatedBracket() {
             </>
           )}
         </div>
-      </div>
+      </div>}
 
-      {/* ── 3rd Place match (below bracket) ─────────────────────────────────── */}
+      {/* ── 3rd Place match ──────────────────────────────────────────────────── */}
       <div className="mt-4 flex items-center gap-4">
         <div className="flex-1 h-px bg-white/[0.05]" />
         <span className="text-[9px] text-white/25 uppercase tracking-widest">3rd Place Match</span>
         <div className="flex-1 h-px bg-white/[0.05]" />
       </div>
-      <div className="mt-3 flex justify-center">
-        <MatchCard
-          match={bracket.matches["3rd_0"]}
-          showProb={showProb}
-          onSetWinner={handleSetWinner}
-          cardRef={(el) => {
-            if (el) matchRefs.current.set("3rd_0", el);
-            else matchRefs.current.delete("3rd_0");
-          }}
-        />
+      <div className="mt-3">
+        {isMobile ? (
+          <MobileMatchCard
+            match={bracket.matches["3rd_0"]}
+            showProb={showProb}
+            onSetWinner={handleSetWinner}
+          />
+        ) : (
+          <div className="flex justify-center">
+            <MatchCard
+              match={bracket.matches["3rd_0"]}
+              showProb={showProb}
+              onSetWinner={handleSetWinner}
+              cardRef={(el) => {
+                if (el) matchRefs.current.set("3rd_0", el);
+                else matchRefs.current.delete("3rd_0");
+              }}
+            />
+          </div>
+        )}
       </div>
 
       {/* ── Champion overlay ────────────────────────────────────────────────── */}

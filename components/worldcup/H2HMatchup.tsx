@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users, ChevronRight, X, Star, Shield, Zap, Target, Clock,
-  BarChart3, Minus,
+  BarChart3, Minus, ChevronDown, Check,
 } from "lucide-react";
 import { WC_TEAMS } from "@/lib/worldcup/data";
 import type { WCPlayer, WCTeam } from "@/lib/worldcup/types";
@@ -316,21 +316,71 @@ function TeamSelector({
   exclude: string;
   label: string;
 }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
   const teams = Object.values(WC_TEAMS).filter((t) => t.id !== exclude);
   const selected = WC_TEAMS[value];
 
+  useEffect(() => {
+    function onDown(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, []);
+
   return (
-    <div className="flex-1">
+    <div className="flex-1 relative" ref={ref}>
       <p className="text-[9px] text-white/30 uppercase tracking-widest mb-1.5">{label}</p>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-[#0D1420] border border-white/[0.1] rounded-xl px-3 py-2 text-xs text-white/80 font-bold focus:border-[#38BDF8]/40 focus:outline-none"
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center gap-2 bg-[#0D1420] border border-white/[0.1] rounded-xl px-3 py-2.5 text-left hover:border-white/[0.22] transition-colors"
       >
-        {teams.map((t) => (
-          <option key={t.id} value={t.id}>{t.name}</option>
-        ))}
-      </select>
+        {selected && (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={`https://flagcdn.com/w40/${selected.countryCode.toLowerCase()}.png`}
+            alt={selected.name}
+            className="w-5 h-4 rounded object-cover shrink-0"
+          />
+        )}
+        <span className="text-xs font-bold text-white/85 flex-1 truncate">{selected?.name ?? "Select team"}</span>
+        <ChevronDown size={13} className={`text-white/30 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} strokeWidth={2} />
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -4, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, scale: 0.97 }}
+            transition={{ duration: 0.15 }}
+            className="absolute top-full left-0 right-0 mt-1 z-50 bg-[#0D1420] border border-white/[0.12] rounded-xl overflow-hidden shadow-2xl"
+            style={{ maxHeight: 240 }}
+          >
+            <div className="overflow-y-auto" style={{ maxHeight: 240 }}>
+              {teams.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => { onChange(t.id); setOpen(false); }}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors ${
+                    t.id === value ? "bg-[#38BDF8]/[0.08]" : "hover:bg-white/[0.05]"
+                  }`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={`https://flagcdn.com/w40/${t.countryCode.toLowerCase()}.png`}
+                    alt={t.name}
+                    className="w-5 h-4 rounded object-cover shrink-0"
+                  />
+                  <span className="text-xs font-medium text-white/80 flex-1 truncate">{t.name}</span>
+                  {t.id === value && <Check size={11} className="text-[#38BDF8] shrink-0" strokeWidth={2.5} />}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

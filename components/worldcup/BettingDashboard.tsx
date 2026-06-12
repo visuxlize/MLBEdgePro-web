@@ -255,6 +255,62 @@ function ValueBetsPanel({ props }: { props: PlayerProp[] }) {
   );
 }
 
+// ── WC 2026 group schedule stub (shown when live odds API unavailable) ────────
+
+const WC_GROUP_MATCHES = [
+  { home: "USA",       away: "Bolivia",    date: "Jun 12",  time: "9:00 PM ET",  group: "A", venue: "SoFi Stadium" },
+  { home: "Canada",    away: "Yugoslavia", date: "Jun 13",  time: "6:00 PM ET",  group: "A", venue: "BMO Field" },
+  { home: "Morocco",   away: "Argentina",  date: "Jun 13",  time: "9:00 PM ET",  group: "B", venue: "MetLife" },
+  { home: "Spain",     away: "Brazil",     date: "Jun 14",  time: "6:00 PM ET",  group: "C", venue: "AT&T Stadium" },
+  { home: "France",    away: "Germany",    date: "Jun 14",  time: "9:00 PM ET",  group: "D", venue: "Rose Bowl" },
+  { home: "England",   away: "Portugal",   date: "Jun 15",  time: "6:00 PM ET",  group: "E", venue: "Mercedes-Benz" },
+  { home: "Japan",     away: "Netherlands",date: "Jun 15",  time: "9:00 PM ET",  group: "F", venue: "Levi's Stadium" },
+  { home: "Mexico",    away: "Ecuador",    date: "Jun 16",  time: "9:00 PM ET",  group: "G", venue: "Estadio Azteca" },
+];
+
+function WCScheduleStub() {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-start gap-3 rounded-xl border border-[#38BDF8]/15 bg-[#38BDF8]/[0.05] px-4 py-3">
+        <TrendingUp size={13} className="text-[#38BDF8] shrink-0 mt-0.5" strokeWidth={2} />
+        <p className="text-xs text-[#38BDF8]/80 leading-relaxed">
+          <span className="font-bold text-[#38BDF8]">Live odds loading</span> — FanDuel WC 2026 markets shown here when available. Group stage schedule below.
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        {WC_GROUP_MATCHES.map((m, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.04 }}
+            className="rounded-xl border border-white/[0.07] bg-[#0D1420] px-4 py-3"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="text-[9px] font-black text-[#FBBF24] border border-[#FBBF24]/25 rounded-full px-1.5 py-0.5">
+                    GRP {m.group}
+                  </span>
+                  <span className="text-[9px] text-white/25">{m.venue}</span>
+                </div>
+                <p className="text-sm font-bold text-white/85 truncate">
+                  {m.home} <span className="text-white/30 text-xs font-normal">vs</span> {m.away}
+                </p>
+              </div>
+              <div className="text-right shrink-0">
+                <p className="text-[10px] font-bold text-white/50">{m.date}</p>
+                <p className="text-[9px] text-white/30">{m.time}</p>
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export function BettingDashboard() {
@@ -358,10 +414,7 @@ export function BettingDashboard() {
               className="space-y-2"
             >
               {markets.length === 0 ? (
-                <div className="rounded-2xl border border-white/[0.07] bg-[#0D1420] p-6 text-center">
-                  <DollarSign size={24} className="text-white/20 mx-auto mb-2" strokeWidth={1.5} />
-                  <p className="text-xs text-white/30">WC 2026 odds open closer to tournament start</p>
-                </div>
+                <WCScheduleStub />
               ) : (
                 markets.map((m, i) => <MarketCard key={i} market={m} />)
               )}

@@ -13,8 +13,8 @@ export default function WorldCupLayout({ children }: { children: React.ReactNode
         "Head-to-head lineup and matchup analysis",
       ]}
     >
-      <div className="min-h-screen bg-[#060C18] px-4 py-8">
-        <div className="max-w-7xl mx-auto mb-6 overflow-x-auto">
+      <div className="min-h-screen bg-[#060C18] px-3 sm:px-4 py-6 sm:py-8">
+        <div className="max-w-7xl mx-auto mb-5 sm:mb-6">
           <WorldCupNav />
         </div>
         {children}

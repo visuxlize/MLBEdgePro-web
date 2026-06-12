@@ -4,7 +4,7 @@ export const metadata = { title: "WC 2026 Bracket – MLBEdgePro" };
 
 export default function BracketPage() {
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="w-full px-2 sm:px-4">
       <LiveAnimatedBracket />
     </div>
   );
