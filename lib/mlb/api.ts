@@ -177,7 +177,7 @@ const VENUE_COORDS: Record<number, { lat: number; lon: number }> = {
 
 export async function fetchGamesByDate(date: string): Promise<Game[]> {
   const url = `${BASE}/schedule?sportId=1&date=${date}&hydrate=probablePitcher,linescore(teams),team`;
-  const res = await fetch(url, { next: { revalidate: 60 } });
+  const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error("MLB API error");
   const data = await res.json();
   return (data.dates ?? []).flatMap((d: any) => d.games ?? []) as Game[];
