@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { rateLimit, getIp } from "@/lib/rate-limit";
 import { INITIAL_BRACKET } from "@/lib/worldcup/data";
 import { fetchWCFixtures } from "@/lib/worldcup/api-football";
+import { isNextResponse, requirePlan } from "@/lib/require-plan";
 import type { BracketState } from "@/lib/worldcup/types";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const planResult = await requirePlan("pro");
+  if (isNextResponse(planResult)) return planResult;
 
   const ip = getIp(req);
   const rl = rateLimit(`wc-bracket:${ip}`, 30, 60_000);

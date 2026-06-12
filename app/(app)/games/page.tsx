@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft, ChevronRight, RefreshCw, Cloud,
-  CircleDot,
+  CircleDot, ArrowRight, Lock, Trophy,
 } from "lucide-react";
 import {
   fetchGamesByDate, gameStatusLabel, getStadiumImageUrl,
@@ -13,6 +14,7 @@ import {
   TEAM_ABBR, TEAM_COLORS, type Game,
 } from "@/lib/mlb/api";
 import { TeamLogoImg } from "@/components/web-tool/team-logo-img";
+import { useSubscription } from "@/lib/subscription";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -296,6 +298,7 @@ function StatsBar({ games, date }: { games: Game[]; date: string }) {
 
 export default function GamesPage() {
   const router = useRouter();
+  const { isLoaded: subscriptionLoaded, isSuperPro } = useSubscription();
   const [date, setDate]   = useState(todayStr());
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
@@ -334,6 +337,10 @@ export default function GamesPage() {
   // Pick featured game: first live, else first upcoming, else first final
   const featured = live[0] ?? upcoming[0] ?? final[0];
   const rest = games.filter((g) => g.gamePk !== featured?.gamePk);
+  const worldCupHref = isSuperPro ? "/worldcup" : "/upgrade?tier=pro";
+  const worldCupSubtext = subscriptionLoaded && isSuperPro
+    ? "PRO access unlocked — open the event hub."
+    : "Pro plan required for FIFA World Cup analysis.";
 
   return (
     <div className="px-4 sm:px-8 py-6 max-w-screen-xl mx-auto">
@@ -365,6 +372,27 @@ export default function GamesPage() {
         </h1>
       </div>
 
+      <Link href={worldCupHref} className="block mb-6">
+        <div className="rounded-2xl border border-[#FBBF24]/25 bg-gradient-to-r from-[#FBBF24]/12 via-[#F59E0B]/8 to-[#0f172a] px-4 sm:px-5 py-4 hover:border-[#FBBF24]/45 transition-colors">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-start gap-3 min-w-0">
+              <div className="w-9 h-9 rounded-xl border border-[#FBBF24]/35 bg-[#FBBF24]/12 flex items-center justify-center shrink-0">
+                <Trophy size={16} className="text-[#FBBF24]" strokeWidth={2.2} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] sm:text-xs font-black tracking-wide text-[#FBBF24] uppercase">
+                  Limited Time Event - FIFA World Cup Analysis
+                </p>
+                <p className="text-xs text-white/55 mt-1">{worldCupSubtext}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 text-[#FBBF24] shrink-0">
+              {!isSuperPro && <Lock size={12} strokeWidth={2.4} />}
+              <ArrowRight size={14} strokeWidth={2.5} />
+            </div>
+          </div>
+        </div>
+      </Link>
       {/* Date picker */}
       <DatePicker date={date} onChange={setDate} />
 

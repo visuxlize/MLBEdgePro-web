@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Trophy, Map, BarChart3, Users, ArrowRight, Globe2 } from "lucide-react";
-import { WorldCupNav } from "@/components/worldcup/WorldCupNav";
 
 export const metadata = { title: "World Cup 2026 – MLBEdgePro" };
 
@@ -41,7 +40,7 @@ const SECTIONS = [
 
 export default function WorldCupHubPage() {
   return (
-    <div className="min-h-screen bg-[#060C18] px-4 py-8 max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto">
       {/* Hero */}
       <div className="text-center mb-10">
         <div className="inline-flex items-center gap-2 rounded-full border border-[#FBBF24]/20 bg-[#FBBF24]/[0.06] px-4 py-2 mb-6">
@@ -59,10 +58,6 @@ export default function WorldCupHubPage() {
         </p>
       </div>
 
-      {/* Nav */}
-      <div className="mb-8 overflow-x-auto">
-        <WorldCupNav />
-      </div>
 
       {/* Section cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
