@@ -36,6 +36,15 @@ const CORAL  = "#FF7828";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+function fmt12h(time: string): string {
+  const [hStr, mStr] = time.split(":");
+  const h = parseInt(hStr, 10);
+  const m = parseInt(mStr, 10);
+  const period = h >= 12 ? "PM" : "AM";
+  const hour = h % 12 || 12;
+  return `${hour}:${m.toString().padStart(2, "0")} ${period}`;
+}
+
 function flagUrl(countryCode: string) {
   return `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`;
 }
@@ -310,7 +319,7 @@ function MatchCard({
           {/* Match info */}
           <div className="flex items-center gap-1 px-1.5">
             <Clock size={7} className="text-white/20" strokeWidth={2} />
-            <span className="text-[8px] text-white/25">{match.time}</span>
+            <span className="text-[8px] text-white/25">{fmt12h(match.time)}</span>
           </div>
           <div className="flex-1 h-px bg-white/[0.06]" />
         </div>
@@ -408,7 +417,11 @@ function BracketConnectors({
       });
     });
 
-    setPaths(newPaths);
+    const key = newPaths.map((p) => `${p.d}|${p.isCompleted}`).join(";");
+    setPaths((prev) => {
+      const prevKey = prev.map((p) => `${p.d}|${p.isCompleted}`).join(";");
+      return prevKey === key ? prev : newPaths;
+    });
   });
 
   return (
@@ -648,7 +661,7 @@ function MobileMatchCard({
           )}
           {match.city && (
             <span className="text-[10px] text-white/25 flex items-center gap-1 ml-auto">
-              <MapPin size={9} strokeWidth={2} />{match.city} · {match.time}
+              <MapPin size={9} strokeWidth={2} />{match.city} · {fmt12h(match.time)}
             </span>
           )}
         </div>

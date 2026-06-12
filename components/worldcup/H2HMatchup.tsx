@@ -202,16 +202,35 @@ function posColor(pos: WCPlayer["position"]): string {
   return map[pos];
 }
 
+// ── Player Avatar ─────────────────────────────────────────────────────────────
+
+function PlayerAvatar({ player, teamColor, size = 36 }: { player: WCPlayer; teamColor: string; size?: number }) {
+  return (
+    <div
+      className="relative rounded-full border-2 border-white/30 flex items-center justify-center overflow-hidden shadow-lg"
+      style={{
+        width: size, height: size,
+        background: `linear-gradient(135deg, ${teamColor}dd, ${teamColor}88)`,
+        boxShadow: `0 0 8px ${teamColor}50`,
+      }}
+    >
+      <span className="text-white font-black leading-none" style={{ fontSize: size * 0.38 }}>
+        {player.jerseyNumber}
+      </span>
+    </div>
+  );
+}
+
 // ── Player Dot on pitch ───────────────────────────────────────────────────────
 
 function PlayerDot({
-  player, isSelected, onClick,
+  player, isSelected, onClick, teamColor,
 }: {
   player: WCPlayer;
   isSelected: boolean;
   onClick: (p: WCPlayer) => void;
+  teamColor: string;
 }) {
-  const color = posColor(player.position);
   const x = `${player.pitchX}%`;
   const y = `${player.pitchY}%`;
 
@@ -225,19 +244,7 @@ function PlayerDot({
       animate={isSelected ? { scale: [1, 1.15, 1.05] } : { scale: 1 }}
       transition={{ duration: 0.3 }}
     >
-      <div
-        className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black border-2 transition-all ${
-          isSelected ? "shadow-lg" : ""
-        }`}
-        style={{
-          background: `${color}25`,
-          borderColor: isSelected ? color : `${color}60`,
-          color,
-          boxShadow: isSelected ? `0 0 10px ${color}60` : undefined,
-        }}
-      >
-        {player.jerseyNumber}
-      </div>
+      <PlayerAvatar player={player} teamColor={teamColor} size={isSelected ? 34 : 28} />
       <span className="text-[8px] text-white/60 font-medium whitespace-nowrap bg-[#060C18]/80 px-1 rounded">
         {player.lastname}
       </span>
@@ -248,12 +255,14 @@ function PlayerDot({
 // ── Pitch ─────────────────────────────────────────────────────────────────────
 
 function VirtualPitch({
-  homePlayers, awayPlayers, selectedPlayer, onSelect,
+  homePlayers, awayPlayers, selectedPlayer, onSelect, homeColor, awayColor,
 }: {
   homePlayers: WCPlayer[];
   awayPlayers: WCPlayer[];
   selectedPlayer: WCPlayer | null;
   onSelect: (p: WCPlayer) => void;
+  homeColor: string;
+  awayColor: string;
 }) {
   return (
     <div className="relative w-full rounded-2xl overflow-hidden" style={{ aspectRatio: "1.6 / 1" }}>
@@ -291,6 +300,7 @@ function VirtualPitch({
           player={p}
           isSelected={selectedPlayer?.id === p.id}
           onClick={onSelect}
+          teamColor={homeColor}
         />
       ))}
 
@@ -301,6 +311,7 @@ function VirtualPitch({
           player={p}
           isSelected={selectedPlayer?.id === p.id}
           onClick={onSelect}
+          teamColor={awayColor}
         />
       ))}
     </div>
@@ -309,7 +320,7 @@ function VirtualPitch({
 
 // ── Player Stats Panel ────────────────────────────────────────────────────────
 
-function PlayerPanel({ player, onClose }: { player: WCPlayer; onClose: () => void }) {
+function PlayerPanel({ player, onClose, teamColor }: { player: WCPlayer; onClose: () => void; teamColor: string }) {
   const color = posColor(player.position);
   const stats = player.stats;
 
@@ -332,15 +343,18 @@ function PlayerPanel({ player, onClose }: { player: WCPlayer; onClose: () => voi
     >
       {/* Header */}
       <div className="flex items-start justify-between p-4 pb-3">
-        <div>
-          <div
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider mb-2"
-            style={{ background: `${color}15`, color }}
-          >
-            {player.position}
+        <div className="flex items-start gap-3">
+          <PlayerAvatar player={player} teamColor={teamColor} size={56} />
+          <div>
+            <div
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider mb-2"
+              style={{ background: `${color}15`, color }}
+            >
+              {player.position}
+            </div>
+            <p className="text-sm font-black text-white">{player.name}</p>
+            <p className="text-[10px] text-white/40 mt-0.5">{player.teamName} · #{player.jerseyNumber}</p>
           </div>
-          <p className="text-sm font-black text-white">{player.name}</p>
-          <p className="text-[10px] text-white/40 mt-0.5">{player.teamName} · #{player.jerseyNumber}</p>
         </div>
         <button onClick={onClose} className="text-white/25 hover:text-white transition-colors mt-0.5">
           <X size={14} strokeWidth={2} />
@@ -517,8 +531,15 @@ export function H2HMatchup() {
   const homeTeam = WC_TEAMS[homeId];
   const awayTeam = WC_TEAMS[awayId];
 
+  const homeTeamColor = homeTeam?.color ?? "#38BDF8";
+  const awayTeamColor = awayTeam?.color ?? "#F87171";
+
   const homePlayers = getPlayers(homeId, "home");
   const awayPlayers = getPlayers(awayId, "away");
+
+  const selectedPlayerTeamColor = selectedPlayer
+    ? (homePlayers.some((p) => p.id === selectedPlayer.id) ? homeTeamColor : awayTeamColor)
+    : "#FBBF24";
 
   const homeGoals   = homePlayers.reduce((s, p) => s + (p.stats?.goals ?? 0), 0);
   const awayGoals   = awayPlayers.reduce((s, p) => s + (p.stats?.goals ?? 0), 0);
@@ -583,11 +604,17 @@ export function H2HMatchup() {
           awayPlayers={awayPlayers}
           selectedPlayer={selectedPlayer}
           onSelect={handleSelectPlayer}
+          homeColor={homeTeamColor}
+          awayColor={awayTeamColor}
         />
 
         <AnimatePresence>
           {selectedPlayer && (
-            <PlayerPanel player={selectedPlayer} onClose={() => setSelectedPlayer(null)} />
+            <PlayerPanel
+              player={selectedPlayer}
+              onClose={() => setSelectedPlayer(null)}
+              teamColor={selectedPlayerTeamColor}
+            />
           )}
         </AnimatePresence>
       </div>

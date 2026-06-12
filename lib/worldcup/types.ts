@@ -161,6 +161,19 @@ export interface WCPlayerStats {
 
 // ── API-Football response types ──────────────────────────────────────────────
 
+// ── Group Stage Types ────────────────────────────────────────────────────────
+
+export interface GSGoal { teamId: string; scorer: string; min: number; }
+export interface GSMatch {
+  home: string; away: string;
+  date: string; time: string; venue: string;
+  homeScore: number | null; awayScore: number | null;
+  goals: GSGoal[];
+  status: "scheduled" | "completed" | "live";
+}
+export interface GSTeam { teamId: string; p: number; w: number; d: number; l: number; gf: number; ga: number; pts: number; }
+export interface WCGroup { id: string; teams: GSTeam[]; matches: GSMatch[]; }
+
 export interface ApiFootballFixture {
   fixture: {
     id: number;

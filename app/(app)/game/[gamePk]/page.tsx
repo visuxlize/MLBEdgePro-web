@@ -26,14 +26,14 @@ export const dynamic = "force-dynamic";
 
 async function fetchGame(gamePk: number): Promise<Game | null> {
   try {
-    const today  = new Date().toISOString().slice(0, 10);
-    const dates  = [today, addDays(today, -1), addDays(today, 1)];
-    for (const d of dates) {
-      const games = await fetchGamesByDate(d);
-      const found = games.find((g) => g.gamePk === gamePk);
-      if (found) return found;
-    }
-    return null;
+    const hydrate = "probablePitcher,linescore(teams),team";
+    const res = await fetch(
+      `https://statsapi.mlb.com/api/v1/schedule?gamePk=${gamePk}&hydrate=${hydrate}`,
+      { cache: "no-store" }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    return (data.dates ?? []).flatMap((d: any) => d.games ?? [])[0] ?? null;
   } catch {
     return null;
   }

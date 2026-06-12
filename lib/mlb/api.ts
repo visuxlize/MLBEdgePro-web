@@ -194,7 +194,8 @@ export async function fetchScores(): Promise<Game[]> {
 
 export async function fetchPitcherStats(personId: number): Promise<PitcherSeasonStats | null> {
   try {
-    const url = `${BASE}/people/${personId}/stats?stats=season&group=pitching&season=2025`;
+    const season = new Date().getFullYear();
+    const url = `${BASE}/people/${personId}/stats?stats=season&group=pitching&season=${season}`;
     const res = await fetch(url, { next: { revalidate: 300 } });
     if (!res.ok) return null;
     const data = await res.json();
@@ -221,7 +222,8 @@ export async function fetchPitcherStats(personId: number): Promise<PitcherSeason
 
 export async function fetchBatterStats(personId: number): Promise<BatterSeasonStats | null> {
   try {
-    const url = `${BASE}/people/${personId}/stats?stats=season&group=hitting&season=2025`;
+    const season = new Date().getFullYear();
+    const url = `${BASE}/people/${personId}/stats?stats=season&group=hitting&season=${season}`;
     const res = await fetch(url, { next: { revalidate: 300 } });
     if (!res.ok) return null;
     const data = await res.json();
@@ -278,7 +280,8 @@ export interface PlayerFullStats {
 export async function fetchPlayerFullStats(personId: number, isPitcher = false): Promise<PlayerFullStats | null> {
   try {
     const groups = isPitcher ? "pitching" : "hitting";
-    const url = `${BASE}/people/${personId}?hydrate=stats(type=season,group=${groups},season=2025),currentTeam`;
+    const season = new Date().getFullYear();
+    const url = `${BASE}/people/${personId}?hydrate=stats(type=season,group=${groups},season=${season}),currentTeam`;
     const res = await fetch(url, { next: { revalidate: 300 } });
     if (!res.ok) return null;
     const data = await res.json();

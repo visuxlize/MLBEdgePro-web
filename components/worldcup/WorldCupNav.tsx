@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { Trophy, Map, BarChart3, Users, Globe, ArrowLeft } from "lucide-react";
+import { Trophy, Map, BarChart3, Users, Globe, ArrowLeft, LayoutGrid } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/worldcup",         label: "Hub",      icon: Globe },
+  { href: "/worldcup/groups",  label: "Groups",   icon: LayoutGrid },
   { href: "/worldcup/bracket", label: "Bracket",  icon: Trophy },
   { href: "/worldcup/map",     label: "Map",      icon: Map },
   { href: "/worldcup/props",   label: "Betting",  icon: BarChart3 },

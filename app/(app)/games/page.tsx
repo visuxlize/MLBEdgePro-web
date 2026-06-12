@@ -84,7 +84,7 @@ function DateStrip({ date, onChange }: { date: string; onChange: (d: string) => 
   );
 }
 
-// ── Compact Game Card ──────────────────────────────────────────────────────────
+// ── Stadium Game Card ──────────────────────────────────────────────────────────
 
 function GameCard({ game, favTeamId, onClick }: { game: Game; favTeamId: number | null; onClick: () => void }) {
   const away = game.teams.away;
@@ -96,94 +96,99 @@ function GameCard({ game, favTeamId, onClick }: { game: Game; favTeamId: number 
   const awayWin = isFinal && awayScore !== undefined && homeScore !== undefined && awayScore > homeScore;
   const homeWin = isFinal && awayScore !== undefined && homeScore !== undefined && homeScore > awayScore;
   const isFavGame = favTeamId && (away.team.id === favTeamId || home.team.id === favTeamId);
+  const stadiumUrl = getStadiumImageUrl(game.venue.id);
+  const gameTime = new Date(game.gameDate).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  const tz = new Date(game.gameDate).toLocaleTimeString("en-US", { timeZoneName: "short" }).split(" ").pop();
 
   return (
     <motion.button
       onClick={onClick}
-      whileHover={{ x: 3 }}
-      className={`w-full rounded-2xl border text-left transition-all overflow-hidden ${
-        isFavGame
-          ? "border-[#FF7828]/30 bg-gradient-to-r from-[#FF7828]/[0.06] to-[#0D1117]"
-          : "border-white/[0.07] bg-[#0D1117] hover:border-white/[0.14] hover:bg-[#111622]"
-      }`}
+      whileHover={{ scale: 1.02 }}
+      transition={{ type: "spring", stiffness: 300, damping: 24 }}
+      className="relative w-full rounded-2xl overflow-hidden text-left cursor-pointer group"
+      style={{ aspectRatio: "16/10" }}
     >
-      <div className="px-4 py-3.5 flex items-center gap-3">
-        {/* Status / Time — prominent left column */}
-        <div className="w-[72px] shrink-0 text-center">
+      {/* Stadium background */}
+      {stadiumUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={stadiumUrl} alt="" className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-br from-[#111622] to-[#0D1117]" />
+      )}
+      {/* Dark gradient — heavier at bottom so logos are readable */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-black/30" />
+      {/* Fav ring */}
+      {isFavGame && <div className="absolute inset-0 rounded-2xl ring-1 ring-[#FF7828]/60 pointer-events-none" />}
+
+      {/* Content */}
+      <div className="relative h-full flex flex-col justify-between p-3.5">
+
+        {/* ── Top row: status badge + fav star ── */}
+        <div className="flex items-start justify-between">
           {isLive ? (
-            <div className="flex flex-col items-center gap-0.5">
-              <motion.div animate={{ opacity: [1, 0.4, 1] }} transition={{ duration: 1.2, repeat: Infinity }}
-                className="flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />
-                <span className="text-[10px] font-black text-red-400">LIVE</span>
-              </motion.div>
-              <span className="text-[10px] text-red-300/70">{game.linescore?.currentInningOrdinal ?? ""}</span>
-            </div>
+            <motion.span animate={{ opacity: [1, 0.5, 1] }} transition={{ duration: 1.2, repeat: Infinity }}
+              className="flex items-center gap-1 text-[9px] font-black text-red-400 bg-red-500/25 border border-red-500/30 rounded-full px-2.5 py-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />
+              LIVE · {game.linescore?.currentInningOrdinal ?? ""}
+            </motion.span>
           ) : isFinal ? (
-            <span className="text-[10px] font-bold text-white/25 uppercase">Final</span>
+            <span className="text-[9px] font-bold text-white bg-black/50 border border-white/15 rounded-full px-2.5 py-1">FINAL</span>
           ) : (
-            <div className="flex flex-col items-center">
-              <span className="text-base font-black text-white leading-tight">
-                {new Date(game.gameDate).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
-              </span>
-              <span className="text-[9px] text-white/35 font-medium">
-                {new Date(game.gameDate).toLocaleTimeString("en-US", { timeZoneName: "short" }).split(" ").pop()}
-              </span>
-            </div>
+            <span className="text-[9px] font-bold text-white bg-black/50 border border-white/20 rounded-full px-2.5 py-1">
+              Today
+            </span>
           )}
+          {isFavGame && <Star size={12} className="text-[#FF7828]" fill="currentColor" />}
         </div>
 
-        <div className="flex-1 flex items-center gap-3 min-w-0">
-          {/* Away */}
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            <div className="shrink-0"><TeamLogoImg teamId={away.team.id} name={away.team.name} size={30} /></div>
-            <div className="min-w-0">
-              <p className={`text-sm font-black truncate leading-tight ${awayWin ? "text-white" : isFinal ? "text-white/40" : "text-white"}`}>
-                {TEAM_ABBR[away.team.id] ?? away.team.name.split(" ").pop()}
+        {/* ── Bottom: away | center | home ── */}
+        <div className="flex items-end justify-between gap-2 pb-0.5">
+
+          {/* Away (left) */}
+          <div className="flex flex-col items-center gap-1.5 flex-1 min-w-0">
+            <TeamLogoImg teamId={away.team.id} name={away.team.name} size={44} badge />
+            <p className={`text-sm font-black leading-tight ${awayWin ? "text-white" : isFinal ? "text-white/35" : "text-white"}`}>
+              {TEAM_ABBR[away.team.id] ?? away.team.name.split(" ").pop()}
+            </p>
+            {(isLive || isFinal) && awayScore !== undefined ? (
+              <span className={`text-2xl font-black tabular-nums leading-none ${awayWin ? "text-white" : "text-white/40"}`}>{awayScore}</span>
+            ) : away.probablePitcher ? (
+              <p className="text-[9px] text-white/40 truncate max-w-[64px] text-center leading-tight">
+                {away.probablePitcher.fullName.split(" ").pop()}
               </p>
-              {away.probablePitcher && (
-                <p className="text-[10px] text-white/30 truncate leading-tight">{away.probablePitcher.fullName.split(" ").pop()}</p>
-              )}
-            </div>
+            ) : null}
           </div>
 
-          {/* Score / separator */}
-          <div className="flex items-center gap-1.5 shrink-0">
-            {(isLive || isFinal) && awayScore !== undefined ? (
-              <>
-                <span className={`text-xl font-black tabular-nums ${awayWin ? "text-white" : "text-white/45"}`}>{awayScore}</span>
-                <span className="text-white/15 text-sm">-</span>
-                <span className={`text-xl font-black tabular-nums ${homeWin ? "text-white" : "text-white/45"}`}>{homeScore}</span>
-              </>
+          {/* Center */}
+          <div className="flex flex-col items-center gap-0.5 shrink-0 mb-0.5">
+            {(isLive || isFinal) ? (
+              <span className="text-white/20 font-black text-xl">—</span>
             ) : (
-              <span className="text-[10px] text-white/20 font-bold px-1">@</span>
+              <>
+                <span className="text-base font-black text-white leading-tight">{gameTime}</span>
+                <span className="text-[8px] text-white/30 font-medium uppercase tracking-wide">{tz}</span>
+                <span className="text-[10px] text-white/20 font-bold mt-0.5">VS</span>
+              </>
             )}
           </div>
 
-          {/* Home */}
-          <div className="flex items-center gap-2 flex-1 min-w-0 flex-row-reverse">
-            <div className="shrink-0"><TeamLogoImg teamId={home.team.id} name={home.team.name} size={30} /></div>
-            <div className="min-w-0 text-right">
-              <p className={`text-sm font-black truncate leading-tight ${homeWin ? "text-white" : isFinal ? "text-white/40" : "text-white"}`}>
-                {TEAM_ABBR[home.team.id] ?? home.team.name.split(" ").pop()}
+          {/* Home (right) */}
+          <div className="flex flex-col items-center gap-1.5 flex-1 min-w-0">
+            <TeamLogoImg teamId={home.team.id} name={home.team.name} size={44} badge />
+            <p className={`text-sm font-black leading-tight ${homeWin ? "text-white" : isFinal ? "text-white/35" : "text-white"}`}>
+              {TEAM_ABBR[home.team.id] ?? home.team.name.split(" ").pop()}
+            </p>
+            {(isLive || isFinal) && homeScore !== undefined ? (
+              <span className={`text-2xl font-black tabular-nums leading-none ${homeWin ? "text-white" : "text-white/40"}`}>{homeScore}</span>
+            ) : home.probablePitcher ? (
+              <p className="text-[9px] text-white/40 truncate max-w-[64px] text-center leading-tight">
+                {home.probablePitcher.fullName.split(" ").pop()}
               </p>
-              {home.probablePitcher && (
-                <p className="text-[10px] text-white/30 truncate leading-tight">{home.probablePitcher.fullName.split(" ").pop()}</p>
-              )}
-            </div>
+            ) : null}
           </div>
         </div>
-
-        {/* Arrow */}
-        <ChevronRight size={13} className="text-white/15 shrink-0" strokeWidth={2} />
       </div>
-
-      {isFavGame && (
-        <div className="px-4 pb-2 flex items-center gap-1">
-          <Star size={9} className="text-[#FF7828]" fill="currentColor" />
-          <span className="text-[9px] font-bold text-[#FF7828]/70">Your team</span>
-        </div>
-      )}
     </motion.button>
   );
 }
@@ -363,7 +368,7 @@ function FavoriteTeamPanel({
               ) : isFinal ? (
                 <span className="text-[10px] font-bold text-white/40 bg-white/[0.08] rounded-full px-2.5 py-1">FINAL</span>
               ) : (
-                <span className="text-[10px] font-bold text-[#FF7828] bg-[#FF7828]/15 border border-[#FF7828]/25 rounded-full px-2.5 py-1">
+                <span className="text-[10px] font-bold text-white bg-black/50 border border-white/20 rounded-full px-2.5 py-1">
                   {!todayGame ? `Next · ${new Date(featuredGame.gameDate + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : "Today"}
                 </span>
               )}
@@ -432,8 +437,7 @@ function FavoriteTeamPanel({
             <Link
               href={`/game/${featuredGame.gamePk}`}
               onClick={(e) => e.stopPropagation()}
-              className="mt-4 flex items-center justify-center gap-2 w-full rounded-xl py-2.5 text-xs font-black transition-colors"
-              style={{ background: `${teamColor}15`, color: teamColor, border: `1px solid ${teamColor}30` }}
+              className="mt-4 flex items-center justify-center gap-2 w-full rounded-xl py-2.5 text-xs font-black text-white transition-colors bg-white/[0.10] border border-white/20 hover:bg-white/[0.18]"
             >
               <BarChart3 size={12} strokeWidth={2.5} />
               View Full Analysis
@@ -592,9 +596,9 @@ export default function GamesPage() {
           <AnimatePresence mode="wait">
             {loading ? (
               <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="space-y-2">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="h-[70px] rounded-2xl bg-white/[0.03] animate-pulse" style={{ animationDelay: `${i * 0.08}s` }} />
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i} className="rounded-2xl bg-white/[0.03] animate-pulse" style={{ aspectRatio: "16/10", animationDelay: `${i * 0.08}s` }} />
                 ))}
               </motion.div>
             ) : games.length === 0 ? (
@@ -615,7 +619,7 @@ export default function GamesPage() {
                     <p className="text-[9px] font-black text-red-400/70 tracking-widest uppercase mb-2 flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />Live Now — {live.length}
                     </p>
-                    <div className="space-y-1.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                       {live.map((g) => (
                         <GameCard key={g.gamePk} game={g} favTeamId={favTeamId} onClick={() => handleGameClick(g.gamePk)} />
                       ))}
@@ -629,7 +633,7 @@ export default function GamesPage() {
                     <p className="text-[9px] font-black text-white/25 tracking-widest uppercase mb-2">
                       Upcoming — {upcoming.length}
                     </p>
-                    <div className="space-y-1.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                       {upcoming.map((g) => (
                         <GameCard key={g.gamePk} game={g} favTeamId={favTeamId} onClick={() => handleGameClick(g.gamePk)} />
                       ))}
@@ -641,7 +645,7 @@ export default function GamesPage() {
                 {final.length > 0 && (
                   <div>
                     <p className="text-[9px] font-black text-white/20 tracking-widest uppercase mb-2">Final — {final.length}</p>
-                    <div className="space-y-1.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                       {final.map((g) => (
                         <GameCard key={g.gamePk} game={g} favTeamId={favTeamId} onClick={() => handleGameClick(g.gamePk)} />
                       ))}
