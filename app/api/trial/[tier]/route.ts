@@ -9,6 +9,7 @@
 import { NextResponse } from "next/server";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import Stripe from "stripe";
+import { rateLimit, getIp } from "@/lib/rate-limit";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2026-02-25.clover",
@@ -17,9 +18,19 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 const TRIAL_DAYS = { fan: 14, pro: 3 } as const;
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ tier: string }> }
 ) {
+  // Rate limit: 5 trial attempts per minute per IP
+  const ip = getIp(req);
+  const rl = rateLimit(`trial:${ip}`, 5, 60_000);
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: "Too many requests." },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfter) } },
+    );
+  }
+
   const { userId } = await auth();
 
   // Not signed in — send to sign-up for the correct tier
@@ -34,6 +45,16 @@ export async function GET(
   const { tier: rawTier } = await params;
   const tier = rawTier === "pro" ? "pro" : "fan";
 
+  // Verify trial hasn't been used
+  const user = await currentUser();
+  const meta = (user?.publicMetadata ?? {}) as { trialUsed?: boolean };
+  if (meta.trialUsed === true) {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? "https://mlbedgepro.dev";
+    return NextResponse.redirect(
+      new URL(`/upgrade?error=${encodeURIComponent("You have already used your free trial.")}`, appUrl)
+    );
+  }
+
   const priceId =
     tier === "pro"
       ? process.env.STRIPE_PRO_PRICE_ID
@@ -43,7 +64,6 @@ export async function GET(
     return NextResponse.json({ error: "Price not configured" }, { status: 500 });
   }
 
-  const user  = await currentUser();
   const email = user?.emailAddresses?.[0]?.emailAddress;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? "https://mlbedgepro.dev";
 

@@ -1,10 +1,23 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { rateLimit, getIp } from "@/lib/rate-limit";
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(req: Request) {
+  // Rate limit: 5 signups per hour per IP to prevent spam
+  const ip = getIp(req);
+  const rl = rateLimit(`waitlist:${ip}`, 5, 3_600_000);
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfter) } },
+    );
+  }
+
   const { email } = await req.json();
 
-  if (!email || !email.includes("@")) {
+  if (!email || typeof email !== "string" || !EMAIL_RE.test(email) || email.length > 254) {
     return NextResponse.json({ error: "Valid email required" }, { status: 400 });
   }
 

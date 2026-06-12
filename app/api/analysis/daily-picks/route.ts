@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { generateJSON } from "@/lib/anthropic";
+import { requirePlan, isNextResponse } from "@/lib/require-plan";
+import { rateLimit, getIp } from "@/lib/rate-limit";
 
 interface GameSummary {
   away: string;
@@ -24,17 +25,41 @@ interface DailyPicksOutput {
   dayNote: string;
 }
 
+function sanitizeGame(g: GameSummary): GameSummary {
+  const s = (v: unknown, n = 80) => String(v ?? "").slice(0, n).replace(/[`<>]/g, "");
+  return {
+    away:      s(g.away),
+    home:      s(g.home),
+    edgeScore: Number(g.edgeScore) || 0,
+    grade:     s(g.grade, 4),
+    keyEdges:  Array.isArray(g.keyEdges)
+      ? g.keyEdges.slice(0, 5).map((e) => s(e, 120))
+      : [],
+  };
+}
+
 export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const ip = getIp(req);
+  const rl = rateLimit(`daily-picks:${ip}`, 15, 60_000);
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: "Too many requests. Please slow down." },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfter) } },
+    );
+  }
+
+  const planResult = await requirePlan("fan");
+  if (isNextResponse(planResult)) return planResult;
 
   const { games }: { games: GameSummary[] } = await req.json();
 
-  if (!games?.length) {
+  if (!Array.isArray(games) || !games.length) {
     return NextResponse.json({ error: "No games provided" }, { status: 400 });
   }
 
-  const gameLines = games
+  const safeGames = games.slice(0, 20).map(sanitizeGame);
+
+  const gameLines = safeGames
     .map((g) => `${g.away} @ ${g.home}: Edge Score ${g.edgeScore}, Grade ${g.grade}, Keys: ${g.keyEdges.join(", ")}`)
     .join("\n");
 

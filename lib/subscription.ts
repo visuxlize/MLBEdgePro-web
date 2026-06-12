@@ -11,7 +11,6 @@ export interface SubscriptionStatus {
   /** true ONLY for Pro ($14.99) — HR Deep Dive and advanced features */
   isSuperPro: boolean;
   isLoaded: boolean;
-  stripeSubscriptionId?: string;
   expiresAt?: string;
 }
 
@@ -41,7 +40,6 @@ export function useSubscription(): SubscriptionStatus {
     plan?: Plan;
     isPro?: boolean;
     isSuperPro?: boolean;
-    stripeSubscriptionId?: string;
     subscriptionExpiresAt?: string;
   };
 
@@ -70,9 +68,8 @@ export function useSubscription(): SubscriptionStatus {
     plan,
     isPro,
     isSuperPro,
-    isLoaded:              true,
-    stripeSubscriptionId:  meta.stripeSubscriptionId,
-    expiresAt:             meta.subscriptionExpiresAt,
+    isLoaded:  true,
+    expiresAt: meta.subscriptionExpiresAt,
   };
 }
 

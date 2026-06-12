@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { generateJSON } from "@/lib/anthropic";
+import { requirePlan, isNextResponse } from "@/lib/require-plan";
+import { rateLimit, getIp } from "@/lib/rate-limit";
 
 interface HRNukeInput {
   batterName: string;
@@ -59,15 +60,41 @@ interface HRNukeOutput {
   narrative: string;
 }
 
+function sanitizeStr(s: unknown, maxLen: number): string {
+  return String(s ?? "").slice(0, maxLen).replace(/[`<>]/g, "");
+}
+
 export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // Rate limit: 20 requests per minute per IP
+  const ip = getIp(req);
+  const rl = rateLimit(`hr-nuke:${ip}`, 20, 60_000);
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: "Too many requests. Please slow down." },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfter) } },
+    );
+  }
+
+  // Require Pro plan
+  const planResult = await requirePlan("pro");
+  if (isNextResponse(planResult)) return planResult;
 
   const d: HRNukeInput = await req.json();
 
+  // Sanitize free-text fields that get interpolated into the AI prompt
+  const batterName  = sanitizeStr(d.batterName,  80);
+  const pitcherName = sanitizeStr(d.pitcherName, 80);
+  const batterHand  = sanitizeStr(d.batterHand,  10);
+  const pitcherHand = sanitizeStr(d.pitcherHand, 10);
+  const pitchMix    = sanitizeStr(d.pitchMix,    500);
+  const pitchSLGMap = sanitizeStr(d.pitchSLGMap, 500);
+  const pitchwOBAMap = sanitizeStr(d.pitchwOBAMap, 500);
+  const parkName    = sanitizeStr(d.parkName,    100);
+  const windDir     = sanitizeStr(d.windDir,     50);
+
   const prompt = `You are an MLB home run probability model trained on Statcast data. Analyze this batter-pitcher matchup and output an HR probability report as JSON.
 
-BATTER: ${d.batterName} (${d.batterHand})
+BATTER: ${batterName} (${batterHand})
 - Barrel%: ${d.barrelPct}%
 - Avg Exit Velocity: ${d.avgEV} mph
 - Max Exit Velocity: ${d.maxEV} mph
@@ -75,24 +102,24 @@ BATTER: ${d.batterName} (${d.batterHand})
 - SLG: ${d.slg}
 - HR this season: ${d.hrCount}
 - Pull%: ${d.pullPct}%, Center%: ${d.centerPct}%, Oppo%: ${d.oppoPct}%
-- vs ${d.pitcherHand}HP this season: ISO ${d.vsISO ?? "N/A"} / SLG ${d.vsSLG ?? "N/A"} / ${d.vsHR ?? "N/A"} HR
+- vs ${pitcherHand}HP this season: ISO ${d.vsISO ?? "N/A"} / SLG ${d.vsSLG ?? "N/A"} / ${d.vsHR ?? "N/A"} HR
 
-PITCHER: ${d.pitcherName} (${d.pitcherHand})
+PITCHER: ${pitcherName} (${pitcherHand})
 - Barrel% Allowed: ${d.barrelAllowed}%
 - Avg EV Allowed: ${d.evAllowed} mph
 - FB Rate: ${d.fbRate}%
 - HR/9: ${d.hr9}
-- Pitch Mix: ${d.pitchMix}
-- SLG Allowed by pitch: ${d.pitchSLGMap}
-- xwOBA by pitch: ${d.pitchwOBAMap}
+- Pitch Mix: ${pitchMix}
+- SLG Allowed by pitch: ${pitchSLGMap}
+- xwOBA by pitch: ${pitchwOBAMap}
 
-BALLPARK: ${d.parkName}
+BALLPARK: ${parkName}
 - RF wall: ${d.rfDist}ft / ${d.rfHeight}ft
 - CF wall: ${d.cfDist}ft / ${d.cfHeight}ft
 - LF wall: ${d.lfDist}ft / ${d.lfHeight}ft
 - Park factor (HR): ${d.parkFactor}
 
-WEATHER: ${d.tempF}°F · ${d.windMph}mph ${d.windDir} · Carry effect: RF ${d.rfCarry > 0 ? "+" : ""}${d.rfCarry}ft, CF ${d.cfCarry > 0 ? "+" : ""}${d.cfCarry}ft, LF ${d.lfCarry > 0 ? "+" : ""}${d.lfCarry}ft
+WEATHER: ${d.tempF}°F · ${d.windMph}mph ${windDir} · Carry effect: RF ${d.rfCarry > 0 ? "+" : ""}${d.rfCarry}ft, CF ${d.cfCarry > 0 ? "+" : ""}${d.cfCarry}ft, LF ${d.lfCarry > 0 ? "+" : ""}${d.lfCarry}ft
 
 Respond ONLY with this JSON (no markdown, no code fences):
 {

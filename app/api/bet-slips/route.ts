@@ -5,6 +5,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@/lib/supabase/server";
+import { rateLimit, getIp } from "@/lib/rate-limit";
 
 export async function GET() {
   const { userId } = await auth();
@@ -22,6 +23,16 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  // Rate limit: 30 slip creates per minute per IP
+  const ip = getIp(req);
+  const rl = rateLimit(`bet-slips:${ip}`, 30, 60_000);
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: "Too many requests." },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfter) } },
+    );
+  }
+
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -31,13 +42,12 @@ export async function POST(req: Request) {
   const { data, error } = await supabase
     .from("bet_slips")
     .insert({
-      id:            body.id,
+      // Never trust client-supplied id or created_at — let the DB generate them
       clerk_user_id: userId,
-      created_at:    body.createdAt,
       legs:          body.legs,
       wager:         body.wager,
       to_win:        body.toWin ?? null,
-      status:        body.status ?? "pending",
+      status:        "pending",           // always start as pending
     })
     .select()
     .single();

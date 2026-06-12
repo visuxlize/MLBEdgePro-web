@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { generateJSON } from "@/lib/anthropic";
+import { requirePlan, isNextResponse } from "@/lib/require-plan";
+import { rateLimit, getIp } from "@/lib/rate-limit";
 
 interface EdgeScoreInput {
   homeTeam: string;
@@ -42,9 +43,22 @@ interface EdgeScoreOutput {
   totalRunEstimate: number;
 }
 
+function s(v: unknown, max = 80): string {
+  return String(v ?? "").slice(0, max).replace(/[`<>]/g, "");
+}
+
 export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const ip = getIp(req);
+  const rl = rateLimit(`edge-score:${ip}`, 30, 60_000);
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: "Too many requests. Please slow down." },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfter) } },
+    );
+  }
+
+  const planResult = await requirePlan("fan");
+  if (isNextResponse(planResult)) return planResult;
 
   const data: EdgeScoreInput = await req.json();
 
@@ -53,14 +67,14 @@ export async function POST(req: NextRequest) {
 Analyze this game and return a JSON edge report. Be direct and confident in your assessment.
 
 GAME DATA:
-Home: ${data.homeTeam} (${data.homeRecord ?? "N/A"})
-Away: ${data.awayTeam} (${data.awayRecord ?? "N/A"})
-Home Pitcher: ${data.homePitcher} — ERA: ${data.homePitcherERA ?? "N/A"}, WHIP: ${data.homePitcherWHIP ?? "N/A"}, K/9: ${data.homePitcherK9 ?? "N/A"}, BB/9: ${data.homePitcherBB9 ?? "N/A"}
-Away Pitcher: ${data.awayPitcher} — ERA: ${data.awayPitcherERA ?? "N/A"}, WHIP: ${data.awayPitcherWHIP ?? "N/A"}, K/9: ${data.awayPitcherK9 ?? "N/A"}, BB/9: ${data.awayPitcherBB9 ?? "N/A"}
-Venue: ${data.venueName ?? "Unknown"}
-Weather: ${data.tempF ?? "N/A"}°F, wind ${data.windMph ?? "N/A"}mph ${data.windDirection ?? ""}, ${data.conditions ?? "clear"}
-Home last 10: ${data.homeL10Record ?? "N/A"}, ${data.homeRunsLast10 ?? "N/A"} runs scored
-Away last 10: ${data.awayL10Record ?? "N/A"}, ${data.awayRunsLast10 ?? "N/A"} runs scored
+Home: ${s(data.homeTeam)} (${s(data.homeRecord) ?? "N/A"})
+Away: ${s(data.awayTeam)} (${s(data.awayRecord) ?? "N/A"})
+Home Pitcher: ${s(data.homePitcher)} — ERA: ${data.homePitcherERA ?? "N/A"}, WHIP: ${data.homePitcherWHIP ?? "N/A"}, K/9: ${data.homePitcherK9 ?? "N/A"}, BB/9: ${data.homePitcherBB9 ?? "N/A"}
+Away Pitcher: ${s(data.awayPitcher)} — ERA: ${data.awayPitcherERA ?? "N/A"}, WHIP: ${data.awayPitcherWHIP ?? "N/A"}, K/9: ${data.awayPitcherK9 ?? "N/A"}, BB/9: ${data.awayPitcherBB9 ?? "N/A"}
+Venue: ${s(data.venueName) ?? "Unknown"}
+Weather: ${data.tempF ?? "N/A"}°F, wind ${data.windMph ?? "N/A"}mph ${s(data.windDirection) ?? ""}, ${s(data.conditions) ?? "clear"}
+Home last 10: ${s(data.homeL10Record) ?? "N/A"}, ${data.homeRunsLast10 ?? "N/A"} runs scored
+Away last 10: ${s(data.awayL10Record) ?? "N/A"}, ${data.awayRunsLast10 ?? "N/A"} runs scored
 Home bullpen ERA (last 7 days): ${data.homeBullpenERA ?? "N/A"}
 Away bullpen ERA (last 7 days): ${data.awayBullpenERA ?? "N/A"}
 

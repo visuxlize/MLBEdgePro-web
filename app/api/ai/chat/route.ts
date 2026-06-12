@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { streamChat, type ChatMessage } from "@/lib/anthropic";
+import { requirePlan, isNextResponse } from "@/lib/require-plan";
+import { rateLimit, getIp } from "@/lib/rate-limit";
 import {
   fetchTodaysGames,
   fetchPitcherStats,
@@ -11,6 +12,13 @@ import {
 } from "@/lib/mlb/api";
 import { createClient } from "@/lib/supabase/server";
 import { fetchFanDuelOddsMap, lookupOdds } from "@/lib/odds";
+
+const MAX_MESSAGES  = 20;
+const MAX_MSG_CHARS = 2_000;
+
+function sanitize(s: string, maxLen = MAX_MSG_CHARS): string {
+  return String(s ?? "").slice(0, maxLen).replace(/[`<>]/g, "");
+}
 
 // ── Context builders ──────────────────────────────────────────────────────────
 
@@ -56,7 +64,6 @@ function moneylineWinPct(homePitcher: PitcherSeasonStats, awayPitcher: PitcherSe
   return { home, away: 100 - home, confidence: diff >= 18 ? "HIGH" : diff >= 10 ? "MEDIUM" : "LOW" };
 }
 
-// Returns rich batter data including IDs for AI structured picks output
 function topBattersCtx(batters: RosterBatter[], pitcher: PitcherSeasonStats, propType: "HR" | "Hit", n = 4) {
   return batters
     .map((b) => {
@@ -180,13 +187,35 @@ async function buildBetHistoryContext(userId: string): Promise<string> {
 // ── Route handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // Rate limit: 30 requests per minute per IP
+  const ip = getIp(req);
+  const rl = rateLimit(`chat:${ip}`, 30, 60_000);
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: "Too many requests. Please slow down." },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfter) } },
+    );
+  }
+
+  // Require Fan plan or above
+  const planResult = await requirePlan("fan");
+  if (isNextResponse(planResult)) return planResult;
+  const { userId } = planResult;
 
   let messages: ChatMessage[];
   try {
     const body = await req.json();
-    messages = body.messages ?? [];
+    const raw: unknown[] = Array.isArray(body.messages) ? body.messages : [];
+
+    // Enforce message count and length limits
+    if (raw.length > MAX_MESSAGES) {
+      return NextResponse.json({ error: "Too many messages in conversation." }, { status: 400 });
+    }
+
+    messages = (raw as ChatMessage[]).map((m) => ({
+      role:    m.role === "assistant" ? "assistant" : "user",
+      content: sanitize(String(m.content ?? ""), MAX_MSG_CHARS),
+    }));
   } catch {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
@@ -195,7 +224,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No messages provided" }, { status: 400 });
   }
 
-  // Build context in parallel (odds fetched alongside game data)
   const [oddsMap, betHistory] = await Promise.all([
     fetchFanDuelOddsMap(),
     buildBetHistoryContext(userId),
@@ -254,9 +282,9 @@ Rules:
 
   return new Response(stream, {
     headers: {
-      "Content-Type":     "text/plain; charset=utf-8",
+      "Content-Type":           "text/plain; charset=utf-8",
       "X-Content-Type-Options": "nosniff",
-      "Cache-Control":    "no-cache",
+      "Cache-Control":          "no-cache",
     },
   });
 }

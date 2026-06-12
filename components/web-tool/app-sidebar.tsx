@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useUser, useClerk } from "@clerk/nextjs";
 import {
   CircleDot, BarChart3, Layers, TrendingUp, Target,
-  Settings, Lock, BookOpen, Menu, X, Zap, LogOut, ChevronRight, Bot,
+  Settings, Lock, BookOpen, Menu, X, Zap, LogOut, ChevronRight, Bot, Globe2,
 } from "lucide-react";
 import { useSubscription } from "@/lib/subscription";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,6 +19,7 @@ const NAV = [
   { href: "/hr-deep-dive", icon: Target,     label: "HR Nuke",       requiredTier: "pro" as const },
   { href: "/bet-tracker",  icon: BookOpen,   label: "Bet Tracker",   requiredTier: "pro" as const },
   { href: "/ai",           icon: Bot,        label: "Edge AI",       requiredTier: "pro" as const },
+  { href: "/worldcup",    icon: Globe2,     label: "World Cup 2026", requiredTier: "fan" as const },
 ];
 
 function DiamondLogo() {

@@ -77,13 +77,14 @@ export async function POST(req: Request) {
 
     await client.users.updateUserMetadata(clerkId, {
       publicMetadata: {
-        plan:                    tier,
-        isPro:                   true,
-        isSuperPro:              tier === "pro",
-        stripeSubscriptionId:    subscriptionId,
-        subscriptionExpiresAt:   expiresAt,
-        // Stamp trialUsed once — never cleared, so we know they've had a trial
+        plan:                  tier,
+        isPro:                 true,
+        isSuperPro:            tier === "pro",
+        subscriptionExpiresAt: expiresAt,
         ...(isTrialing ? { trialUsed: true } : {}),
+      },
+      privateMetadata: {
+        stripeSubscriptionId: subscriptionId,
       },
     });
 
@@ -96,17 +97,25 @@ export async function POST(req: Request) {
     const clerkId = sub.metadata?.clerk_user_id;
     if (!clerkId) return NextResponse.json({ received: true });
 
-    const tier    = sub.metadata?.tier as "fan" | "pro" | undefined ?? "fan";
+    const rawTier = sub.metadata?.tier;
+    const tier    = (rawTier === "fan" || rawTier === "pro") ? rawTier : null;
     const active  = sub.status === "active" || sub.status === "trialing";
     const expires = new Date((sub as any).current_period_end * 1000).toISOString();
 
+    if (!tier) {
+      console.warn("customer.subscription.updated: missing/invalid tier in metadata", sub.id);
+      return NextResponse.json({ received: true });
+    }
+
     await client.users.updateUserMetadata(clerkId, {
       publicMetadata: {
-        plan:                    active ? tier : "free",
-        isPro:                   active,
-        isSuperPro:              active && tier === "pro",
-        stripeSubscriptionId:    sub.id,
-        subscriptionExpiresAt:   active ? expires : null,
+        plan:                  active ? tier : "free",
+        isPro:                 active,
+        isSuperPro:            active && tier === "pro",
+        subscriptionExpiresAt: active ? expires : null,
+      },
+      privateMetadata: {
+        stripeSubscriptionId: sub.id,
       },
     });
   }
@@ -119,11 +128,13 @@ export async function POST(req: Request) {
 
     await client.users.updateUserMetadata(clerkId, {
       publicMetadata: {
-        plan:                    "free",
-        isPro:                   false,
-        isSuperPro:              false,
-        stripeSubscriptionId:    null,
-        subscriptionExpiresAt:   null,
+        plan:                  "free",
+        isPro:                 false,
+        isSuperPro:            false,
+        subscriptionExpiresAt: null,
+      },
+      privateMetadata: {
+        stripeSubscriptionId: null,
       },
     });
 

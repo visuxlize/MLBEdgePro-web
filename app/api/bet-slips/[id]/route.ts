@@ -17,8 +17,15 @@ export async function PATCH(
   const body    = await req.json();
   const supabase = await createClient();
 
+  const VALID_STATUSES = new Set(["pending", "won", "lost", "void"]);
+
   const update: Record<string, unknown> = {};
-  if (body.status    !== undefined) update.status     = body.status;
+  if (body.status !== undefined) {
+    if (!VALID_STATUSES.has(body.status)) {
+      return NextResponse.json({ error: "Invalid status value." }, { status: 400 });
+    }
+    update.status = body.status;
+  }
   if (body.settledAt !== undefined) update.settled_at = body.settledAt;
   if (body.legs      !== undefined) update.legs       = body.legs;
   if (body.wager     !== undefined) update.wager      = body.wager;
