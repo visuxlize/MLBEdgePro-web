@@ -161,9 +161,7 @@ function WeatherCard({ temp, wind, direction, conditions, humidity }: {
 
 // ── Main content ──────────────────────────────────────────────────────────────
 
-async function GameDetailContent({ gamePk }: { gamePk: number }) {
-  const game = await fetchGame(gamePk);
-  if (!game) notFound();
+async function GameDetailContent({ game }: { game: Game }) {
 
   const away = game.teams.away;
   const home = game.teams.home;
@@ -360,7 +358,9 @@ async function GameDetailContent({ gamePk }: { gamePk: number }) {
 
 // ── Page export ───────────────────────────────────────────────────────────────
 
-// Next.js 15: params is a Promise
+// Next.js 15: params is a Promise. Fetch game here (page level) so notFound()
+// is called outside <Suspense>, avoiding the known issue where notFound() inside
+// a Suspense boundary can be caught by error.tsx instead of not-found.tsx.
 export default async function GameDetailPage({
   params,
 }: {
@@ -369,6 +369,9 @@ export default async function GameDetailPage({
   const { gamePk: gamePkStr } = await params;
   const gamePk = parseInt(gamePkStr, 10);
   if (isNaN(gamePk)) notFound();
+
+  const game = await fetchGame(gamePk);
+  if (!game) notFound();
 
   return (
     <Suspense
@@ -379,7 +382,7 @@ export default async function GameDetailPage({
         </div>
       }
     >
-      <GameDetailContent gamePk={gamePk} />
+      <GameDetailContent game={game} />
     </Suspense>
   );
 }
