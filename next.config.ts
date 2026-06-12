@@ -30,7 +30,7 @@ const securityHeaders = [
         " https://*.clerk.com" +
         " https://*.clerk.accounts.dev" +
         " https://images.clerk.dev",
-      "connect-src 'self' https://*.clerk.accounts.dev https://clerk.mlbedgepro.dev https://api.stripe.com wss://*.clerk.accounts.dev https://statsapi.mlb.com https://api.the-odds-api.com",
+      "connect-src 'self' https://*.clerk.accounts.dev https://clerk.mlbedgepro.dev https://api.stripe.com wss://*.clerk.accounts.dev https://statsapi.mlb.com https://api.the-odds-api.com https://cdn.jsdelivr.net",
       "frame-src https://js.stripe.com https://hooks.stripe.com",
       "frame-ancestors 'none'",
     ].join("; "),

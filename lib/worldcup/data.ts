@@ -220,6 +220,18 @@ export const WC_TEAMS: Record<string, WCTeam> = {
   aus: { id: "aus", name: "Australia",    shortName: "AUS", countryCode: "au", strength: 1612, color: "#00843D" },
   srb: { id: "srb", name: "Serbia",       shortName: "SRB", countryCode: "rs", strength: 1702, color: "#C6363C" },
   egy: { id: "egy", name: "Egypt",        shortName: "EGY", countryCode: "eg", strength: 1632, color: "#CE1126" },
+  par: { id: "par", name: "Paraguay",     shortName: "PAR", countryCode: "py", strength: 1638, color: "#D52B1E" },
+  bol: { id: "bol", name: "Bolivia",      shortName: "BOL", countryCode: "bo", strength: 1542, color: "#D52B1E" },
+  ven: { id: "ven", name: "Venezuela",    shortName: "VEN", countryCode: "ve", strength: 1598, color: "#CF142B" },
+  pan: { id: "pan", name: "Panama",       shortName: "PAN", countryCode: "pa", strength: 1612, color: "#DA121A" },
+  crc: { id: "crc", name: "Costa Rica",   shortName: "CRC", countryCode: "cr", strength: 1618, color: "#002B7F" },
+  jam: { id: "jam", name: "Jamaica",      shortName: "JAM", countryCode: "jm", strength: 1578, color: "#000000" },
+  mar: { id: "mar", name: "Maroc",        shortName: "MAR", countryCode: "ma", strength: 1682, color: "#C1272D" },
+  sco: { id: "sco", name: "Scotland",     shortName: "SCO", countryCode: "gb-sct", strength: 1658, color: "#005EB8" },
+  wal: { id: "wal", name: "Wales",        shortName: "WAL", countryCode: "gb-wls", strength: 1635, color: "#C8102E" },
+  tun: { id: "tun", name: "Tunisia",      shortName: "TUN", countryCode: "tn", strength: 1612, color: "#E70013" },
+  cmr: { id: "cmr", name: "Cameroon",     shortName: "CMR", countryCode: "cm", strength: 1618, color: "#007A5E" },
+  qat: { id: "qat", name: "Qatar",        shortName: "QAT", countryCode: "qa", strength: 1562, color: "#8D1B3D" },
 };
 
 // ── ELO Win Probability ───────────────────────────────────────────────────────

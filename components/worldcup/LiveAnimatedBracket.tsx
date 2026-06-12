@@ -180,8 +180,7 @@ function TeamSlot({
       </div>
 
       {/* Name */}
-      <motion.span
-        layoutId={team ? `team-name-${team.id}` : undefined}
+      <span
         className={`flex-1 text-[11px] font-bold truncate ${
           isWinner ? "text-[#FBBF24]"
           : isLoser ? "text-white/25"
@@ -190,7 +189,7 @@ function TeamSlot({
         }`}
       >
         {team?.shortName ?? "TBD"}
-      </motion.span>
+      </span>
 
       {/* Win probability badge */}
       {showProb && prob !== undefined && team && !isWinner && (
