@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AppSidebar } from "@/components/web-tool/app-sidebar";
 import { PendingTrialRedirect } from "@/components/PendingTrialRedirect";
+import { FloatingChat } from "@/components/web-tool/floating-chat";
 
 function DisclaimerStrip() {
   return (
@@ -25,6 +26,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <AppSidebar />
       <main className="flex-1 w-full">{children}</main>
       <DisclaimerStrip />
+      <FloatingChat />
     </div>
   );
 }

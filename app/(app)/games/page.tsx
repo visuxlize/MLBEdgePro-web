@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ChevronLeft, ChevronRight, RefreshCw, Cloud,
+  ChevronLeft, ChevronRight, RefreshCw,
   CircleDot, ArrowRight, Lock, Trophy,
 } from "lucide-react";
 import {
@@ -433,9 +433,8 @@ export default function GamesPage() {
         )}
       </AnimatePresence>
 
-      <p className="mt-10 text-xs text-white/12 flex items-center gap-1.5">
-        <Cloud size={11} strokeWidth={1.5} />
-        MLB Stats API · Refreshes every 60 seconds
+      <p className="mt-10 text-xs text-white/12">
+        Data updates automatically throughout the day.
       </p>
     </div>
   );

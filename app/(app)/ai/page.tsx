@@ -5,9 +5,10 @@ import Link from "next/link";
 import {
   Send, RotateCcw, CircleDot, Layers,
   Target, BookOpen, TrendingUp, Clock, Loader2, Bot,
-  Plus, Check, ChevronRight, Zap,
+  Plus, Check, ChevronRight, Zap, Trophy,
 } from "lucide-react";
 import { PaywallGate } from "@/components/web-tool/paywall-gate";
+import { useSubscription } from "@/lib/subscription";
 import { playerHeadshotUrl, teamLogoUrl } from "@/lib/mlb/api";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -369,6 +370,7 @@ function EdgeAIChat() {
   const bottomRef  = useRef<HTMLDivElement>(null);
   const inputRef   = useRef<HTMLTextAreaElement>(null);
   const abortRef   = useRef<AbortController | null>(null);
+  const { isSuperPro, isLoaded: subscriptionLoaded } = useSubscription();
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -479,6 +481,28 @@ function EdgeAIChat() {
               {label}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* World Cup limited-time banner */}
+      {isEmpty && subscriptionLoaded && isSuperPro && (
+        <div className="px-4 pt-3 shrink-0">
+          <button
+            onClick={() => send("Give me the top FIFA World Cup betting edges for today's matches — best bets, value lines, and key insights.")}
+            disabled={streaming}
+            className="w-full flex items-center gap-3 rounded-2xl border border-[#FBBF24]/30 bg-gradient-to-r from-[#FBBF24]/10 via-[#F59E0B]/6 to-transparent px-4 py-3.5 text-left hover:border-[#FBBF24]/50 transition-colors"
+          >
+            <div className="w-9 h-9 rounded-xl border border-[#FBBF24]/35 bg-[#FBBF24]/12 flex items-center justify-center shrink-0">
+              <Trophy size={16} className="text-[#FBBF24]" strokeWidth={2.2} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-black text-[#FBBF24] uppercase tracking-wide leading-tight">
+                Limited Time — FIFA World Cup Edge
+              </p>
+              <p className="text-[10px] text-white/45 mt-0.5">Ask for today's top World Cup betting analysis</p>
+            </div>
+            <span className="text-[9px] font-black text-[#FBBF24]/60 border border-[#FBBF24]/25 rounded-full px-2 py-0.5">PRO</span>
+          </button>
         </div>
       )}
 
