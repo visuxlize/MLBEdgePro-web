@@ -92,24 +92,37 @@ async function fetchSlips(): Promise<BetSlip[]> {
   }));
 }
 
-async function apiCreate(slip: BetSlip): Promise<void> {
-  await fetch("/api/bet-slips", {
+async function apiCreate(slip: BetSlip): Promise<{ id: string } | null> {
+  const res = await fetch("/api/bet-slips", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(slip),
   });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error ?? `Save failed (${res.status})`);
+  }
+  return res.json();
 }
 
 async function apiPatch(id: string, patch: Partial<BetSlip>): Promise<void> {
-  await fetch(`/api/bet-slips/${id}`, {
+  const res = await fetch(`/api/bet-slips/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(patch),
   });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error ?? `Update failed (${res.status})`);
+  }
 }
 
 async function apiDelete(id: string): Promise<void> {
-  await fetch(`/api/bet-slips/${id}`, { method: "DELETE" });
+  const res = await fetch(`/api/bet-slips/${id}`, { method: "DELETE" });
+  if (!res.ok && res.status !== 204) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error ?? `Delete failed (${res.status})`);
+  }
 }
 
 // ── Stat card ─────────────────────────────────────────────────────────────────
@@ -780,31 +793,60 @@ export default function BetTrackerPage() {
   const [showModal, setShowModal]   = useState(false);
   const [activeTab, setActiveTab]   = useState<TabType>("pending");
   const [sharingSlip, setSharingSlip] = useState<BetSlip | null>(null);
+  const [toast, setToast]           = useState<{ msg: string; type: "error" | "ok" } | null>(null);
+
+  function showToast(msg: string, type: "error" | "ok" = "error") {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 4000);
+  }
 
   // Load from Supabase on mount
   useEffect(() => {
-    fetchSlips().then((data) => { setSlips(data); setLoading(false); });
+    fetchSlips()
+      .then((data) => { setSlips(data); setLoading(false); })
+      .catch(() => { setLoading(false); showToast("Could not load slips — check your connection."); });
   }, []);
 
   async function addSlip(slip: BetSlip) {
-    setSlips((prev) => [slip, ...prev]); // optimistic
-    await apiCreate(slip);
+    try {
+      const saved = await apiCreate(slip);
+      // Use the DB-generated id so subsequent patch/delete use the real UUID
+      const finalSlip = saved ? { ...slip, id: saved.id, createdAt: (saved as any).created_at ?? slip.createdAt } : slip;
+      setSlips((prev) => [finalSlip, ...prev]);
+      showToast("Slip saved!", "ok");
+    } catch (err: any) {
+      showToast(err.message ?? "Failed to save slip.");
+    }
   }
 
   async function settleSlip(id: string, status: "won" | "lost") {
     const settledAt = new Date().toISOString();
     setSlips((prev) => prev.map((s) => s.id === id ? { ...s, status, settledAt } : s));
-    await apiPatch(id, { status, settledAt });
+    try {
+      await apiPatch(id, { status, settledAt });
+    } catch (err: any) {
+      showToast(err.message ?? "Failed to settle slip.");
+      setSlips((prev) => prev.map((s) => s.id === id ? { ...s, status: "pending", settledAt: undefined } : s));
+    }
   }
 
   async function deleteSlip(id: string) {
     setSlips((prev) => prev.filter((s) => s.id !== id));
-    await apiDelete(id);
+    try {
+      await apiDelete(id);
+    } catch (err: any) {
+      showToast(err.message ?? "Failed to delete slip.");
+      fetchSlips().then(setSlips).catch(() => {});
+    }
   }
 
   async function updateSlip(id: string, updated: Partial<BetSlip>) {
     setSlips((prev) => prev.map((s) => s.id === id ? { ...s, ...updated } : s));
-    await apiPatch(id, updated);
+    try {
+      await apiPatch(id, updated);
+    } catch (err: any) {
+      showToast(err.message ?? "Failed to update slip.");
+    }
   }
 
   const won     = slips.filter((s) => s.status === "won");
@@ -852,6 +894,17 @@ export default function BetTrackerPage() {
       ]}
     >
     <div className="px-4 py-6 sm:px-8 sm:py-8 max-w-screen-lg mx-auto">
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 rounded-2xl border px-5 py-3 text-sm font-bold shadow-xl backdrop-blur-md ${
+          toast.type === "ok"
+            ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+            : "border-red-500/30 bg-red-500/10 text-red-300"
+        }`}>
+          {toast.type === "ok" ? "✓" : "⚠"} {toast.msg}
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-start justify-between mb-8">
         <div>

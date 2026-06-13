@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
 /**
@@ -30,6 +31,21 @@ export async function createClient() {
         },
       },
     },
+  );
+}
+
+/**
+ * Service-role client for API routes that authenticate via Clerk.
+ * Uses SUPABASE_SERVICE_ROLE_KEY to bypass RLS — auth is enforced by Clerk
+ * before this client is ever called, so this is safe.
+ * Falls back to the publishable key if the service role key is not set.
+ */
+export function createServiceClient() {
+  return createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY ??
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    { auth: { persistSession: false } },
   );
 }
 

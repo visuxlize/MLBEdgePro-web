@@ -4,7 +4,7 @@
  */
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 
 export async function PATCH(
   req: Request,
@@ -15,7 +15,7 @@ export async function PATCH(
 
   const { id } = await params;
   const body    = await req.json();
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   const VALID_STATUSES = new Set(["pending", "won", "lost", "void"]);
 
@@ -35,7 +35,7 @@ export async function PATCH(
     .from("bet_slips")
     .update(update)
     .eq("id", id)
-    .eq("clerk_user_id", userId)   // ensure user owns the slip
+    .eq("clerk_user_id", userId)
     .select()
     .single();
 
@@ -51,7 +51,7 @@ export async function DELETE(
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   const { error } = await supabase
     .from("bet_slips")

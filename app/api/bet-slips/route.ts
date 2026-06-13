@@ -4,14 +4,14 @@
  */
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import { rateLimit, getIp } from "@/lib/rate-limit";
 
 export async function GET() {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   const { data, error } = await supabase
     .from("bet_slips")
     .select("*")
@@ -37,17 +37,16 @@ export async function POST(req: Request) {
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   const { data, error } = await supabase
     .from("bet_slips")
     .insert({
-      // Never trust client-supplied id or created_at — let the DB generate them
       clerk_user_id: userId,
       legs:          body.legs,
       wager:         body.wager,
       to_win:        body.toWin ?? null,
-      status:        "pending",           // always start as pending
+      status:        "pending",
     })
     .select()
     .single();
