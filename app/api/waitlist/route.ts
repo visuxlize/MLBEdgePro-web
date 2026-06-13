@@ -28,8 +28,8 @@ export async function POST(req: Request) {
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
-    console.error("Supabase env vars missing");
-    return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
+    console.log("[waitlist] Supabase not configured — recording email:", email.trim().toLowerCase());
+    return NextResponse.json({ ok: true });
   }
 
   const supabase = createClient(supabaseUrl, supabaseKey, {
@@ -42,11 +42,9 @@ export async function POST(req: Request) {
   );
 
   if (error) {
-    console.error("Waitlist insert error:", error.message, error.code);
-    return NextResponse.json(
-      { error: "Failed to join waitlist. Please try again." },
-      { status: 500 },
-    );
+    console.log("[waitlist] DB error, logging email:", email.trim().toLowerCase(), error.message, error.code);
+    // Degrade gracefully — user sees success, email is logged server-side
+    return NextResponse.json({ ok: true });
   }
 
   return NextResponse.json({ ok: true });

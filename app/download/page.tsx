@@ -518,7 +518,7 @@ export default function DownloadPage() {
           </Container>
         </section>
 
-        {/* PRO VS FREE SECTION ────────────────────────────────────────────── */}
+        {/* PRICING SECTION ─────────────────────────────────────────────────── */}
         <section className="py-16 sm:py-20 border-t border-white/[0.05]">
           <Container>
             <motion.div
@@ -529,66 +529,95 @@ export default function DownloadPage() {
               className="text-center mb-12"
             >
               <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight mb-3">
-                Free to start. Pro when you&apos;re ready.
+                Start free. Try Fan or Pro on us.
               </h2>
               <p className="text-white/40 max-w-md mx-auto">
-                No paywall on the basics. The full edge unlocks at $4.99/month.
+                14-day Fan trial. 3-day Pro trial. Card required. No charge until your trial ends.
               </p>
             </motion.div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
-              {[
-                {
-                  tier: "Free", price: "$0", sub: "Always free",
-                  color: "rgba(255,255,255,0.06)", border: "rgba(255,255,255,0.08)",
-                  items: ["Today's game schedule", "Live scores", "Win predictions", "Weather conditions"],
-                  iconColor: "rgba(255,255,255,0.30)",
-                },
-                {
-                  tier: "Edge Pro", price: "$4.99", sub: "Per month",
-                  color: "rgba(255,120,40,0.06)", border: "rgba(255,120,40,0.30)",
-                  items: ["HR & Hit props", "Pitcher K projections", "Edge Report", "Full matchup analysis", "Prop Builder & slips"],
-                  iconColor: "#FF7828",
-                  highlight: true,
-                },
-              ].map((plan, i) => (
-                <motion.div
-                  key={plan.tier}
-                  initial={{ opacity: 0, y: 24 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: i * 0.1 }}
-                  className="rounded-2xl p-6"
-                  style={{ backgroundColor: plan.color, border: `1px solid ${plan.border}` }}
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: plan.highlight ? "#FF7828" : "rgba(255,255,255,0.30)" }}>
-                        {plan.tier}
-                      </p>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-3xl font-black text-white">{plan.price}</span>
-                        <span className="text-white/30 text-sm">/{plan.sub}</span>
-                      </div>
-                    </div>
-                    {plan.highlight && (
-                      <span className="rounded-full border border-[#FF7828]/30 bg-[#FF7828]/10 px-2.5 py-1 text-[9px] font-black text-[#FF7828] tracking-widest uppercase">
-                        Most Popular
-                      </span>
-                    )}
-                  </div>
-                  <ul className="space-y-2.5">
-                    {plan.items.map((item) => (
-                      <li key={item} className="flex items-center gap-2.5">
-                        <Check size={13} strokeWidth={2.5} style={{ color: plan.iconColor, flexShrink: 0 }} />
-                        <span className="text-sm" style={{ color: plan.highlight ? "rgba(255,255,255,0.70)" : "rgba(255,255,255,0.45)" }}>
-                          {item}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </motion.div>
-              ))}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
+              {/* Free */}
+              <motion.div
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5 }}
+                className="rounded-2xl p-6"
+                style={{ backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}
+              >
+                <p className="text-xs font-bold tracking-widest uppercase mb-1 text-white/30">Free</p>
+                <div className="flex items-baseline gap-1 mb-4">
+                  <span className="text-3xl font-black text-white">$0</span>
+                  <span className="text-white/30 text-sm">/month</span>
+                </div>
+                <ul className="space-y-2.5">
+                  {["Today's game schedule", "Live scores", "Win predictions", "Weather conditions"].map((item) => (
+                    <li key={item} className="flex items-center gap-2.5">
+                      <Check size={13} strokeWidth={2.5} style={{ color: "rgba(255,255,255,0.30)", flexShrink: 0 }} />
+                      <span className="text-sm text-white/45">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+
+              {/* Fan */}
+              <motion.div
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.08 }}
+                className="rounded-2xl p-6 relative overflow-hidden"
+                style={{ backgroundColor: "rgba(255,120,40,0.06)", border: "1px solid rgba(255,120,40,0.30)" }}
+              >
+                <div className="absolute -top-12 -right-12 w-36 h-36 rounded-full bg-[#FF7828]/10 blur-3xl pointer-events-none" />
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-xs font-bold tracking-widest uppercase text-[#FF7828]">Fan</p>
+                  <span className="rounded-full border border-[#FF7828]/30 bg-[#FF7828]/10 px-2 py-0.5 text-[9px] font-black text-[#FF7828] tracking-widest uppercase">Most Popular</span>
+                </div>
+                <div className="text-[9px] font-black text-[#FF7828] tracking-widest uppercase mb-1">14-Day Free Trial</div>
+                <div className="flex items-baseline gap-1 mb-4">
+                  <span className="text-3xl font-black text-white">$4.99</span>
+                  <span className="text-white/30 text-sm">/mo after trial</span>
+                </div>
+                <ul className="space-y-2.5">
+                  {["Edge Report — AI-ranked value bets", "Full Prop Builder (HR, hits, K props)", "Batter vs Pitcher matchup analysis", "Multi-leg prop slips & bet tracker", "Priority data refresh"].map((item) => (
+                    <li key={item} className="flex items-center gap-2.5">
+                      <Check size={13} strokeWidth={2.5} style={{ color: "#FF7828", flexShrink: 0 }} />
+                      <span className="text-sm text-white/70">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+
+              {/* Pro */}
+              <motion.div
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.16 }}
+                className="rounded-2xl p-6 relative overflow-hidden"
+                style={{ backgroundColor: "rgba(129,140,248,0.06)", border: "1px solid rgba(129,140,248,0.30)" }}
+              >
+                <div className="absolute -top-12 -right-12 w-36 h-36 rounded-full bg-[#818cf8]/10 blur-3xl pointer-events-none" />
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-xs font-bold tracking-widest uppercase text-[#818cf8]">Pro</p>
+                  <span className="rounded-full border border-[#818cf8]/30 bg-[#818cf8]/10 px-2 py-0.5 text-[9px] font-black text-[#818cf8] tracking-widest uppercase">Best Value</span>
+                </div>
+                <div className="text-[9px] font-black text-[#818cf8] tracking-widest uppercase mb-1">3-Day Free Trial</div>
+                <div className="flex items-baseline gap-1 mb-4">
+                  <span className="text-3xl font-black text-white">$14.99</span>
+                  <span className="text-white/30 text-sm">/mo after trial</span>
+                </div>
+                <ul className="space-y-2.5">
+                  {["HR Deep Dive + spray charts", "Wall Clearance & Carry Analysis", "Confident daily picks", "⚽ World Cup groups, bracket & AI picks", "⚽ ELO win probabilities"].map((item) => (
+                    <li key={item} className="flex items-center gap-2.5">
+                      <Check size={13} strokeWidth={2.5} style={{ color: "#818cf8", flexShrink: 0 }} />
+                      <span className="text-sm text-white/70">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
             </div>
           </Container>
         </section>

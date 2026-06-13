@@ -22,6 +22,27 @@ function flagSmUrl(countryCode: string) {
   return `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`;
 }
 
+function FlagImg({ code, name, className, small = false }: { code: string; name: string; className?: string; small?: boolean }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return (
+      <div className={`${className ?? ""} flex items-center justify-center bg-white/[0.12] text-white/60 font-black select-none`}
+           style={{ fontSize: "7px", letterSpacing: "-0.3px" }}>
+        {name.slice(0, 3).toUpperCase()}
+      </div>
+    );
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={small ? flagSmUrl(code) : flagUrl(code)}
+      alt={name}
+      className={`${className ?? ""} object-cover`}
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
 function sortedStandings(teams: GSTeam[]): GSTeam[] {
   return [...teams].sort((a, b) => {
     if (b.pts !== a.pts) return b.pts - a.pts;
@@ -97,10 +118,7 @@ function TeamModal({
           {/* Flag + name */}
           <div className="flex flex-col items-center gap-3 z-10">
             <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white/20 shadow-xl">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={flagUrl(team.countryCode)} alt={team.name}
-                className="w-full h-full object-cover"
-                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+              <FlagImg code={team.countryCode} name={team.shortName} className="w-full h-full" />
             </div>
             <div className="text-center">
               <p className="text-xl font-black text-white leading-tight">{team.name}</p>
@@ -164,10 +182,7 @@ function TeamModal({
                   <div key={i} className="rounded-xl bg-white/[0.03] border border-white/[0.06] px-3 py-2.5 flex items-center gap-3">
                     {/* Opponent flag + name */}
                     <div className="w-8 h-8 rounded-lg overflow-hidden border border-white/10 shrink-0">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={flagSmUrl(opponent.countryCode)} alt={opponent.shortName}
-                        className="w-full h-full object-cover"
-                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+                      <FlagImg code={opponent.countryCode} name={opponent.shortName} className="w-full h-full" small />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold text-white">
@@ -213,10 +228,7 @@ function TeamModal({
                 return (
                   <div key={opp.teamId} className="flex items-center gap-2.5">
                     <div className="w-5 h-5 rounded overflow-hidden border border-white/10 shrink-0">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={flagSmUrl(oppTeam.countryCode)} alt={oppTeam.shortName}
-                        className="w-full h-full object-cover"
-                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+                      <FlagImg code={oppTeam.countryCode} name={oppTeam.shortName} className="w-full h-full" small />
                     </div>
                     <span className="text-[10px] text-white/50 w-8">{oppTeam.shortName}</span>
                     <div className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
@@ -343,10 +355,7 @@ function GroupCard({
               )}
               {!isQualifying && <div className="w-1 mr-0.5 shrink-0" />}
               <div className="w-4 h-4 rounded-full overflow-hidden border border-white/10 shrink-0">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={flagSmUrl(team.countryCode)} alt={team.shortName}
-                  className="w-full h-full object-cover"
-                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+                <FlagImg code={team.countryCode} name={team.shortName} className="w-full h-full" small />
               </div>
               <span className="flex-1 text-[11px] font-bold text-white/80 truncate min-w-0 ml-1">{team.shortName}</span>
               {[standing.p, standing.w, standing.d, standing.l, standing.gf, standing.ga].map((val, i) => (
@@ -384,9 +393,7 @@ function GroupCard({
                     isDone ? "text-white/35" : "text-white/70"
                   }`}>{home.shortName}</span>
                   <div className="w-4 h-4 rounded-full overflow-hidden border border-white/10 shrink-0">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={flagSmUrl(home.countryCode)} alt={home.shortName} className="w-full h-full object-cover"
-                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+                    <FlagImg code={home.countryCode} name={home.shortName} className="w-full h-full" small />
                   </div>
                 </div>
                 <div className="flex items-center justify-center shrink-0 min-w-[52px]">
@@ -414,9 +421,7 @@ function GroupCard({
                 </div>
                 <div className="flex items-center gap-1.5 flex-1 min-w-0">
                   <div className="w-4 h-4 rounded-full overflow-hidden border border-white/10 shrink-0">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={flagSmUrl(away.countryCode)} alt={away.shortName} className="w-full h-full object-cover"
-                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+                    <FlagImg code={away.countryCode} name={away.shortName} className="w-full h-full" small />
                   </div>
                   <span className={`text-[10px] font-bold truncate ${
                     isDone && match.awayScore! > match.homeScore! ? "text-white" :

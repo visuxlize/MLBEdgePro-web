@@ -41,6 +41,22 @@ function flagUrl(countryCode: string) {
   return `https://flagcdn.com/w80/${countryCode.toLowerCase()}.png`;
 }
 
+function FlagImg({ src, alt, className }: { src: string; alt: string; className?: string }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return (
+      <div className={`${className ?? ""} flex items-center justify-center bg-white/[0.12] text-white/50 font-black`}
+           style={{ fontSize: "6px" }}>
+        {alt.slice(0, 3).toUpperCase()}
+      </div>
+    );
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={src} alt={alt} className={`${className ?? ""} object-cover`} onError={() => setFailed(true)} />
+  );
+}
+
 function sortedTeams(teams: WCGroup["teams"]) {
   return [...teams].sort((a, b) => {
     if (b.pts !== a.pts) return b.pts - a.pts;
@@ -89,7 +105,7 @@ function TodayMatchCard({ match }: { match: TodayMatch }) {
       </div>
       <div className="flex items-center justify-between gap-2 mb-2">
         <div className="flex items-center gap-1.5 flex-1 min-w-0">
-          <img src={match.homeFlagUrl} alt={match.home} className="w-5 h-5 rounded-full object-cover border border-white/10 shrink-0" />
+          <FlagImg src={match.homeFlagUrl} alt={match.home} className="w-5 h-5 rounded-full border border-white/10 shrink-0" />
           <span className="text-xs font-bold text-white truncate">{WC_TEAMS[match.homeId]?.shortName ?? match.home.slice(0,3).toUpperCase()}</span>
         </div>
         <div className="flex items-center gap-1 shrink-0">
@@ -103,7 +119,7 @@ function TodayMatchCard({ match }: { match: TodayMatch }) {
         </div>
         <div className="flex items-center gap-1.5 flex-1 min-w-0 justify-end">
           <span className="text-xs font-bold text-white truncate text-right">{WC_TEAMS[match.awayId]?.shortName ?? match.away.slice(0,3).toUpperCase()}</span>
-          <img src={match.awayFlagUrl} alt={match.away} className="w-5 h-5 rounded-full object-cover border border-white/10 shrink-0" />
+          <FlagImg src={match.awayFlagUrl} alt={match.away} className="w-5 h-5 rounded-full border border-white/10 shrink-0" />
         </div>
       </div>
       <div className="flex items-center gap-1 text-[9px] text-white/30">
@@ -127,7 +143,7 @@ function GroupMiniCard({ group }: { group: WCGroup }) {
           return (
             <div key={t.teamId} className="flex items-center gap-2 mb-1 last:mb-0">
               <span className="text-[9px] text-white/20 w-2.5">{i + 1}</span>
-              <img src={flagUrl(team?.countryCode ?? t.teamId)} alt={team?.name ?? t.teamId} className="w-3.5 h-3.5 rounded-full object-cover border border-white/10" />
+              <FlagImg src={flagUrl(team?.countryCode ?? t.teamId)} alt={team?.shortName ?? t.teamId.toUpperCase()} className="w-3.5 h-3.5 rounded-full border border-white/10" />
               <span className="text-[10px] font-bold text-white/80 flex-1 truncate">{team?.shortName ?? t.teamId.toUpperCase()}</span>
               <span className="text-[10px] font-black text-[#FBBF24]">{t.pts}pt</span>
             </div>

@@ -32,6 +32,9 @@ const PRO_FEATURES = [
   "Barrel Rate & Exit Velocity Analysis",
   "Confident daily picks",
   "Batter power & pitcher vulnerability",
+  "⚽ World Cup 2026 — Groups, bracket & AI picks",
+  "⚽ Live group standings & team deep dives",
+  "⚽ ELO win probabilities for every match",
 ];
 
 const fadeUp = {
@@ -57,7 +60,10 @@ const COMPARISON: [string, boolean, boolean, boolean][] = [
   ["HR Deep Dive",             false, false, true ],
   ["Wall Clearance Analysis",  false, false, true ],
   ["Carry Conditions",         false, false, true ],
-  ["Pitch → Spray Connection", false, false, true ],
+  ["Pitch → Spray Connection",         false, false, true ],
+  ["⚽ WC Groups & Standings",         false, false, true ],
+  ["⚽ WC Bracket & Predictions",      false, false, true ],
+  ["⚽ Team Deep Dives & ELO Model",   false, false, true ],
 ];
 
 function CheckIcon({ yes, color }: { yes: boolean; color?: string }) {
@@ -69,6 +75,27 @@ export function LandingPricing() {
   return (
     <section id="pricing" className="py-20 sm:py-28">
       <Container>
+        {/* World Cup urgency banner */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="mb-8 rounded-2xl border border-[#FBBF24]/30 bg-gradient-to-r from-[#FBBF24]/[0.08] via-[#FBBF24]/[0.04] to-transparent p-4 flex flex-col sm:flex-row items-center justify-between gap-3 max-w-5xl mx-auto"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-xl">⚽</span>
+            <div>
+              <p className="text-sm font-black text-[#FBBF24]">FIFA World Cup 2026 is LIVE — Limited Time Pro Access</p>
+              <p className="text-xs text-white/40 mt-0.5">Live group standings, ELO bracket simulation & AI picks — Pro only. While the tournament runs.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="w-2 h-2 rounded-full bg-[#FBBF24] animate-pulse" />
+            <span className="text-[10px] font-black text-[#FBBF24] tracking-widest uppercase">Live Now</span>
+          </div>
+        </motion.div>
+
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
