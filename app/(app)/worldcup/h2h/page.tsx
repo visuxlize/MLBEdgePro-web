@@ -1,11 +1,11 @@
-import { H2HMatchup } from "@/components/worldcup/H2HMatchup";
+import { MatchAnalysis } from "@/components/worldcup/MatchAnalysis";
 
-export const metadata = { title: "WC 2026 H2H – MLBEdgePro" };
+export const metadata = { title: "WC 2026 Match Analysis – MLBEdgePro" };
 
-export default function H2HPage() {
+export default function MatchAnalysisPage() {
   return (
-    <div className="max-w-4xl mx-auto">
-      <H2HMatchup />
+    <div className="max-w-3xl mx-auto">
+      <MatchAnalysis />
     </div>
   );
 }

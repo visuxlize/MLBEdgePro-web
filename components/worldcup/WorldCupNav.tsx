@@ -11,7 +11,7 @@ const NAV_ITEMS = [
   { href: "/worldcup/bracket", label: "Bracket",  icon: Trophy },
   { href: "/worldcup/map",     label: "Map",      icon: Map },
   { href: "/worldcup/props",   label: "Betting",  icon: BarChart3 },
-  { href: "/worldcup/h2h",     label: "H2H",      icon: Users },
+  { href: "/worldcup/h2h",     label: "Analysis",  icon: Users },
   { href: "/worldcup/slips",   label: "Slips",    icon: Ticket },
 ];
 

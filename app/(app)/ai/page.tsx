@@ -132,19 +132,40 @@ function MarkdownContent({ text }: { text: string }) {
 
 // ── [PICKS] parser ────────────────────────────────────────────────────────────
 
-function parseContent(raw: string): { text: string; picks: AIPick[] } {
-  const match = raw.match(/\[PICKS\]\s*([\s\S]*?)\s*\[\/PICKS\]/);
-  if (!match) return { text: raw.trim(), picks: [] };
-
-  const text = raw.slice(0, match.index).trim();
-  let picks: AIPick[] = [];
+function tryParsePicksJson(str: string): AIPick[] {
+  const trimmed = str.trim();
+  // Accept a bare JSON array
+  const arrStart = trimmed.indexOf("[");
+  if (arrStart === -1) return [];
   try {
-    picks = JSON.parse(match[1].trim());
-    if (!Array.isArray(picks)) picks = [];
+    const parsed = JSON.parse(trimmed.slice(arrStart));
+    return Array.isArray(parsed) ? parsed : [];
   } catch {
-    picks = [];
+    return [];
   }
-  return { text, picks };
+}
+
+function parseContent(raw: string): { text: string; picks: AIPick[] } {
+  // 1. Try closed form: [PICKS] ... [/PICKS]
+  const closed = raw.match(/\[PICKS\]\s*([\s\S]*?)\s*\[\/PICKS\]/);
+  if (closed) {
+    const picks = tryParsePicksJson(closed[1]);
+    return { text: raw.slice(0, closed.index).trim(), picks };
+  }
+
+  // 2. Fallback: find last [PICKS] and grab the JSON array that follows (no closing tag)
+  const tagIdx = raw.lastIndexOf("[PICKS]");
+  if (tagIdx !== -1) {
+    const after  = raw.slice(tagIdx + 7); // skip "[PICKS]"
+    const picks  = tryParsePicksJson(after);
+    if (picks.length > 0) {
+      return { text: raw.slice(0, tagIdx).trim(), picks };
+    }
+    // [PICKS] present but no valid JSON — strip the tag from visible text
+    return { text: raw.slice(0, tagIdx).trim(), picks: [] };
+  }
+
+  return { text: raw.trim(), picks: [] };
 }
 
 // ── Prop color helper ─────────────────────────────────────────────────────────

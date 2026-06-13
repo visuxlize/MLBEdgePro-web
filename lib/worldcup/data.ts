@@ -382,14 +382,14 @@ export const WC_GROUPS: WCGroup[] = [
   {
     id: "B",
     teams: [
-      { teamId: "can", p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
+      { teamId: "can", p: 1, w: 0, d: 1, l: 0, gf: 1, ga: 1, pts: 1 },
       { teamId: "sui", p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
-      { teamId: "bih", p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
+      { teamId: "bih", p: 1, w: 0, d: 1, l: 0, gf: 1, ga: 1, pts: 1 },
       { teamId: "qat", p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
     ],
     matches: [
       { home: "can", away: "bih", date: "Jun 12", time: "6:00 PM", venue: "BMO Field, Toronto",
-        homeScore: null, awayScore: null, status: "scheduled", goals: [] },
+        homeScore: 1, awayScore: 1, status: "completed", goals: [] },
       { home: "qat", away: "sui", date: "Jun 13", time: "3:00 PM", venue: "Levi's Stadium, Bay Area",
         homeScore: null, awayScore: null, status: "scheduled", goals: [] },
       { home: "sui", away: "bih", date: "Jun 18", time: "3:00 PM", venue: "SoFi Stadium, LA",
@@ -428,14 +428,14 @@ export const WC_GROUPS: WCGroup[] = [
   {
     id: "D",
     teams: [
-      { teamId: "usa", p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
-      { teamId: "par", p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
+      { teamId: "usa", p: 1, w: 1, d: 0, l: 0, gf: 4, ga: 1, pts: 3 },
+      { teamId: "par", p: 1, w: 0, d: 0, l: 1, gf: 1, ga: 4, pts: 0 },
       { teamId: "aus", p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
       { teamId: "tur", p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 },
     ],
     matches: [
       { home: "usa", away: "par", date: "Jun 12", time: "9:00 PM", venue: "SoFi Stadium, LA",
-        homeScore: null, awayScore: null, status: "scheduled", goals: [] },
+        homeScore: 4, awayScore: 1, status: "completed", goals: [] },
       { home: "aus", away: "tur", date: "Jun 13", time: "6:00 PM", venue: "BC Place, Vancouver",
         homeScore: null, awayScore: null, status: "scheduled", goals: [] },
       { home: "usa", away: "aus", date: "Jun 19", time: "6:00 PM", venue: "Lumen Field, Seattle",
