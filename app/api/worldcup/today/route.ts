@@ -68,10 +68,11 @@ async function fetchTodayFromESPN(): Promise<TodayMatch[] | null> {
       const homeTeam = WC_TEAMS[homeId];
       const awayTeam = WC_TEAMS[awayId];
 
-      const statusName = comp.status?.type?.name ?? "";
+      const statusName  = comp.status?.type?.name ?? "";
+      const statusState = comp.status?.type?.state as string | undefined;
       const status: TodayMatch["status"] =
-        statusName === "STATUS_FINAL"     ? "completed"
-        : statusName === "STATUS_SCHEDULED" ? "scheduled"
+        statusName === "STATUS_FINAL" || statusName === "STATUS_FULL_TIME" || statusState === "post" ? "completed"
+        : statusName === "STATUS_SCHEDULED" || statusState === "pre" ? "scheduled"
         : "live";
 
       const dt = new Date(event.date ?? "");

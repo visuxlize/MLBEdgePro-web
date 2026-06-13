@@ -11,17 +11,54 @@ import type { WCGroup } from "@/lib/worldcup/types";
 import type { TodayMatch } from "@/app/api/worldcup/today/route";
 import { WC_GROUPS, WC_TEAMS } from "@/lib/worldcup/data";
 
-// ── Stadium Cards ─────────────────────────────────────────────────────────────
+// ── Stadium data with real photo URLs ─────────────────────────────────────────
 
 const STADIUMS = [
-  { name: "MetLife Stadium",    city: "New York/NJ", capacity: "82,500", matches: 8, from: "#1B4D8E", to: "#0F2D56", country: "usa", isFinal: true },
-  { name: "SoFi Stadium",       city: "Los Angeles", capacity: "70,240", matches: 7, from: "#002244", to: "#0085CA", country: "usa" },
-  { name: "AT&T Stadium",       city: "Dallas",       capacity: "80,000", matches: 6, from: "#002647", to: "#869397", country: "usa" },
-  { name: "Estadio Azteca",     city: "Mexico City",  capacity: "87,523", matches: 7, from: "#006341", to: "#004225", country: "mex" },
-  { name: "Levi's Stadium",     city: "Bay Area",     capacity: "68,500", matches: 6, from: "#AA0000", to: "#890000", country: "usa" },
-  { name: "NRG Stadium",        city: "Houston",      capacity: "72,220", matches: 6, from: "#03202F", to: "#0CA1D2", country: "usa" },
-  { name: "Lumen Field",        city: "Seattle",      capacity: "69,000", matches: 6, from: "#002244", to: "#69BE28", country: "usa" },
-  { name: "BMO Field",          city: "Toronto",      capacity: "45,000", matches: 6, from: "#231F20", to: "#BE0000", country: "can" },
+  {
+    name: "MetLife Stadium",  city: "New York/NJ",  capacity: "82,500", matches: 8,
+    from: "#1B4D8E", to: "#0F2D56", country: "us", isFinal: true,
+    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/MetLife_Stadium.jpg?width=400",
+  },
+  {
+    name: "Estadio Azteca",   city: "Mexico City",  capacity: "87,523", matches: 7,
+    from: "#006341", to: "#004225", country: "mx",
+    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Azteca_Stadium.jpg?width=400",
+  },
+  {
+    name: "SoFi Stadium",     city: "Los Angeles",  capacity: "70,240", matches: 7,
+    from: "#002244", to: "#0085CA", country: "us",
+    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/SoFi_Stadium_aerial_view.jpg?width=400",
+  },
+  {
+    name: "Hard Rock Stadium", city: "Miami",        capacity: "65,326", matches: 7,
+    from: "#008E97", to: "#005C62", country: "us",
+    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Hard_Rock_Stadium.jpg?width=400",
+  },
+  {
+    name: "AT&T Stadium",     city: "Dallas",       capacity: "80,000", matches: 6,
+    from: "#002647", to: "#869397", country: "us",
+    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/AT%26T_Stadium.jpg?width=400",
+  },
+  {
+    name: "Levi's Stadium",   city: "Bay Area",     capacity: "68,500", matches: 6,
+    from: "#AA0000", to: "#890000", country: "us",
+    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Levi%27s_Stadium.jpg?width=400",
+  },
+  {
+    name: "Lumen Field",      city: "Seattle",      capacity: "69,000", matches: 6,
+    from: "#002244", to: "#69BE28", country: "us",
+    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Lumen_Field.jpg?width=400",
+  },
+  {
+    name: "BMO Field",        city: "Toronto",      capacity: "45,000", matches: 6,
+    from: "#231F20", to: "#BE0000", country: "ca",
+    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/BMO_Field.jpg?width=400",
+  },
+  {
+    name: "BC Place",         city: "Vancouver",    capacity: "54,500", matches: 6,
+    from: "#00205B", to: "#001440", country: "ca",
+    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/BC_Place.jpg?width=400",
+  },
 ];
 
 // ── Nav Sections ──────────────────────────────────────────────────────────────
@@ -31,8 +68,8 @@ const SECTIONS = [
   { href: "/worldcup/bracket", icon: Trophy,     title: "Bracket",  desc: "32-team knockout with ELO simulation",     accent: "#FBBF24" },
   { href: "/worldcup/map",     icon: Map,        title: "Venues",   desc: "Interactive host city & stadium map",      accent: "#34D399" },
   { href: "/worldcup/props",   icon: BarChart3,  title: "Betting",  desc: "Live odds, props, and value bets",         accent: "#FF7828" },
-  { href: "/worldcup/h2h",     icon: Users,      title: "H2H",      desc: "Starting lineups and player matchups",     accent: "#818CF8" },
-  { href: "/worldcup/slips",   icon: Ticket,     title: "WC Slips", desc: "Track your World Cup parlay bets",        accent: "#F472B6" },
+  { href: "/worldcup/h2h",     icon: Users,      title: "Analysis", desc: "xG & ELO match analysis + bet picks",      accent: "#818CF8" },
+  { href: "/worldcup/slips",   icon: Ticket,     title: "WC Slips", desc: "Track your World Cup parlay bets",         accent: "#F472B6" },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -154,6 +191,109 @@ function GroupMiniCard({ group }: { group: WCGroup }) {
   );
 }
 
+function StadiumCard({ s }: { s: typeof STADIUMS[number] }) {
+  const [imgFailed, setImgFailed] = useState(false);
+
+  return (
+    <Link href="/worldcup/map" className="block shrink-0 group">
+      <div className="relative w-48 h-32 rounded-2xl overflow-hidden border border-white/[0.06] group-hover:border-white/[0.18] transition-all duration-200">
+        {/* Real stadium photo */}
+        {!imgFailed && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={s.imageUrl}
+            alt={s.name}
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{ opacity: 0.55 }}
+            onError={() => setImgFailed(true)}
+          />
+        )}
+        {/* Color tint overlay */}
+        <div
+          className="absolute inset-0"
+          style={{ background: imgFailed ? `linear-gradient(135deg, ${s.from}, ${s.to})` : `linear-gradient(135deg, ${s.from}99, ${s.to}66)` }}
+        />
+        {/* Bottom fade */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+
+        {/* Final badge */}
+        {s.isFinal && (
+          <div className="absolute top-2 left-2">
+            <div className="flex items-center gap-1 rounded-full bg-[#FBBF24]/20 border border-[#FBBF24]/40 px-1.5 py-0.5 backdrop-blur-sm">
+              <Trophy size={8} className="text-[#FBBF24]" />
+              <span className="text-[8px] font-black text-[#FBBF24]">FINAL</span>
+            </div>
+          </div>
+        )}
+
+        {/* Country flag */}
+        <div className="absolute top-2 right-2">
+          <FlagImg
+            src={flagUrl(s.country)}
+            alt={s.country}
+            className="w-5 h-3.5 rounded overflow-hidden border border-white/20"
+          />
+        </div>
+
+        <div className="absolute bottom-0 left-0 right-0 p-2.5">
+          <div className="text-[10px] font-black text-white leading-tight">{s.name}</div>
+          <div className="text-[8px] text-white/50 mt-0.5">{s.city} · {s.matches} matches · {s.capacity}</div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+// ── WC Trophy Hero visual ─────────────────────────────────────────────────────
+
+function TrophyHero() {
+  return (
+    <div className="hidden md:flex flex-col items-center justify-center relative shrink-0 w-52">
+      {/* Outer glow ring */}
+      <motion.div
+        className="absolute rounded-full"
+        style={{ width: 180, height: 180, background: "radial-gradient(ellipse, rgba(251,191,36,0.18), transparent 70%)" }}
+        animate={{ scale: [1, 1.08, 1], opacity: [0.7, 1, 0.7] }}
+        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+      />
+      {/* Stars orbit */}
+      {[0, 60, 120, 180, 240, 300].map((deg, i) => (
+        <motion.div
+          key={i}
+          className="absolute text-[10px]"
+          style={{
+            transform: `rotate(${deg}deg) translateY(-72px) rotate(-${deg}deg)`,
+          }}
+          animate={{ opacity: [0.4, 0.9, 0.4] }}
+          transition={{ duration: 2, delay: i * 0.3, repeat: Infinity }}
+        >
+          ⭐
+        </motion.div>
+      ))}
+      {/* Trophy icon */}
+      <div className="relative z-10 flex flex-col items-center">
+        <Trophy
+          size={80}
+          strokeWidth={1.5}
+          style={{
+            color: "#FBBF24",
+            filter: "drop-shadow(0 0 24px rgba(251,191,36,0.7)) drop-shadow(0 0 6px rgba(251,191,36,0.9))",
+          }}
+        />
+        <div className="mt-2 text-5xl font-black tracking-tight" style={{ color: "#FBBF24", textShadow: "0 0 20px rgba(251,191,36,0.5)" }}>
+          2026
+        </div>
+        {/* Three-nation accent */}
+        <div className="flex items-center gap-1 mt-2">
+          {["us", "ca", "mx"].map((cc) => (
+            <FlagImg key={cc} src={flagUrl(cc)} alt={cc} className="w-6 h-4 rounded overflow-hidden border border-white/20" />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function WorldCupHubPage() {
@@ -184,48 +324,76 @@ export default function WorldCupHubPage() {
       {/* ── Hero ── */}
       <div
         className="relative rounded-3xl overflow-hidden"
-        style={{ background: "linear-gradient(135deg, #0A1628 0%, #1A2D5A 40%, #0F1E3C 70%, #1C1000 100%)" }}
+        style={{ background: "linear-gradient(135deg, #051128 0%, #0E2450 35%, #081830 65%, #130D00 100%)" }}
       >
-        <div
-          className="absolute inset-0 opacity-30"
-          style={{
-            background: "radial-gradient(ellipse 80% 60% at 50% 0%, #FBBF2430, transparent), radial-gradient(ellipse 60% 40% at 100% 100%, #1E3A5F50, transparent)",
-          }}
-        />
-        <div className="relative px-8 py-10 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#FBBF24]/20 bg-[#FBBF24]/[0.06] px-4 py-1.5 mb-5">
-            <Globe2 size={11} className="text-[#FBBF24]" />
-            <span className="text-[9px] font-black text-[#FBBF24] tracking-[0.2em] uppercase">FIFA World Cup 2026</span>
-            {hasLive && (
-              <>
-                <span className="text-white/15 mx-1">·</span>
-                <LiveBadge />
-              </>
-            )}
+        {/* Background radial glows */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse 60% 70% at 75% 50%, rgba(251,191,36,0.12), transparent)" }} />
+          <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse 40% 60% at 15% 50%, rgba(30,90,200,0.10), transparent)" }} />
+          <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse 30% 40% at 50% 100%, rgba(180,50,0,0.06), transparent)" }} />
+          {/* Subtle grid overlay */}
+          <div className="absolute inset-0 opacity-[0.04]"
+            style={{ backgroundImage: "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
+        </div>
+
+        <div className="relative flex items-center gap-6 px-8 py-10">
+          {/* Left: Text */}
+          <div className="flex-1 min-w-0">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#FBBF24]/20 bg-[#FBBF24]/[0.06] px-4 py-1.5 mb-5">
+              <Globe2 size={11} className="text-[#FBBF24]" />
+              <span className="text-[9px] font-black text-[#FBBF24] tracking-[0.2em] uppercase">FIFA World Cup 2026</span>
+              {hasLive && (
+                <>
+                  <span className="text-white/15 mx-1">·</span>
+                  <LiveBadge />
+                </>
+              )}
+            </div>
+
+            <h1 className="text-5xl sm:text-6xl font-black text-white leading-none tracking-tight mb-1">
+              WORLD
+            </h1>
+            <h1 className="text-5xl sm:text-6xl font-black leading-none tracking-tight mb-4" style={{ color: "#FBBF24", textShadow: "0 0 40px rgba(251,191,36,0.3)" }}>
+              CUP
+            </h1>
+
+            {/* Country flags row */}
+            <div className="flex items-center gap-2 mb-2">
+              {[
+                { cc: "us", name: "USA" },
+                { cc: "ca", name: "Canada" },
+                { cc: "mx", name: "Mexico" },
+              ].map(({ cc, name }) => (
+                <div key={cc} className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-1">
+                  <FlagImg src={flagUrl(cc)} alt={name} className="w-4 h-3 rounded overflow-hidden" />
+                  <span className="text-[9px] font-bold text-white/60">{name}</span>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-white/35 text-xs mb-6">48 teams · Jun 11 – Jul 21, 2026</p>
+
+            <div className="flex items-center gap-3 flex-wrap">
+              <Link
+                href="/worldcup/groups"
+                className="inline-flex items-center gap-2 rounded-xl bg-[#FBBF24] text-black text-xs font-black px-5 py-2.5 hover:bg-[#F59E0B] transition-colors shadow-lg"
+                style={{ boxShadow: "0 4px 20px rgba(251,191,36,0.35)" }}
+              >
+                <LayoutGrid size={13} />
+                Live Groups
+              </Link>
+              <Link
+                href="/worldcup/bracket"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/[0.06] text-white text-xs font-black px-5 py-2.5 hover:bg-white/[0.10] transition-colors"
+              >
+                <Trophy size={13} />
+                Bracket
+              </Link>
+            </div>
           </div>
-          <h1 className="text-5xl font-black text-white mb-2 tracking-tight">
-            WORLD CUP
-            <span className="block text-[#FBBF24]">2026</span>
-          </h1>
-          <p className="text-white/40 text-sm max-w-sm mx-auto mb-6">
-            USA · Canada · Mexico · 48 teams · Jun 11 – Jul 21, 2026
-          </p>
-          <div className="flex items-center justify-center gap-3 flex-wrap">
-            <Link
-              href="/worldcup/groups"
-              className="inline-flex items-center gap-2 rounded-xl bg-[#FBBF24] text-black text-xs font-black px-5 py-2.5 hover:bg-[#F59E0B] transition-colors"
-            >
-              <LayoutGrid size={13} />
-              Live Groups
-            </Link>
-            <Link
-              href="/worldcup/bracket"
-              className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/[0.06] text-white text-xs font-black px-5 py-2.5 hover:bg-white/[0.10] transition-colors"
-            >
-              <Trophy size={13} />
-              Bracket
-            </Link>
-          </div>
+
+          {/* Right: Trophy visual (desktop only) */}
+          <TrophyHero />
         </div>
       </div>
 
@@ -250,35 +418,20 @@ export default function WorldCupHubPage() {
         </section>
       )}
 
-      {/* ── Stadiums ── */}
+      {/* ── Host Stadiums ── */}
       <section>
-        <div className="flex items-center gap-2 mb-3">
-          <Map size={14} className="text-[#34D399]" />
-          <span className="text-sm font-black text-white">Host Stadiums</span>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Map size={14} className="text-[#34D399]" />
+            <span className="text-sm font-black text-white">Host Stadiums</span>
+          </div>
+          <Link href="/worldcup/map" className="text-[10px] font-bold text-white/40 hover:text-white/70 flex items-center gap-1">
+            View map <ChevronRight size={10} />
+          </Link>
         </div>
-        <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
+        <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
           {STADIUMS.map((s) => (
-            <Link key={s.name} href="/worldcup/map" className="block shrink-0 group">
-              <div
-                className="relative w-44 h-28 rounded-2xl overflow-hidden border border-white/[0.06] group-hover:border-white/[0.15] transition-colors"
-                style={{ background: `linear-gradient(135deg, ${s.from}, ${s.to})` }}
-              >
-                {s.isFinal && (
-                  <div className="absolute top-2 left-2">
-                    <div className="flex items-center gap-1 rounded-full bg-[#FBBF24]/20 border border-[#FBBF24]/30 px-1.5 py-0.5">
-                      <Trophy size={8} className="text-[#FBBF24]" />
-                      <span className="text-[8px] font-black text-[#FBBF24]">FINAL</span>
-                    </div>
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-2.5">
-                  <div className="text-[10px] font-black text-white leading-tight">{s.name}</div>
-                  <div className="text-[9px] text-white/50 mt-0.5">{s.city} · {s.matches} matches</div>
-                  <div className="text-[9px] text-white/35">{s.capacity} cap.</div>
-                </div>
-              </div>
-            </Link>
+            <StadiumCard key={s.name} s={s} />
           ))}
         </div>
       </section>
@@ -333,7 +486,7 @@ export default function WorldCupHubPage() {
       </section>
 
       <p className="text-center text-[10px] text-white/20">
-        Data: API-Football · ELO ratings · The Odds API · Updated in real-time
+        Live data: ESPN · ELO model · Updated in real-time
       </p>
     </div>
   );

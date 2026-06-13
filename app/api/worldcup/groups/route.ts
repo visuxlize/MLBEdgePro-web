@@ -17,10 +17,10 @@ function abbToId(abbr: string): string {
   return ESPN_TO_ID[up] ?? abbr.toLowerCase();
 }
 
-function espnStatusToGS(name: string): GSMatch["status"] {
-  if (name === "STATUS_FINAL") return "completed";
-  if (name === "STATUS_SCHEDULED") return "scheduled";
-  return "live"; // STATUS_IN_PROGRESS, STATUS_FIRST_HALF, etc.
+function espnStatusToGS(name: string, state?: string): GSMatch["status"] {
+  if (name === "STATUS_FINAL" || name === "STATUS_FULL_TIME" || state === "post") return "completed";
+  if (name === "STATUS_SCHEDULED" || state === "pre") return "scheduled";
+  return "live";
 }
 
 // Return YYYYMMDD strings for the last N days (including today)
@@ -91,7 +91,8 @@ async function fetchLiveGroups(): Promise<WCGroup[]> {
       const homeId = abbToId(home.team.abbreviation);
       const awayId = abbToId(away.team.abbreviation);
       const statusName  = comp.status?.type?.name ?? "";
-      const gsStatus    = espnStatusToGS(statusName);
+      const statusState = comp.status?.type?.state as string | undefined;
+      const gsStatus    = espnStatusToGS(statusName, statusState);
       const homeScore   = home.score != null ? parseInt(home.score, 10) : null;
       const awayScore   = away.score != null ? parseInt(away.score, 10) : null;
 

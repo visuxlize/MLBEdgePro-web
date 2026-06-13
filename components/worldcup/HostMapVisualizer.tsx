@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   ComposableMap, Geographies, Geography, Marker, ZoomableGroup,
 } from "react-simple-maps";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, Thermometer, Wind, Droplets, Settings, X, ChevronRight, Trophy, Users, ZoomIn, ZoomOut, Flame } from "lucide-react";
+import { MapPin, Wind, Droplets, Settings, X, ChevronRight, Trophy, Users, ZoomIn, ZoomOut } from "lucide-react";
 import { HOST_CITIES } from "@/lib/worldcup/data";
 import type { HostCity, HostCountry } from "@/lib/worldcup/types";
+import type { TodayMatch } from "@/app/api/worldcup/today/route";
 
 const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
@@ -74,9 +75,43 @@ function SettingsPanel({ layer, onLayerChange, onClose }: {
   );
 }
 
+// ── Live match helpers ────────────────────────────────────────────────────────
+
+function venueMatchesCity(venue: string, cityStadium: string): boolean {
+  const part = venue.split(",")[0].trim().toLowerCase();
+  const norm = cityStadium.replace(/\s*\(.*?\)/g, "").trim().toLowerCase();
+  return norm.includes(part) || part.includes(norm);
+}
+
+function LiveMatchBanner({ match }: { match: TodayMatch }) {
+  const homeScore = match.homeScore ?? "–";
+  const awayScore = match.awayScore ?? "–";
+  return (
+    <div className="mx-4 mb-3 rounded-xl border border-red-400/25 bg-red-400/[0.07] p-2.5">
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <motion.div className="w-1.5 h-1.5 rounded-full bg-red-400"
+          animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1.2, repeat: Infinity }} />
+        <span className="text-[9px] font-black text-red-400 uppercase tracking-widest">
+          {match.status === "live" ? "Live Now" : match.status === "completed" ? "Final" : "Today"}
+        </span>
+      </div>
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-bold text-white/80">{match.home}</span>
+        <span className="text-sm font-black text-white px-2">
+          {match.status !== "scheduled" ? `${homeScore} – ${awayScore}` : "vs"}
+        </span>
+        <span className="text-xs font-bold text-white/80 text-right">{match.away}</span>
+      </div>
+      {match.status === "scheduled" && (
+        <p className="text-center text-[9px] text-white/30 mt-1">{match.time}</p>
+      )}
+    </div>
+  );
+}
+
 // ── City Info Card ────────────────────────────────────────────────────────────
 
-function CityCard({ city, onClose }: { city: HostCity; onClose: () => void }) {
+function CityCard({ city, onClose, liveMatch }: { city: HostCity; onClose: () => void; liveMatch?: TodayMatch }) {
   const color = MARKER_COLORS[city.country];
 
   return (
@@ -116,6 +151,9 @@ function CityCard({ city, onClose }: { city: HostCity; onClose: () => void }) {
             <p className="text-[11px] text-white/40">{city.stadium}</p>
           </div>
         </div>
+
+      {/* Live match banner */}
+      {liveMatch && <LiveMatchBanner match={liveMatch} />}
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-2 mb-3">
@@ -166,14 +204,16 @@ function CityCard({ city, onClose }: { city: HostCity; onClose: () => void }) {
 // ── Animated City Marker ──────────────────────────────────────────────────────
 
 function CityMarker({
-  city, layer, isSelected, isHovered, onSelect, onHover, onHoverEnd, index,
+  city, layer, isSelected, isHovered, onSelect, onHover, onHoverEnd, index, liveMatch,
 }: {
   city: HostCity; layer: MapLayer;
   isSelected: boolean; isHovered: boolean;
   onSelect: () => void; onHover: () => void; onHoverEnd: () => void;
   index: number;
+  liveMatch?: TodayMatch;
 }) {
-  const color = MARKER_COLORS[city.country];
+  const isLive = liveMatch?.status === "live";
+  const color  = isLive ? "#EF4444" : MARKER_COLORS[city.country];
   const isActive = isSelected || isHovered;
 
   const baseR = (() => {
@@ -274,6 +314,25 @@ export function HostMapVisualizer() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [layer, setLayer] = useState<MapLayer>("matches");
   const [zoom, setZoom]   = useState(1);
+  const [todayMatches, setTodayMatches] = useState<TodayMatch[]>([]);
+
+  useEffect(() => {
+    fetch("/api/worldcup/today")
+      .then((r) => r.json())
+      .then(({ matches }: { matches: TodayMatch[] }) => setTodayMatches(matches ?? []))
+      .catch(() => {});
+    const interval = setInterval(() => {
+      fetch("/api/worldcup/today")
+        .then((r) => r.json())
+        .then(({ matches }: { matches: TodayMatch[] }) => setTodayMatches(matches ?? []))
+        .catch(() => {});
+    }, 60_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  function getLiveMatchForCity(city: HostCity): TodayMatch | undefined {
+    return todayMatches.find((m) => venueMatchesCity(m.venue, city.stadium));
+  }
 
   const activeCity = selectedCity ?? hoveredCity;
 
@@ -378,6 +437,7 @@ export function HostMapVisualizer() {
               onSelect={() => handleSelectCity(city)}
               onHover={() => handleHoverCity(city)}
               onHoverEnd={handleHoverEnd}
+              liveMatch={getLiveMatchForCity(city)}
             />
           ))}
         </ZoomableGroup>
@@ -385,7 +445,7 @@ export function HostMapVisualizer() {
 
       {/* City detail card */}
       <AnimatePresence>
-        {activeCity && <CityCard city={activeCity} onClose={() => { setSelectedCity(null); setHoveredCity(null); }} />}
+        {activeCity && <CityCard city={activeCity} liveMatch={getLiveMatchForCity(activeCity)} onClose={() => { setSelectedCity(null); setHoveredCity(null); }} />}
       </AnimatePresence>
 
       {/* Bottom gradient + legend */}

@@ -4,7 +4,7 @@ export const metadata = { title: "WC 2026 Match Analysis – MLBEdgePro" };
 
 export default function MatchAnalysisPage() {
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-7xl mx-auto">
       <MatchAnalysis />
     </div>
   );
