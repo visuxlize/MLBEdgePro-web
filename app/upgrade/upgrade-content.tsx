@@ -8,10 +8,18 @@ import { Check, Minus, Zap, Star, ArrowLeft, ArrowRight, Loader2 } from "lucide-
 import { Button } from "@/components/ui/button";
 import { useSubscription } from "@/lib/subscription";
 
+const FREE_FEATURES = [
+  "Today's full game schedule",
+  "Live scores & game status",
+  "Win prediction (home / away)",
+  "Upcoming matchup overview",
+  "Stadium weather conditions",
+];
+
 const FAN_FEATURES = [
   "Everything in Free",
   "Edge Report — AI-ranked value bets",
-  "Full Prop Builder (HR, Hit, K props)",
+  "Full Prop Builder (HR, 1+ Hit, 2+ Hits, K props)",
   "Batter vs Pitcher matchup analysis",
   "Multi-leg prop slips",
   "Save & track your bet slips",
@@ -20,31 +28,35 @@ const FAN_FEATURES = [
 
 const PRO_FEATURES = [
   "Everything in Fan",
-  "HR Deep Dive — spray charts & grades",
+  "HR Deep Dive — spray charts & grade",
   "Wall Clearance + Carry Analysis",
   "Pitch → Spray Connection",
   "Barrel Rate & Exit Velocity Analysis",
   "Confident daily picks",
   "Batter power & pitcher vulnerability",
-  "⚽ FIFA World Cup 2026 Analysis (Limited Time)",
+  "⚽ World Cup 2026 — Group stage, brackets & AI picks",
+  "⚽ Live group standings & team deep dives",
+  "⚽ ELO win probabilities for every match",
 ];
 
 const COMPARISON: [string, boolean, boolean, boolean][] = [
-  ["Today's game schedule",    true,  true,  true ],
-  ["Live scores",              true,  true,  true ],
-  ["Win predictions",          true,  true,  true ],
-  ["Weather conditions",       true,  true,  true ],
-  ["Home Run props",           false, true,  true ],
-  ["Hit & 2+ Hit props",       false, true,  true ],
-  ["Pitcher K projections",    false, true,  true ],
-  ["Edge Report",              false, true,  true ],
-  ["Matchup analysis",         false, true,  true ],
-  ["Prop Builder & slips",     false, true,  true ],
-  ["HR Deep Dive",             false, false, true ],
-  ["Wall Clearance Analysis",  false, false, true ],
-  ["Carry Conditions",         false, false, true ],
-  ["Pitch → Spray Connection", false, false, true ],
-  ["⚽ World Cup Analysis",    false, false, true ],
+  ["Today's game schedule",            true,  true,  true ],
+  ["Live scores",                      true,  true,  true ],
+  ["Win predictions",                  true,  true,  true ],
+  ["Weather conditions",               true,  true,  true ],
+  ["Home Run props",                   false, true,  true ],
+  ["Hit & 2+ Hit props",               false, true,  true ],
+  ["Pitcher K projections",            false, true,  true ],
+  ["Edge Report",                      false, true,  true ],
+  ["Matchup analysis",                 false, true,  true ],
+  ["Prop Builder & slips",             false, true,  true ],
+  ["HR Deep Dive",                     false, false, true ],
+  ["Wall Clearance Analysis",          false, false, true ],
+  ["Carry Conditions",                 false, false, true ],
+  ["Pitch → Spray Connection",         false, false, true ],
+  ["⚽ WC Groups & Standings",         false, false, true ],
+  ["⚽ WC Bracket & Predictions",      false, false, true ],
+  ["⚽ Team Deep Dives & ELO Model",   false, false, true ],
 ];
 
 function CheckIcon({ yes, color }: { yes: boolean; color?: string }) {
@@ -106,6 +118,25 @@ function UpgradeInner({ highlightTier }: { highlightTier: "fan" | "pro" | null }
           </div>
         )}
 
+        {/* World Cup urgency banner */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="mb-8 rounded-2xl border border-[#FBBF24]/30 bg-gradient-to-r from-[#FBBF24]/[0.10] to-[#f59e0b]/[0.06] px-5 py-4 flex items-center gap-4 relative overflow-hidden"
+        >
+          <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-[#FBBF24]/[0.08] blur-3xl pointer-events-none" />
+          <div className="text-3xl shrink-0">⚽</div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-black text-[#FBBF24] mb-0.5">FIFA World Cup 2026 is LIVE — Limited Time Access</p>
+            <p className="text-xs text-white/50">Pro members get full group stage tracking, bracket predictions, team deep dives & ELO win probability for every match. Only available while the tournament runs.</p>
+          </div>
+          <div className="shrink-0 hidden sm:flex items-center gap-1.5 rounded-full border border-[#FBBF24]/40 bg-[#FBBF24]/15 px-3 py-1.5">
+            <span className="w-2 h-2 rounded-full bg-[#FBBF24] animate-pulse" />
+            <span className="text-[10px] font-black text-[#FBBF24] tracking-widest uppercase">Live Now</span>
+          </div>
+        </motion.div>
+
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -121,7 +152,7 @@ function UpgradeInner({ highlightTier }: { highlightTier: "fan" | "pro" | null }
             Unlock every edge
           </h1>
           <p className="text-white/45 text-base max-w-md mx-auto leading-relaxed">
-            Every prop. Every edge. Every advantage. Start with Fan or go all-in with Pro.
+            Every prop. Every edge. Every advantage — plus World Cup 2026 analysis while it&apos;s live.
           </p>
         </motion.div>
 
@@ -139,9 +170,19 @@ function UpgradeInner({ highlightTier }: { highlightTier: "fan" | "pro" | null }
               <span className="text-white/30 text-base">/month</span>
             </div>
             <p className="text-sm text-white/30 mb-5">Always free. No card required.</p>
-            <div className="py-3 px-4 rounded-xl border border-white/[0.06] bg-white/[0.02] text-sm text-white/35 text-center font-medium">
-              {plan === "free" ? "Current Plan" : "Included"}
+            <div className="py-3 px-4 rounded-xl border border-white/[0.06] bg-white/[0.02] text-sm text-white/35 text-center font-medium mb-5">
+              {plan === "free" ? "Current Plan" : "Get Started Free"}
             </div>
+            <ul className="space-y-2.5">
+              {FREE_FEATURES.map((f) => (
+                <li key={f} className="flex items-center gap-3">
+                  <div className="w-4 h-4 rounded-full bg-white/[0.06] flex items-center justify-center shrink-0">
+                    <Check size={9} className="text-white/30" strokeWidth={3} />
+                  </div>
+                  <span className="text-sm text-white/45">{f}</span>
+                </li>
+              ))}
+            </ul>
           </motion.div>
 
           {/* Fan */}
@@ -157,7 +198,7 @@ function UpgradeInner({ highlightTier }: { highlightTier: "fan" | "pro" | null }
           >
             <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full bg-[#FF7828]/8 blur-3xl pointer-events-none" />
 
-            <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center justify-between mb-3">
               <p className="text-xs font-bold text-[#FF7828] tracking-widest uppercase">Fan</p>
               <div className="flex items-center gap-1.5 rounded-full border border-[#FF7828]/30 bg-[#FF7828]/10 px-2.5 py-1">
                 <Zap size={9} className="text-[#FF7828]" strokeWidth={2.5} />
@@ -165,11 +206,15 @@ function UpgradeInner({ highlightTier }: { highlightTier: "fan" | "pro" | null }
               </div>
             </div>
 
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-[#FF7828]/30 bg-[#FF7828]/10 px-3 py-1 mb-4">
+              <span className="text-[10px] font-black text-[#FF7828] tracking-wide uppercase">14-Day Free Trial</span>
+            </div>
+
             <div className="flex items-baseline gap-1 mb-1">
               <span className="text-4xl font-black text-white">$4.99</span>
-              <span className="text-white/40 text-base">/month</span>
+              <span className="text-white/40 text-base">/mo after trial</span>
             </div>
-            <p className="text-sm text-white/35 mb-5">Cancel anytime.</p>
+            <p className="text-sm text-white/35 mb-5">Cancel anytime. No contracts.</p>
 
             {fanActive ? (
               <div className="py-3 px-4 rounded-xl border border-emerald-500/25 bg-emerald-500/[0.08] text-sm text-emerald-400 text-center font-bold mb-5 flex items-center justify-center gap-2">
@@ -191,7 +236,7 @@ function UpgradeInner({ highlightTier }: { highlightTier: "fan" | "pro" | null }
                 ) : (
                   <>
                     <Zap size={14} strokeWidth={2.5} />
-                    Start Fan
+                    Try Fan Free → 14 Days
                     <ArrowRight size={14} strokeWidth={2.5} />
                   </>
                 )}
@@ -230,16 +275,25 @@ function UpgradeInner({ highlightTier }: { highlightTier: "fan" | "pro" | null }
                 <span className="text-[9px] font-black text-[#818cf8] tracking-widest uppercase">Best Value</span>
               </div>
             </div>
-            <div className="flex items-center gap-1.5 mb-4 rounded-lg border border-[#FBBF24]/25 bg-[#FBBF24]/10 px-2.5 py-1.5">
-              <span className="text-sm">⚽</span>
-              <span className="text-[10px] font-black text-[#FBBF24] tracking-wide uppercase">FIFA World Cup 2026 — Limited Time Access</span>
+
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-[#818cf8]/30 bg-[#818cf8]/10 px-3 py-1 mb-3">
+              <span className="text-[10px] font-black text-[#818cf8] tracking-wide uppercase">3-Day Free Trial</span>
+            </div>
+
+            <div className="flex items-center gap-2 mb-4 rounded-xl border border-[#FBBF24]/30 bg-[#FBBF24]/[0.08] px-3 py-2">
+              <span className="text-base">⚽</span>
+              <div>
+                <p className="text-[10px] font-black text-[#FBBF24] tracking-wide uppercase leading-none mb-0.5">Limited Time — World Cup 2026 Live</p>
+                <p className="text-[10px] text-white/40">Full tournament access while it runs. Grab it now.</p>
+              </div>
+              <span className="ml-auto w-2 h-2 rounded-full bg-[#FBBF24] animate-pulse shrink-0" />
             </div>
 
             <div className="flex items-baseline gap-1 mb-1">
               <span className="text-4xl font-black text-white">$14.99</span>
-              <span className="text-white/40 text-base">/month</span>
+              <span className="text-white/40 text-base">/mo after trial</span>
             </div>
-            <p className="text-sm text-white/35 mb-5">Cancel anytime.</p>
+            <p className="text-sm text-white/35 mb-5">Cancel anytime. No contracts.</p>
 
             {proActive ? (
               <div className="py-3 px-4 rounded-xl border border-emerald-500/25 bg-emerald-500/[0.08] text-sm text-emerald-400 text-center font-bold mb-5 flex items-center justify-center gap-2">
@@ -261,7 +315,7 @@ function UpgradeInner({ highlightTier }: { highlightTier: "fan" | "pro" | null }
                 ) : (
                   <>
                     <Star size={14} strokeWidth={2.5} />
-                    {fanActive ? "Upgrade to Pro" : "Start Pro"}
+                    {fanActive ? "Upgrade to Pro → 3 Days Free" : "Try Pro Free → 3 Days"}
                     <ArrowRight size={14} strokeWidth={2.5} />
                   </>
                 )}

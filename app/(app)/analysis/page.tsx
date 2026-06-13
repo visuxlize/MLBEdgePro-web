@@ -409,73 +409,83 @@ Return ONLY this JSON (no markdown, no code fences):
 }
 
 async function EdgeContent() {
-  let games: Game[] = [];
-  try { games = await fetchTodaysGames(); } catch {}
+  try {
+    let games: Game[] = [];
+    try { games = await fetchTodaysGames(); } catch {}
 
-  const withPitchers = games.filter(
-    (g) => g.teams.away.probablePitcher || g.teams.home.probablePitcher
-  );
-
-  if (!withPitchers.length) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <Zap size={44} className="text-white/10 mb-4" strokeWidth={1.2} />
-        <p className="text-white/35">Edge data requires confirmed pitchers</p>
-      </div>
+    const withPitchers = games.filter(
+      (g) => g.teams.away.probablePitcher || g.teams.home.probablePitcher
     );
-  }
 
-  const capped = withPitchers.slice(0, 8);
-  const results = await Promise.allSettled(capped.map(fetchGameData));
+    if (!withPitchers.length) {
+      return (
+        <div className="flex flex-col items-center justify-center py-20">
+          <Zap size={44} className="text-white/10 mb-4" strokeWidth={1.2} />
+          <p className="text-white/35">Edge data requires confirmed pitchers</p>
+        </div>
+      );
+    }
 
-  const scored: GameWithScore[] = [];
-  for (const r of results) {
-    if (r.status === "fulfilled") scored.push(r.value);
-  }
+    const capped = withPitchers.slice(0, 8);
+    const results = await Promise.allSettled(capped.map(fetchGameData));
 
-  if (!scored.length) {
+    const scored: GameWithScore[] = [];
+    for (const r of results) {
+      if (r.status === "fulfilled") scored.push(r.value);
+    }
+
+    if (!scored.length) {
+      return (
+        <div className="rounded-2xl border border-white/[0.07] bg-[#111622] p-8 text-center">
+          <Zap size={38} className="mx-auto mb-3 text-white/10" strokeWidth={1.2} />
+          <p className="text-white/45">Could not load game data. Please try again shortly.</p>
+        </div>
+      );
+    }
+
+    const sorted = [...scored].sort((a, b) => b.score.edgeScore - a.score.edgeScore);
+
+    const picksInput = sorted.map(({ game, score }) => ({
+      away:      game.teams.away.team.name,
+      home:      game.teams.home.team.name,
+      edgeScore: score.edgeScore,
+      grade:     score.grade,
+      keyEdges:  score.keyEdges,
+    }));
+
+    const isAI = scored.some((s) => s.score.isAI);
+
+    return (
+      <>
+        {isAI && (
+          <Suspense fallback={null}>
+            <StrongPicksBanner games={picksInput} />
+          </Suspense>
+        )}
+        {!hasAnthropicKey() && (
+          <div className="mb-5 rounded-xl border border-[#FF7828]/20 bg-[#FF7828]/[0.05] px-4 py-3 flex items-center gap-3">
+            <TrendingUp size={14} className="text-[#FF7828] shrink-0" strokeWidth={2} />
+            <p className="text-xs text-white/50">
+              <span className="text-[#FF7828] font-bold">Tip:</span> Add <code className="text-white/70 bg-white/[0.08] px-1 rounded">ANTHROPIC_API_KEY</code> to your Vercel env vars to enable AI-powered edge scoring.
+            </p>
+          </div>
+        )}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {sorted.map((data) => (
+            <EdgeCard key={data.game.gamePk} data={data} />
+          ))}
+        </div>
+      </>
+    );
+  } catch {
     return (
       <div className="rounded-2xl border border-white/[0.07] bg-[#111622] p-8 text-center">
         <Zap size={38} className="mx-auto mb-3 text-white/10" strokeWidth={1.2} />
-        <p className="text-white/45">Could not load game data. Please try again shortly.</p>
+        <p className="text-white/45 mb-2">Edge data temporarily unavailable.</p>
+        <p className="text-xs text-white/25">Check back in a moment — MLB data may be refreshing.</p>
       </div>
     );
   }
-
-  const sorted = [...scored].sort((a, b) => b.score.edgeScore - a.score.edgeScore);
-
-  const picksInput = sorted.map(({ game, score }) => ({
-    away:      game.teams.away.team.name,
-    home:      game.teams.home.team.name,
-    edgeScore: score.edgeScore,
-    grade:     score.grade,
-    keyEdges:  score.keyEdges,
-  }));
-
-  const isAI = scored.some((s) => s.score.isAI);
-
-  return (
-    <>
-      {isAI && (
-        <Suspense fallback={null}>
-          <StrongPicksBanner games={picksInput} />
-        </Suspense>
-      )}
-      {!hasAnthropicKey() && (
-        <div className="mb-5 rounded-xl border border-[#FF7828]/20 bg-[#FF7828]/[0.05] px-4 py-3 flex items-center gap-3">
-          <TrendingUp size={14} className="text-[#FF7828] shrink-0" strokeWidth={2} />
-          <p className="text-xs text-white/50">
-            <span className="text-[#FF7828] font-bold">Tip:</span> Add <code className="text-white/70 bg-white/[0.08] px-1 rounded">ANTHROPIC_API_KEY</code> to your Vercel env vars to enable AI-powered edge scoring.
-          </p>
-        </div>
-      )}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {sorted.map((data) => (
-          <EdgeCard key={data.game.gamePk} data={data} />
-        ))}
-      </div>
-    </>
-  );
 }
 
 export default function AnalysisPage() {

@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trophy, ChevronDown, ChevronUp, CheckCircle2, X, TrendingUp, Shield, Target, Clock } from "lucide-react";
+import { Trophy, ChevronDown, ChevronUp, CheckCircle2, X, TrendingUp, Shield, Target, Clock, Cpu } from "lucide-react";
 import { WC_GROUPS, WC_TEAMS, eloWinProb } from "@/lib/worldcup/data";
 import type { WCGroup, GSTeam, GSMatch } from "@/lib/worldcup/types";
+import type { GroupPrediction, MatchPrediction } from "@/app/api/worldcup/predictions/route";
 
 const GOLD = "#FBBF24";
 
@@ -284,9 +285,11 @@ function TeamModal({
 function GroupCard({
   group,
   onTeamClick,
+  predictions,
 }: {
   group: WCGroup;
   onTeamClick: (teamId: string, group: WCGroup) => void;
+  predictions?: GroupPrediction;
 }) {
   const [expanded, setExpanded] = useState(false);
   const sorted = sortedStandings(group.teams);
@@ -366,6 +369,12 @@ function GroupCard({
           const away = WC_TEAMS[match.away];
           if (!home || !away) return null;
           const isDone = match.status === "completed";
+          const isLive = match.status === "live";
+
+          const pred: MatchPrediction | undefined = !isDone
+            ? predictions?.matches.find((p) => p.home === match.home && p.away === match.away)
+            : undefined;
+
           return (
             <div key={i}>
               <div className="flex items-center gap-2">
@@ -381,10 +390,21 @@ function GroupCard({
                   </div>
                 </div>
                 <div className="flex items-center justify-center shrink-0 min-w-[52px]">
-                  {isDone ? (
-                    <span className="text-xs font-black text-white">
-                      {match.homeScore} – {match.awayScore}
-                    </span>
+                  {isDone || isLive ? (
+                    <div className="flex flex-col items-center">
+                      <span className="text-xs font-black text-white">
+                        {match.homeScore} – {match.awayScore}
+                      </span>
+                      {isLive && (
+                        <motion.span
+                          className="text-[8px] font-black text-red-400 uppercase"
+                          animate={{ opacity: [1, 0.4, 1] }}
+                          transition={{ duration: 1.2, repeat: Infinity }}
+                        >
+                          LIVE
+                        </motion.span>
+                      )}
+                    </div>
                   ) : (
                     <div className="flex flex-col items-center">
                       <span className="text-[9px] font-bold text-white/35">{match.date}</span>
@@ -413,6 +433,17 @@ function GroupCard({
                   ))}
                 </div>
               )}
+              {!isDone && pred && (
+                <div className="mt-0.5 flex justify-center">
+                  <div className="inline-flex items-center gap-1 rounded-full bg-[#818CF8]/[0.10] border border-[#818CF8]/20 px-2 py-0.5">
+                    <Cpu size={7} className="text-[#818CF8]" />
+                    <span className="text-[8px] font-bold text-[#818CF8]">
+                      AI Pick: {pred.predictedHome}–{pred.predictedAway}
+                    </span>
+                    <span className="text-[7px] text-[#818CF8]/50">({pred.confidence}%)</span>
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}
@@ -436,10 +467,38 @@ function GroupCard({
 export function GroupStage() {
   const [filterGroup, setFilterGroup] = useState<string | null>(null);
   const [selectedTeam, setSelectedTeam] = useState<{ teamId: string; group: WCGroup } | null>(null);
+  const [groups, setGroups] = useState<WCGroup[]>(WC_GROUPS);
+  const [predictions, setPredictions] = useState<GroupPrediction[]>([]);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [groupsRes, predsRes] = await Promise.all([
+          fetch("/api/worldcup/groups"),
+          fetch("/api/worldcup/predictions"),
+        ]);
+        if (groupsRes.ok) {
+          const { groups: g } = await groupsRes.json();
+          if (g?.length) setGroups(g);
+        }
+        if (predsRes.ok) {
+          const { predictions: p } = await predsRes.json();
+          if (p?.length) setPredictions(p);
+        }
+      } catch {
+        // keep static fallback
+      }
+    }
+
+    loadData();
+    pollRef.current = setInterval(loadData, 60_000);
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+  }, []);
 
   const displayed = filterGroup
-    ? WC_GROUPS.filter((g) => g.id === filterGroup)
-    : WC_GROUPS;
+    ? groups.filter((g) => g.id === filterGroup)
+    : groups;
 
   return (
     <div>
@@ -480,6 +539,7 @@ export function GroupStage() {
               key={group.id}
               group={group}
               onTeamClick={(teamId, grp) => setSelectedTeam({ teamId, group: grp })}
+              predictions={predictions.find((p) => p.groupId === group.id)}
             />
           ))}
         </AnimatePresence>
@@ -494,7 +554,7 @@ export function GroupStage() {
         {selectedTeam && (
           <TeamModal
             teamId={selectedTeam.teamId}
-            group={selectedTeam.group}
+            group={groups.find((g) => g.id === selectedTeam.group.id) ?? selectedTeam.group}
             onClose={() => setSelectedTeam(null)}
           />
         )}

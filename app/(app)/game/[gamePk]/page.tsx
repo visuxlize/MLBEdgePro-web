@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { ArrowLeft, Cloud, Wind, Thermometer, Droplets, RefreshCw, Zap, Star, TrendingUp } from "lucide-react";
 import {
   fetchGamesByDate,
@@ -29,7 +28,7 @@ async function fetchGame(gamePk: number): Promise<Game | null> {
     const hydrate = "probablePitcher,linescore(teams),team";
     const res = await fetch(
       `https://statsapi.mlb.com/api/v1/schedule?gamePk=${gamePk}&hydrate=${hydrate}`,
-      { cache: "no-store" }
+      { cache: "no-store", signal: AbortSignal.timeout(8000) }
     );
     if (!res.ok) return null;
     const data = await res.json();
@@ -162,7 +161,7 @@ function WeatherCard({ temp, wind, direction, conditions, humidity }: {
 // ── Main content ──────────────────────────────────────────────────────────────
 
 async function GameDetailContent({ game }: { game: Game }) {
-
+  try {
   const away = game.teams.away;
   const home = game.teams.home;
   const isLive  = game.status.detailedState === "In Progress";
@@ -354,6 +353,23 @@ async function GameDetailContent({ game }: { game: Game }) {
       </div>
     </div>
   );
+  } catch {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center px-6 text-center">
+        <div className="w-14 h-14 rounded-2xl bg-[#FF7828]/10 border border-[#FF7828]/20 flex items-center justify-center mb-5">
+          <RefreshCw size={22} className="text-[#FF7828]" strokeWidth={1.5} />
+        </div>
+        <h1 className="text-xl font-black text-white mb-2">Game data unavailable</h1>
+        <p className="text-sm text-white/40 mb-6 max-w-xs">Stats are loading or temporarily unavailable. Try refreshing.</p>
+        <div className="flex items-center gap-3">
+          <Link href="/games" className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#FF7828]/15 border border-[#FF7828]/30 text-sm font-bold text-[#FF7828] hover:bg-[#FF7828]/25 transition-colors">
+            <ArrowLeft size={13} strokeWidth={2} />
+            Back to Games
+          </Link>
+        </div>
+      </div>
+    );
+  }
 }
 
 // ── Page export ───────────────────────────────────────────────────────────────
@@ -368,10 +384,25 @@ export default async function GameDetailPage({
 }) {
   const { gamePk: gamePkStr } = await params;
   const gamePk = parseInt(gamePkStr, 10);
-  if (isNaN(gamePk)) notFound();
+
+  const notFoundUI = (
+    <div className="min-h-[60vh] flex flex-col items-center justify-center px-6 text-center">
+      <div className="w-14 h-14 rounded-2xl bg-white/[0.06] border border-white/[0.10] flex items-center justify-center mb-5">
+        <Zap size={22} className="text-white/30" strokeWidth={1.5} />
+      </div>
+      <h1 className="text-xl font-black text-white mb-2">Game not found</h1>
+      <p className="text-sm text-white/40 mb-6 max-w-xs">This game may have been postponed or the link is outdated.</p>
+      <Link href="/games" className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.06] border border-white/[0.10] text-sm font-bold text-white/70 hover:text-white transition-colors">
+        <ArrowLeft size={13} strokeWidth={2} />
+        Back to Games
+      </Link>
+    </div>
+  );
+
+  if (isNaN(gamePk)) return notFoundUI;
 
   const game = await fetchGame(gamePk);
-  if (!game) notFound();
+  if (!game) return notFoundUI;
 
   return (
     <Suspense
