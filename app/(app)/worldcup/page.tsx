@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
-  Trophy, Map, BarChart3, Users, ArrowRight, Globe2, Clock,
-  LayoutGrid, Zap, ChevronRight, Ticket,
+  Trophy, Map, Users, ArrowRight, Globe2, Clock,
+  LayoutGrid, Zap, ChevronRight,
 } from "lucide-react";
 import type { WCGroup } from "@/lib/worldcup/types";
 import type { TodayMatch } from "@/app/api/worldcup/today/route";
@@ -64,12 +64,10 @@ const STADIUMS = [
 // ── Nav Sections ──────────────────────────────────────────────────────────────
 
 const SECTIONS = [
-  { href: "/worldcup/groups",  icon: LayoutGrid, title: "Groups",   desc: "Live standings for all 12 groups",         accent: "#38BDF8" },
-  { href: "/worldcup/bracket", icon: Trophy,     title: "Bracket",  desc: "32-team knockout with ELO simulation",     accent: "#FBBF24" },
-  { href: "/worldcup/map",     icon: Map,        title: "Venues",   desc: "Interactive host city & stadium map",      accent: "#34D399" },
-  { href: "/worldcup/props",   icon: BarChart3,  title: "Betting",  desc: "Live odds, props, and value bets",         accent: "#FF7828" },
-  { href: "/worldcup/h2h",     icon: Users,      title: "Analysis", desc: "xG & ELO match analysis + bet picks",      accent: "#818CF8" },
-  { href: "/worldcup/slips",   icon: Ticket,     title: "WC Slips", desc: "Track your World Cup parlay bets",         accent: "#F472B6" },
+  { href: "/worldcup/groups",  icon: LayoutGrid, title: "Groups",   desc: "Live standings for all 12 groups",               accent: "#38BDF8" },
+  { href: "/worldcup/bracket", icon: Trophy,     title: "Bracket",  desc: "32-team knockout with ELO simulation & predictor", accent: "#FBBF24" },
+  { href: "/worldcup/map",     icon: Map,        title: "Venues",   desc: "Interactive host city & stadium map",              accent: "#34D399" },
+  { href: "/worldcup/h2h",     icon: Users,      title: "Analysis", desc: "AI match analysis, props & tournament predictor",  accent: "#818CF8" },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

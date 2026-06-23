@@ -771,6 +771,16 @@ export function LiveAnimatedBracket() {
   const containerRef = useRef<HTMLDivElement>(null);
   const matchRefs    = useRef(new Map<string, HTMLDivElement>());
 
+  // Fetch live bracket (with group advancement) on mount
+  useEffect(() => {
+    fetch("/api/worldcup/bracket")
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data?.matches) setBracket(data);
+      })
+      .catch(() => {});
+  }, []);
+
   // Show champion banner when bracket is complete
   useEffect(() => {
     if (bracket.championId) setShowChampion(true);
@@ -789,7 +799,12 @@ export function LiveAnimatedBracket() {
   }, []);
 
   const handleReset = useCallback(() => {
-    setBracket(INITIAL_BRACKET);
+    fetch("/api/worldcup/bracket")
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        setBracket(data?.matches ? data : INITIAL_BRACKET);
+      })
+      .catch(() => setBracket(INITIAL_BRACKET));
     setShowChampion(false);
   }, []);
 
