@@ -379,6 +379,101 @@ function derivePlayerProps(
   return props.slice(0, 4);
 }
 
+// ── Post-match recap ─────────────────────────────────────────────────────────
+
+interface PostMatchRecap {
+  predictionCorrect: boolean;
+  resultLabel: string;       // e.g. "Correct call ✓" or "Upset — AI missed"
+  resultColor: string;
+  wasUpset: boolean;
+  scoreDiff: string;         // e.g. "AI called 2–1, actual 3–0"
+  narrative: string[];       // 3-4 sentences explaining what happened and why
+  modelAdjustment: string;   // what the AI notes for future predictions
+}
+
+function derivePostMatchRecap(
+  match: TodayMatch,
+  aiAnalysis: AIMatchPrediction,
+  homeElo: number,
+  awayElo: number,
+  homeXG: number,
+  awayXG: number,
+): PostMatchRecap {
+  const hs = match.homeScore ?? 0;
+  const as = match.awayScore ?? 0;
+
+  const actualWinner =
+    hs > as ? match.home :
+    as > hs ? match.away :
+    "Draw";
+
+  const predictionCorrect = actualWinner === aiAnalysis.winner;
+  const wasUpset = !predictionCorrect && aiAnalysis.winner !== "Draw";
+  const eloDiff  = homeElo - awayElo;
+  const favName  = eloDiff >= 0 ? match.home : match.away;
+
+  const totalActual   = hs + as;
+  const totalExpected = homeXG + awayXG;
+  const highScoring   = totalActual >= 4;
+  const lowScoring    = totalActual <= 1;
+  const overPerformed = totalActual > Math.round(totalExpected);
+  const underPerformed = totalActual < Math.round(totalExpected);
+
+  const homeOverXG = hs > Math.round(homeXG);
+  const awayOverXG = as > Math.round(awayXG);
+
+  const narrative: string[] = [];
+
+  if (wasUpset) {
+    narrative.push(
+      `${actualWinner} pulled off an upset — the model gave them under a ${Math.round((eloDiff > 0 ? (1 - homeElo / (homeElo + awayElo)) : (homeElo / (homeElo + awayElo))) * 100)}% chance of winning.`
+    );
+    narrative.push(
+      `${favName} were the ELO favourite but failed to convert their edge on the scoreboard.`
+    );
+  } else if (actualWinner === "Draw") {
+    narrative.push(
+      `The game ended level — both teams were well-matched and neither side could find a winning goal.`
+    );
+  } else {
+    narrative.push(
+      `${actualWinner} won as the model expected, validating the ELO gap between these two sides.`
+    );
+  }
+
+  if (highScoring) {
+    narrative.push(`It was a high-scoring affair (${hs}–${as}) — both defences were exposed and attacking transitions opened up frequently.`);
+  } else if (lowScoring) {
+    narrative.push(`A tight, low-scoring game (${hs}–${as}) — defences held firm and neither side created high-quality chances consistently.`);
+  } else if (overPerformed) {
+    narrative.push(`The actual goal total (${totalActual}) exceeded the model's xG projection of ${totalExpected.toFixed(1)} — clinical finishing or set-piece goals inflated the tally.`);
+  } else if (underPerformed) {
+    narrative.push(`Despite a combined xG of ${totalExpected.toFixed(1)}, only ${totalActual} goals were scored — keepers or wayward finishing kept the scoreline tight.`);
+  }
+
+  if (homeOverXG && !awayOverXG) {
+    narrative.push(`${match.home} (${hs} goals vs ${homeXG.toFixed(1)} xG) were more clinical than expected — their strikers outperformed probability.`);
+  } else if (awayOverXG && !homeOverXG) {
+    narrative.push(`${match.away} (${as} goals vs ${awayXG.toFixed(1)} xG) were the more clinical side — converting chances at a higher rate than the model projects.`);
+  }
+
+  const modelAdjustment = wasUpset
+    ? `AI note: ${actualWinner}'s performance suggests their ELO may be understated. This result slightly increases confidence in similar underdog picks for the rest of the group.`
+    : predictionCorrect
+    ? `AI note: Result matched the prediction. ELO model continues to be reliable for this type of gap (${Math.abs(eloDiff)} pts). Confidence holds for upcoming matches.`
+    : `AI note: Draw result recorded. When ELO gaps are under 60 pts, group-stage caution makes draws more likely than the model accounts for.`;
+
+  return {
+    predictionCorrect,
+    resultLabel:  wasUpset ? "Upset — AI missed ✗" : predictionCorrect ? "Correct call ✓" : "Draw correctly called ✓",
+    resultColor:  wasUpset ? RED : GREEN,
+    wasUpset,
+    scoreDiff: `AI predicted ${aiAnalysis.winner} (${aiAnalysis.scorePrediction}) · Final: ${hs}–${as}`,
+    narrative,
+    modelAdjustment,
+  };
+}
+
 // ── Stadium Background ────────────────────────────────────────────────────────
 
 function StadiumBg({ venue, homeColor, awayColor }: { venue: string; homeColor: string; awayColor: string }) {
@@ -431,8 +526,9 @@ function MatchCard({ match, compact = false }: { match: TodayMatch; compact?: bo
   const isDone = match.status === "completed";
   const isLive = match.status === "live";
 
-  const aiAnalysis = deriveAIAnalysis(match, hw, dw, aw, homeElo, awayElo, homeXG, awayXG);
+  const aiAnalysis  = deriveAIAnalysis(match, hw, dw, aw, homeElo, awayElo, homeXG, awayXG);
   const playerProps = derivePlayerProps(match, homeElo, awayElo, homeXG, awayXG);
+  const postRecap   = isDone ? derivePostMatchRecap(match, aiAnalysis, homeElo, awayElo, homeXG, awayXG) : null;
 
   const homeColor = homeTeam?.color ?? "#1E3A8A";
   const awayColor = awayTeam?.color ?? "#065F46";
@@ -660,120 +756,191 @@ function MatchCard({ match, compact = false }: { match: TodayMatch; compact?: bo
         </div>
       )}
 
-      {/* AI Analysis toggle */}
-      <button
-        onClick={() => setExpanded((v) => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/[0.03] transition-colors"
-      >
-        <div className="flex items-center gap-2">
-          <Brain size={12} className="text-[#818CF8]" strokeWidth={2.5} />
-          <span className="text-xs font-black text-white">AI Analysis</span>
-          <span
-            className="text-[8px] font-black rounded-full px-1.5 py-0.5"
-            style={{ background: `${aiAnalysis.confidenceColor}15`, color: aiAnalysis.confidenceColor, border: `1px solid ${aiAnalysis.confidenceColor}30` }}
+      {/* ── Post-match recap (completed games) ── */}
+      {isDone && postRecap && (
+        <>
+          <button
+            onClick={() => setExpanded((v) => !v)}
+            className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/[0.03] transition-colors"
           >
-            {aiAnalysis.confidence}
-          </span>
-        </div>
-        {expanded ? <ChevronUp size={13} className="text-white/30" /> : <ChevronDown size={13} className="text-white/30" />}
-      </button>
-
-      <AnimatePresence>
-        {expanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
-            <div className="px-4 pb-4 border-t border-white/[0.05] pt-3 space-y-4">
-
-              {/* Match Prediction */}
-              <div
-                className="rounded-xl border p-3.5"
-                style={{ background: `${aiAnalysis.confidenceColor}08`, borderColor: `${aiAnalysis.confidenceColor}22` }}
+            <div className="flex items-center gap-2">
+              <Brain size={12} style={{ color: postRecap.resultColor }} strokeWidth={2.5} />
+              <span className="text-xs font-black text-white">Match Recap</span>
+              <span
+                className="text-[8px] font-black rounded-full px-1.5 py-0.5"
+                style={{ background: `${postRecap.resultColor}18`, color: postRecap.resultColor, border: `1px solid ${postRecap.resultColor}30` }}
               >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Sparkles size={11} style={{ color: aiAnalysis.confidenceColor }} />
-                    <span className="text-[10px] font-black text-white uppercase tracking-wider">Match Prediction</span>
-                  </div>
-                  <span
-                    className="text-[8px] font-black rounded-full px-2 py-0.5"
-                    style={{ background: `${aiAnalysis.confidenceColor}15`, color: aiAnalysis.confidenceColor, border: `1px solid ${aiAnalysis.confidenceColor}30` }}
-                  >
-                    {aiAnalysis.confidence} confidence
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="flex flex-col">
-                    <p className="text-base font-black text-white">{aiAnalysis.winner}</p>
-                    <p className="text-[10px] text-white/40">Predicted score: <span className="font-bold text-white/70">{aiAnalysis.scorePrediction}</span></p>
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  {aiAnalysis.reasons.map((r, i) => (
-                    <div key={i} className="flex items-start gap-2">
-                      <div className="w-1 h-1 rounded-full mt-1.5 shrink-0" style={{ background: aiAnalysis.confidenceColor }} />
-                      <p className="text-[10px] text-white/55 leading-relaxed">{r}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Historical Context */}
-              {aiAnalysis.historicalContext && (
-                <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] px-3 py-2.5 flex gap-2.5">
-                  <Trophy size={13} className="text-[#FBBF24] shrink-0 mt-0.5" strokeWidth={1.5} />
-                  <p className="text-[9px] text-white/45 leading-relaxed">{aiAnalysis.historicalContext}</p>
-                </div>
-              )}
-
-              {/* Player Props */}
-              <div>
-                <div className="flex items-center gap-1.5 mb-2">
-                  <Users size={10} className="text-[#38BDF8]" />
-                  <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest">Player Props & Analysis</p>
-                </div>
-                <div className="space-y-2">
-                  {playerProps.map((prop, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, x: -6 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.05 }}
-                      className="rounded-xl border p-2.5"
-                      style={{ background: `${prop.confidenceColor}06`, borderColor: `${prop.confidenceColor}1a` }}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[9px] font-black text-white">{prop.player}</span>
-                          <span className="text-[8px] text-white/30 font-medium">· {prop.teamShort}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[8px] text-white/40">{prop.prop}</span>
-                          <span
-                            className="text-[7px] font-black rounded-full px-1.5 py-0.5 shrink-0"
-                            style={{ background: `${prop.confidenceColor}15`, color: prop.confidenceColor, border: `1px solid ${prop.confidenceColor}30` }}
-                          >
-                            {prop.confidence}
-                          </span>
-                        </div>
-                      </div>
-                      <p className="text-[9px] text-white/40 leading-relaxed">{prop.reason}</p>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-
-              <p className="text-[8px] text-white/15 text-center">
-                ELO + xG model · Historical WC data · For analysis only
-              </p>
+                {postRecap.resultLabel}
+              </span>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            {expanded ? <ChevronUp size={13} className="text-white/30" /> : <ChevronDown size={13} className="text-white/30" />}
+          </button>
+
+          <AnimatePresence>
+            {expanded && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <div className="px-4 pb-4 border-t border-white/[0.05] pt-3 space-y-3">
+
+                  {/* Prediction vs actual */}
+                  <div
+                    className="rounded-xl border p-3"
+                    style={{ background: `${postRecap.resultColor}08`, borderColor: `${postRecap.resultColor}22` }}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <Sparkles size={10} style={{ color: postRecap.resultColor }} />
+                      <span className="text-[10px] font-black text-white uppercase tracking-wider">Prediction Review</span>
+                    </div>
+                    <p className="text-[9px] text-white/45 leading-relaxed">{postRecap.scoreDiff}</p>
+                  </div>
+
+                  {/* What happened and why */}
+                  <div>
+                    <p className="text-[9px] font-bold text-white/25 uppercase tracking-widest mb-2">What Happened & Why</p>
+                    <div className="space-y-1.5">
+                      {postRecap.narrative.map((line, i) => (
+                        <div key={i} className="flex items-start gap-2">
+                          <div className="w-1 h-1 rounded-full mt-1.5 shrink-0 bg-white/20" />
+                          <p className="text-[10px] text-white/55 leading-relaxed">{line}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* AI model adjustment note */}
+                  <div className="rounded-xl bg-[#818CF8]/[0.06] border border-[#818CF8]/15 px-3 py-2.5 flex gap-2.5">
+                    <Brain size={11} className="text-[#818CF8] shrink-0 mt-0.5" strokeWidth={1.5} />
+                    <p className="text-[9px] text-white/40 leading-relaxed">{postRecap.modelAdjustment}</p>
+                  </div>
+
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </>
+      )}
+
+      {/* ── AI pre-match analysis (upcoming / live games) ── */}
+      {!isDone && (
+        <>
+          <button
+            onClick={() => setExpanded((v) => !v)}
+            className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/[0.03] transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Brain size={12} className="text-[#818CF8]" strokeWidth={2.5} />
+              <span className="text-xs font-black text-white">AI Analysis</span>
+              <span
+                className="text-[8px] font-black rounded-full px-1.5 py-0.5"
+                style={{ background: `${aiAnalysis.confidenceColor}15`, color: aiAnalysis.confidenceColor, border: `1px solid ${aiAnalysis.confidenceColor}30` }}
+              >
+                {aiAnalysis.confidence}
+              </span>
+            </div>
+            {expanded ? <ChevronUp size={13} className="text-white/30" /> : <ChevronDown size={13} className="text-white/30" />}
+          </button>
+
+          <AnimatePresence>
+            {expanded && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <div className="px-4 pb-4 border-t border-white/[0.05] pt-3 space-y-4">
+
+                  {/* Match Prediction */}
+                  <div
+                    className="rounded-xl border p-3.5"
+                    style={{ background: `${aiAnalysis.confidenceColor}08`, borderColor: `${aiAnalysis.confidenceColor}22` }}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Sparkles size={11} style={{ color: aiAnalysis.confidenceColor }} />
+                        <span className="text-[10px] font-black text-white uppercase tracking-wider">Match Prediction</span>
+                      </div>
+                      <span
+                        className="text-[8px] font-black rounded-full px-2 py-0.5"
+                        style={{ background: `${aiAnalysis.confidenceColor}15`, color: aiAnalysis.confidenceColor, border: `1px solid ${aiAnalysis.confidenceColor}30` }}
+                      >
+                        {aiAnalysis.confidence} confidence
+                      </span>
+                    </div>
+                    <p className="text-base font-black text-white mb-0.5">{aiAnalysis.winner}</p>
+                    <p className="text-[10px] text-white/40 mb-3">
+                      Predicted score: <span className="font-bold text-white/70">{aiAnalysis.scorePrediction}</span>
+                    </p>
+                    <div className="space-y-1.5">
+                      {aiAnalysis.reasons.map((r, i) => (
+                        <div key={i} className="flex items-start gap-2">
+                          <div className="w-1 h-1 rounded-full mt-1.5 shrink-0" style={{ background: aiAnalysis.confidenceColor }} />
+                          <p className="text-[10px] text-white/55 leading-relaxed">{r}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Historical Context */}
+                  {aiAnalysis.historicalContext && (
+                    <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] px-3 py-2.5 flex gap-2.5">
+                      <Trophy size={13} className="text-[#FBBF24] shrink-0 mt-0.5" strokeWidth={1.5} />
+                      <p className="text-[9px] text-white/45 leading-relaxed">{aiAnalysis.historicalContext}</p>
+                    </div>
+                  )}
+
+                  {/* Player Props */}
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <Users size={10} className="text-[#38BDF8]" />
+                      <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest">Player Props & Analysis</p>
+                    </div>
+                    <div className="space-y-2">
+                      {playerProps.map((prop, i) => (
+                        <motion.div
+                          key={i}
+                          initial={{ opacity: 0, x: -6 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.05 }}
+                          className="rounded-xl border p-2.5"
+                          style={{ background: `${prop.confidenceColor}06`, borderColor: `${prop.confidenceColor}1a` }}
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[9px] font-black text-white">{prop.player}</span>
+                              <span className="text-[8px] text-white/30 font-medium">· {prop.teamShort}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[8px] text-white/40">{prop.prop}</span>
+                              <span
+                                className="text-[7px] font-black rounded-full px-1.5 py-0.5 shrink-0"
+                                style={{ background: `${prop.confidenceColor}15`, color: prop.confidenceColor, border: `1px solid ${prop.confidenceColor}30` }}
+                              >
+                                {prop.confidence}
+                              </span>
+                            </div>
+                          </div>
+                          <p className="text-[9px] text-white/40 leading-relaxed">{prop.reason}</p>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <p className="text-[8px] text-white/15 text-center">
+                    ELO + xG model · Historical WC data · For analysis only
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </>
+      )}
     </motion.div>
   );
 }
@@ -875,32 +1042,63 @@ function TournamentPredictor({ groups }: { groups: WCGroup[] }) {
   );
 }
 
+// ── Date helpers ──────────────────────────────────────────────────────────────
+
+// Static data uses "Jun 17" format — compare against 2026 calendar
+function isMatchDatePast(dateStr: string): boolean {
+  const parsed = new Date(`${dateStr.trim()} 2026`);
+  if (isNaN(parsed.getTime())) return false;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  parsed.setHours(0, 0, 0, 0);
+
+  return parsed < today;
+}
+
+function isMatchDateToday(dateStr: string): boolean {
+  const parsed = new Date(`${dateStr.trim()} 2026`);
+  if (isNaN(parsed.getTime())) return false;
+
+  const today = new Date();
+  return (
+    parsed.getFullYear() === today.getFullYear() &&
+    parsed.getMonth()    === today.getMonth()    &&
+    parsed.getDate()     === today.getDate()
+  );
+}
+
 // ── Upcoming matches derived from groups ──────────────────────────────────────
 
 function getUpcomingFromGroups(groups: WCGroup[], limit = 12): TodayMatch[] {
   const results: TodayMatch[] = [];
-  const todayStr = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
   for (const group of groups) {
     for (const m of group.matches) {
+      // Skip games that are done (status updated by ESPN)
       if (m.status === "completed") continue;
-      // Skip today's matches (they show in a separate section)
-      if (m.date.trim() === todayStr && m.status === "live") continue;
+      // Skip games that are live right now (they're in Today's section)
+      if (m.status === "live") continue;
+      // Skip games whose date has already passed — static data won't always
+      // reflect completed status if ESPN doesn't recognise the team ID
+      if (isMatchDatePast(m.date)) continue;
+      // Skip today's games — they're fetched separately from ESPN
+      if (isMatchDateToday(m.date)) continue;
 
       const homeTeam = WC_TEAMS[m.home];
       const awayTeam = WC_TEAMS[m.away];
       results.push({
-        groupId: group.id,
-        home:    homeTeam?.name ?? m.home,
-        away:    awayTeam?.name ?? m.away,
-        homeId:  m.home,
-        awayId:  m.away,
-        date:    m.date,
-        time:    m.time,
-        venue:   m.venue,
-        homeScore: null,
-        awayScore: null,
-        status: "scheduled",
+        groupId:    group.id,
+        home:       homeTeam?.name ?? m.home,
+        away:       awayTeam?.name ?? m.away,
+        homeId:     m.home,
+        awayId:     m.away,
+        date:       m.date,
+        time:       m.time,
+        venue:      m.venue,
+        homeScore:  null,
+        awayScore:  null,
+        status:     "scheduled",
         homeFlagUrl: homeTeam ? `https://flagcdn.com/w80/${homeTeam.countryCode}.png` : "",
         awayFlagUrl: awayTeam ? `https://flagcdn.com/w80/${awayTeam.countryCode}.png` : "",
       });
