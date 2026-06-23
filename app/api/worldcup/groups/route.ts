@@ -68,7 +68,7 @@ async function fetchLiveGroups(): Promise<WCGroup[]> {
   }
 
   // ── 2. Recent match results (last 7 days to cover full group stage so far) ──
-  const dates = recentDates(7);
+  const dates = recentDates(20);
   const scoreboardResults = await Promise.allSettled(
     dates.map((d) => fetch(`${ESPN_SCOREBOARD}?dates=${d}&limit=20`, opts).then((r) => r.ok ? r.json() : null))
   );

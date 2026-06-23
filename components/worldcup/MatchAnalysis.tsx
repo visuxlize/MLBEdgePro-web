@@ -6,6 +6,7 @@ import {
   Zap, RefreshCw, Clock, Trophy,
   ChevronDown, ChevronUp, CheckCircle2, MapPin,
   Brain, Users, Calendar, BarChart3, Sparkles,
+  TrendingUp, DollarSign, Goal, Crosshair,
 } from "lucide-react";
 import { WC_GROUPS, WC_TEAMS, eloWinProb } from "@/lib/worldcup/data";
 import type { TodayMatch } from "@/app/api/worldcup/today/route";
@@ -379,6 +380,137 @@ function derivePlayerProps(
   return props.slice(0, 4);
 }
 
+// ── Betting lines ─────────────────────────────────────────────────────────────
+
+interface BettingLine {
+  market:          string;
+  pick:            string;
+  confidence:      ConfidenceLevel;
+  confidenceColor: string;
+  probability:     number;    // 0-100 integer
+  odds:            string;    // American format e.g. "+150" or "-200"
+  reason:          string;
+}
+
+function toAmericanOdds(p: number): string {
+  if (p <= 0 || p >= 1) return "N/A";
+  if (p >= 0.5) return `-${Math.round((p / (1 - p)) * 100)}`;
+  return `+${Math.round(((1 - p) / p) * 100)}`;
+}
+
+function deriveBettingLines(
+  match:   TodayMatch,
+  hw:      number,
+  dw:      number,
+  aw:      number,
+  homeElo: number,
+  awayElo: number,
+  homeXG:  number,
+  awayXG:  number,
+): BettingLine[] {
+  const eloDiff  = homeElo - awayElo;
+  const totalXG  = homeXG + awayXG;
+  const homeStars = getTeamStars(match.homeId);
+  const awayStars = getTeamStars(match.awayId);
+
+  // ── Moneyline (best-value side only) ──────────────────────────────────────
+  const favIsHome  = eloDiff >= 0;
+  const favProb    = favIsHome ? hw : aw;
+  const favName    = favIsHome ? match.home : match.away;
+  const favConf: ConfidenceLevel = favProb >= 0.60 ? "Strong" : favProb >= 0.45 ? "Moderate" : "Low";
+  const moneyline: BettingLine = {
+    market:          "Moneyline",
+    pick:            favName,
+    confidence:      favConf,
+    confidenceColor: confidenceColor(favConf),
+    probability:     Math.round(favProb * 100),
+    odds:            toAmericanOdds(favProb),
+    reason:          `${favName} carry a ${Math.abs(Math.round(eloDiff))}-pt ELO edge. Win probability: ${Math.round(favProb * 100)}%.`,
+  };
+
+  // ── Draw ──────────────────────────────────────────────────────────────────
+  const drawConf: ConfidenceLevel = dw >= 0.30 ? "Moderate" : "Low";
+  const drawLine: BettingLine = {
+    market:          "Draw",
+    pick:            "Draw",
+    confidence:      drawConf,
+    confidenceColor: confidenceColor(drawConf),
+    probability:     Math.round(dw * 100),
+    odds:            toAmericanOdds(dw),
+    reason:          Math.abs(eloDiff) < 60
+      ? `Teams are closely matched — group-stage caution favours a draw (${Math.round(dw * 100)}%).`
+      : `Underdog can absorb pressure and hold; draw at ${Math.round(dw * 100)}% is live.`,
+  };
+
+  // ── BTTS — Poisson P(score ≥ 1) = 1 − e^(−xG) ───────────────────────────
+  const pHomeScores = 1 - Math.exp(-homeXG);
+  const pAwayScores = 1 - Math.exp(-awayXG);
+  const bttsProb    = pHomeScores * pAwayScores;
+  const bttsPick    = bttsProb >= 0.50 ? "Yes" : "No";
+  const bttsConf: ConfidenceLevel = bttsProb >= 0.55 ? "Strong" : bttsProb >= 0.40 ? "Moderate" : "Low";
+  const btts: BettingLine = {
+    market:          "BTTS",
+    pick:            bttsPick,
+    confidence:      bttsConf,
+    confidenceColor: confidenceColor(bttsConf),
+    probability:     Math.round(bttsProb * 100),
+    odds:            toAmericanOdds(bttsProb >= 0.50 ? bttsProb : 1 - bttsProb),
+    reason:          `${match.home} scores in ${Math.round(pHomeScores * 100)}% of games at ${homeXG.toFixed(1)} xG; ${match.away} in ${Math.round(pAwayScores * 100)}%. Combined BTTS probability: ${Math.round(bttsProb * 100)}%.`,
+  };
+
+  // ── Over/Under 2.5 ────────────────────────────────────────────────────────
+  const overProb   = Math.min(0.72, Math.max(0.30, totalXG / 4.8));
+  const isOver     = overProb >= 0.50;
+  const ouConf: ConfidenceLevel = Math.abs(overProb - 0.5) >= 0.15 ? "Strong" : Math.abs(overProb - 0.5) >= 0.07 ? "Moderate" : "Low";
+  const overUnder: BettingLine = {
+    market:          "Over/Under",
+    pick:            isOver ? "Over 2.5" : "Under 2.5",
+    confidence:      ouConf,
+    confidenceColor: confidenceColor(ouConf),
+    probability:     Math.round((isOver ? overProb : 1 - overProb) * 100),
+    odds:            toAmericanOdds(isOver ? overProb : 1 - overProb),
+    reason:          `Combined xG ${totalXG.toFixed(1)} → ${Math.round(overProb * 100)}% chance of 3+ goals. ${isOver ? "Both sides carry attacking threat." : "Defensive setup expected from at least one side."}`,
+  };
+
+  // ── First goalscorer ──────────────────────────────────────────────────────
+  // Pick the top striker from whichever team has the higher xG projection
+  const fsTeamId  = homeXG >= awayXG ? match.homeId : match.awayId;
+  const fsStars   = fsTeamId === match.homeId ? homeStars : awayStars;
+  const fsXG      = fsTeamId === match.homeId ? homeXG : awayXG;
+  const fsProb    = Math.min(0.42, fsXG / 2.4 * 0.65);
+  const fsConf: ConfidenceLevel = fsProb >= 0.28 ? "Moderate" : "Low";
+  const firstScorer: BettingLine | null = fsStars[0] ? {
+    market:          "First Goalscorer",
+    pick:            fsStars[0].name,
+    confidence:      fsConf,
+    confidenceColor: confidenceColor(fsConf),
+    probability:     Math.round(fsProb * 100),
+    odds:            toAmericanOdds(fsProb),
+    reason:          `${fsStars[0].name} — ${fsStars[0].trait}. ${WC_TEAMS[fsTeamId]?.shortName ?? fsTeamId.toUpperCase()} project ${fsXG.toFixed(1)} xG; primary striker leads chance creation.`,
+  } : null;
+
+  // ── Corners Over/Under ────────────────────────────────────────────────────
+  // Base ≈ 9.5 corners per game; each xG unit above 2.6 adds ~1.2 corners
+  const cornersAdj   = (totalXG - 2.6) * 1.2;
+  const projCorners  = 9.5 + cornersAdj;
+  const cornersLine  = projCorners >= 10.5 ? "Over 10.5" : projCorners >= 9.5 ? "Over 9.5" : "Under 9.5";
+  const cornersProb  = Math.min(0.68, Math.max(0.38, 0.5 + cornersAdj / 6));
+  const cornersConf: ConfidenceLevel = Math.abs(cornersAdj) >= 2 ? "Moderate" : "Low";
+  const corners: BettingLine = {
+    market:          "Total Corners",
+    pick:            cornersLine,
+    confidence:      cornersConf,
+    confidenceColor: confidenceColor(cornersConf),
+    probability:     Math.round(cornersProb * 100),
+    odds:            toAmericanOdds(cornersProb),
+    reason:          `Projected ${projCorners.toFixed(1)} corners from combined xG (${totalXG.toFixed(1)}). High-tempo sides generate more wide play and set-piece situations.`,
+  };
+
+  const lines: BettingLine[] = [moneyline, drawLine, btts, overUnder, corners];
+  if (firstScorer) lines.splice(4, 0, firstScorer);  // before corners
+  return lines;
+}
+
 // ── Post-match recap ─────────────────────────────────────────────────────────
 
 interface PostMatchRecap {
@@ -528,6 +660,7 @@ function MatchCard({ match, compact = false }: { match: TodayMatch; compact?: bo
 
   const aiAnalysis  = deriveAIAnalysis(match, hw, dw, aw, homeElo, awayElo, homeXG, awayXG);
   const playerProps = derivePlayerProps(match, homeElo, awayElo, homeXG, awayXG);
+  const bettingLines = deriveBettingLines(match, hw, dw, aw, homeElo, awayElo, homeXG, awayXG);
   const postRecap   = isDone ? derivePostMatchRecap(match, aiAnalysis, homeElo, awayElo, homeXG, awayXG) : null;
 
   const homeColor = homeTeam?.color ?? "#1E3A8A";
@@ -932,8 +1065,60 @@ function MatchCard({ match, compact = false }: { match: TodayMatch; compact?: bo
                     </div>
                   </div>
 
+                  {/* Betting Lines */}
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <DollarSign size={10} className="text-[#4ADE80]" />
+                      <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest">Single Bet Breakdown</p>
+                    </div>
+                    <div className="space-y-1.5">
+                      {bettingLines.map((line, i) => (
+                        <motion.div
+                          key={i}
+                          initial={{ opacity: 0, x: -6 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.04 }}
+                          className="rounded-xl border p-2.5"
+                          style={{ background: `${line.confidenceColor}05`, borderColor: `${line.confidenceColor}18` }}
+                        >
+                          <div className="flex items-center gap-2 mb-1">
+                            {/* Market label */}
+                            <span className="text-[8px] font-bold text-white/30 uppercase tracking-wider shrink-0 w-24">
+                              {line.market}
+                            </span>
+
+                            {/* Pick + odds */}
+                            <span className="text-[10px] font-black text-white flex-1 truncate">{line.pick}</span>
+
+                            {/* Odds pill */}
+                            <span
+                              className="text-[9px] font-black rounded-md px-1.5 py-0.5 shrink-0 tabular-nums"
+                              style={{ background: `${line.confidenceColor}15`, color: line.confidenceColor }}
+                            >
+                              {line.odds}
+                            </span>
+
+                            {/* Probability */}
+                            <span className="text-[8px] text-white/35 shrink-0 tabular-nums w-8 text-right">
+                              {line.probability}%
+                            </span>
+
+                            {/* Confidence badge */}
+                            <span
+                              className="text-[7px] font-black rounded-full px-1.5 py-0.5 shrink-0"
+                              style={{ background: `${line.confidenceColor}15`, color: line.confidenceColor, border: `1px solid ${line.confidenceColor}25` }}
+                            >
+                              {line.confidence}
+                            </span>
+                          </div>
+                          <p className="text-[9px] text-white/35 leading-relaxed">{line.reason}</p>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+
                   <p className="text-[8px] text-white/15 text-center">
-                    ELO + xG model · Historical WC data · For analysis only
+                    ELO + xG model · Historical WC data · Odds are implied, not live lines
                   </p>
                 </div>
               </motion.div>
