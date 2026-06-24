@@ -4,6 +4,7 @@ import { ArrowLeft, RefreshCw, Zap } from "lucide-react";
 import {
   fetchPitcherStats,
   fetchTeamBatters,
+  fetchTeamLastGameHRHitters,
   getStadiumImageUrl,
   computeWinProbability,
   computeNRFI,
@@ -206,7 +207,7 @@ async function GameDetailContent({ game }: { game: Game }) {
     const awayAbbr = TEAM_ABBR[away.team.id] ?? away.team.name.split(" ").pop() ?? "";
     const homeAbbr = TEAM_ABBR[home.team.id] ?? home.team.name.split(" ").pop() ?? "";
 
-    const [homePRes, awayPRes, homeBatRes, awayBatRes, h2hRes, firstInnRes] =
+    const [homePRes, awayPRes, homeBatRes, awayBatRes, h2hRes, firstInnRes, awayHRRes, homeHRRes] =
       await Promise.allSettled([
         home.probablePitcher ? fetchPitcherStats(home.probablePitcher.id) : Promise.resolve(null),
         away.probablePitcher ? fetchPitcherStats(away.probablePitcher.id) : Promise.resolve(null),
@@ -214,14 +215,19 @@ async function GameDetailContent({ game }: { game: Game }) {
         fetchTeamBatters(away.team.id),
         fetchH2HHistory(away.team.id, home.team.id, 5),
         isFinal ? fetchFirstInningScores(game.gamePk) : Promise.resolve(null),
+        fetchTeamLastGameHRHitters(away.team.id),
+        fetchTeamLastGameHRHitters(home.team.id),
       ]);
 
-    const homeP      = homePRes.status      === "fulfilled" ? homePRes.value      : null;
-    const awayP      = awayPRes.status      === "fulfilled" ? awayPRes.value      : null;
-    const homeBats   = homeBatRes.status    === "fulfilled" ? homeBatRes.value    : [];
-    const awayBats   = awayBatRes.status    === "fulfilled" ? awayBatRes.value    : [];
-    const h2hGames   = h2hRes.status        === "fulfilled" ? h2hRes.value        : [];
-    const firstInn   = firstInnRes.status   === "fulfilled" ? firstInnRes.value   : null;
+    const homeP      = homePRes.status    === "fulfilled" ? homePRes.value    : null;
+    const awayP      = awayPRes.status    === "fulfilled" ? awayPRes.value    : null;
+    const homeBats   = homeBatRes.status  === "fulfilled" ? homeBatRes.value  : [];
+    const awayBats   = awayBatRes.status  === "fulfilled" ? awayBatRes.value  : [];
+    const h2hGames   = h2hRes.status      === "fulfilled" ? h2hRes.value      : [];
+    const firstInn   = firstInnRes.status === "fulfilled" ? firstInnRes.value : null;
+    const awayHRSet  = awayHRRes.status   === "fulfilled" ? awayHRRes.value   : new Set<number>();
+    const homeHRSet  = homeHRRes.status   === "fulfilled" ? homeHRRes.value   : new Set<number>();
+    const recentHRs  = new Set([...awayHRSet, ...homeHRSet]);
 
     const winProb = computeWinProbability(homeP, awayP);
     const nrfi    = computeNRFI(awayP, homeP);
@@ -242,6 +248,8 @@ async function GameDetailContent({ game }: { game: Game }) {
     }
 
     function toRow(b: RosterBatter, pct: number, label: string, pitcherName: string, teamId: number) {
+      const hitHRLastGame = recentHRs.has(b.id);
+      const isDue = !hitHRLastGame && b.stats.homeRuns >= 8;
       return {
         batterId:    b.id,
         batterName:  b.fullName,
@@ -253,18 +261,24 @@ async function GameDetailContent({ game }: { game: Game }) {
         pitcherName,
         teamId,
         position:    b.position,
+        isHot:       hitHRLastGame,
+        isDue,
       };
     }
 
     const hrRows = [
-      ...awayBats.slice(0, 9).map((b) => toRow(b, hrProb(b, homeP), "HR Prob",  home.probablePitcher?.fullName ?? "TBD", away.team.id)),
-      ...homeBats.slice(0, 9).map((b) => toRow(b, hrProb(b, awayP), "HR Prob",  away.probablePitcher?.fullName ?? "TBD", home.team.id)),
+      ...awayBats.slice(0, 9).map((b) => toRow(b, hrProb(b, homeP), "HR Prob", home.probablePitcher?.fullName ?? "TBD", away.team.id)),
+      ...homeBats.slice(0, 9).map((b) => toRow(b, hrProb(b, awayP), "HR Prob", away.probablePitcher?.fullName ?? "TBD", home.team.id)),
     ].sort((a, b) => b.pct - a.pct);
 
-    const hitRows = [
-      ...awayBats.slice(0, 9).map((b) => toRow(b, hitProb(b, homeP), "Hit Prob", home.probablePitcher?.fullName ?? "TBD", away.team.id)),
-      ...homeBats.slice(0, 9).map((b) => toRow(b, hitProb(b, awayP), "Hit Prob", away.probablePitcher?.fullName ?? "TBD", home.team.id)),
-    ].sort((a, b) => b.pct - a.pct);
+    // Balanced hit rows: take top 6 from each team, merge, then sort
+    const awayHitTop = awayBats.slice(0, 9)
+      .map((b) => toRow(b, hitProb(b, homeP), "Hit Prob", home.probablePitcher?.fullName ?? "TBD", away.team.id))
+      .sort((a, b) => b.pct - a.pct).slice(0, 6);
+    const homeHitTop = homeBats.slice(0, 9)
+      .map((b) => toRow(b, hitProb(b, awayP), "Hit Prob", away.probablePitcher?.fullName ?? "TBD", home.team.id))
+      .sort((a, b) => b.pct - a.pct).slice(0, 6);
+    const hitRows = [...awayHitTop, ...homeHitTop].sort((a, b) => b.pct - a.pct);
 
     // Post-game scores
     const awayFinalScore = game.teams.away.score;

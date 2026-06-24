@@ -106,11 +106,12 @@ interface PropRowData {
   pitcherName: string;
   teamId?: number;
   position?: string;
+  isHot?: boolean;
+  isDue?: boolean;
 }
 
 function PropCardLarge({ row, index }: { row: PropRowData; index: number }) {
   const c = pctColor(row.pct);
-  const isHot = row.pct >= 26;
   return (
     <motion.div
       custom={index}
@@ -119,12 +120,19 @@ function PropCardLarge({ row, index }: { row: PropRowData; index: number }) {
       variants={fadeUp}
       className="relative rounded-2xl border border-white/[0.07] bg-[#0D1320] overflow-hidden group hover:border-white/[0.12] transition-colors"
     >
-      {/* HOT badge */}
-      {isHot && (
-        <div className="absolute top-2.5 right-2.5 flex items-center gap-1 rounded-full bg-[#FF7828]/15 border border-[#FF7828]/25 px-2 py-0.5 z-10">
-          <span className="text-[9px] font-black text-[#FF7828] tracking-widest">HOT</span>
-        </div>
-      )}
+      {/* Badges — top-right corner */}
+      <div className="absolute top-2.5 right-2.5 flex flex-col items-end gap-1 z-10">
+        {row.isHot && (
+          <div className="flex items-center gap-1 rounded-full bg-[#FF4500] px-2 py-0.5 shadow-sm">
+            <span className="text-[9px] font-black text-white tracking-widest">🔥 HOT</span>
+          </div>
+        )}
+        {row.isDue && !row.isHot && (
+          <div className="flex items-center gap-1 rounded-full bg-[#FBBF24] px-2 py-0.5 shadow-sm">
+            <span className="text-[9px] font-black text-black tracking-widest">⚡ DUE</span>
+          </div>
+        )}
+      </div>
 
       {/* Headshot — no circle, masked edges blend into card bg */}
       <div className="flex justify-center pt-3">
@@ -132,10 +140,10 @@ function PropCardLarge({ row, index }: { row: PropRowData; index: number }) {
       </div>
 
       <div className="px-3 pb-4 flex flex-col items-center gap-2 text-center -mt-2">
-        {/* Pct badge */}
+        {/* Pct badge — solid background, bold white text */}
         <div
-          className="rounded-full px-2.5 py-0.5 text-[11px] font-black border"
-          style={{ background: `${c}18`, color: c, borderColor: `${c}35` }}
+          className="rounded-full px-3 py-1 text-[12px] font-black text-white"
+          style={{ background: c, boxShadow: `0 2px 10px ${c}50` }}
         >
           {row.pct}%
         </div>
@@ -186,14 +194,27 @@ function PropRowSmall({ row, index }: { row: PropRowData; index: number }) {
         />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-bold text-white truncate">{row.batterName}</p>
+        <div className="flex items-center gap-1.5 mb-0.5">
+          <p className="text-sm font-bold text-white truncate">{row.batterName}</p>
+          {row.isHot && (
+            <span className="shrink-0 text-[8px] font-black text-white bg-[#FF4500] rounded-full px-1.5 py-0.5">🔥</span>
+          )}
+          {row.isDue && !row.isHot && (
+            <span className="shrink-0 text-[8px] font-black text-black bg-[#FBBF24] rounded-full px-1.5 py-0.5">⚡</span>
+          )}
+        </div>
         <p className="text-[10px] text-white/30 truncate">
           {row.batterAvg} AVG · {row.batterHr} HR · vs {row.pitcherName.split(" ").pop()}
         </p>
       </div>
       <div className="text-right shrink-0">
-        <p className="text-lg font-black tabular-nums" style={{ color: c }}>{row.pct}%</p>
-        <p className="text-[9px] font-bold" style={{ color: `${c}70` }}>{row.label}</p>
+        <div
+          className="inline-block rounded-full px-2.5 py-0.5 text-[13px] font-black text-white tabular-nums"
+          style={{ background: c }}
+        >
+          {row.pct}%
+        </div>
+        <p className="text-[9px] font-bold mt-0.5" style={{ color: `${c}70` }}>{row.label}</p>
       </div>
     </motion.div>
   );
@@ -567,11 +588,14 @@ export function GatedH2HHistory({ games, currentAwayTeamId, currentHomeTeamId }:
   const awayColor = TEAM_COLORS[currentAwayTeamId] ?? "#818cf8";
   const homeColor = TEAM_COLORS[currentHomeTeamId] ?? "#FF7828";
 
-  // Count wins from current matchup perspective
-  const awayWins = games.filter((g) => g.winnerTeamId === currentAwayTeamId).length;
-  const homeWins = games.filter((g) => g.winnerTeamId === currentHomeTeamId).length;
+  // Filter out 0-0 ghost games (incomplete data)
+  const validGames = games.filter((g) => !(g.awayScore === 0 && g.homeScore === 0));
 
-  if (games.length === 0) {
+  // Count wins from current matchup perspective
+  const awayWins = validGames.filter((g) => g.winnerTeamId === currentAwayTeamId).length;
+  const homeWins = validGames.filter((g) => g.winnerTeamId === currentHomeTeamId).length;
+
+  if (validGames.length === 0) {
     return (
       <div className="rounded-2xl border border-white/[0.07] bg-[#0D1320] p-6 text-center">
         <p className="text-white/30 text-sm">No recent H2H history found</p>
@@ -586,28 +610,42 @@ export function GatedH2HHistory({ games, currentAwayTeamId, currentHomeTeamId }:
       transition={{ duration: 0.45, delay: 0.2 }}
       className="rounded-2xl border border-white/[0.07] bg-[#0D1320] overflow-hidden"
     >
+      {/* Header */}
       <div className="px-5 py-4 border-b border-white/[0.05]">
-        <p className="text-[10px] font-bold text-white/25 tracking-widest uppercase mb-1">History</p>
-        <div className="flex items-center justify-between">
+        <p className="text-[10px] font-bold text-white/25 tracking-widest uppercase mb-2">History</p>
+        <div className="flex items-center justify-between gap-3">
           <p className="text-sm font-black text-white">Head-to-Head</p>
-          {/* Series record */}
-          <div className="flex items-center gap-2 text-xs font-black">
-            <span style={{ color: awayColor }}>{awayAbbr} {awayWins}</span>
-            <span className="text-white/20">–</span>
-            <span style={{ color: homeColor }}>{homeWins} {homeAbbr}</span>
-            <span className="text-white/20 font-normal">({games.length} recent)</span>
+          {/* Series record pill */}
+          <div className="flex items-center gap-1 shrink-0">
+            <span className="text-sm font-black tabular-nums" style={{ color: awayColor }}>{awayWins}</span>
+            <span className="text-white/30 text-xs font-bold mx-0.5">–</span>
+            <span className="text-sm font-black tabular-nums" style={{ color: homeColor }}>{homeWins}</span>
+            <span className="text-[10px] text-white/30 ml-1">({validGames.length}g)</span>
+          </div>
+        </div>
+        {/* Team labels under record */}
+        <div className="flex items-center justify-between mt-1">
+          <div className="flex items-center gap-1.5">
+            <PlayerImg src={teamLogoUrl(currentAwayTeamId)} alt={awayAbbr} className="w-4 h-4 object-contain" />
+            <span className="text-[10px] font-bold" style={{ color: awayColor }}>{awayAbbr}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] font-bold" style={{ color: homeColor }}>{homeAbbr}</span>
+            <PlayerImg src={teamLogoUrl(currentHomeTeamId)} alt={homeAbbr} className="w-4 h-4 object-contain" />
           </div>
         </div>
       </div>
 
       <div className="divide-y divide-white/[0.04]">
-        {games.map((g, i) => {
+        {validGames.map((g, i) => {
           const isAwayGame = g.awayTeamId === currentAwayTeamId;
           const awayScore = isAwayGame ? g.awayScore : g.homeScore;
           const homeScore = isAwayGame ? g.homeScore : g.awayScore;
           const awayWon  = awayScore > homeScore;
+          const winColor = awayWon ? awayColor : homeColor;
+          const winAbbr  = awayWon ? awayAbbr  : homeAbbr;
           const d = new Date(g.date);
-          const dateStr = d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "2-digit" });
+          const dateStr = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
           return (
             <motion.div
@@ -616,44 +654,46 @@ export function GatedH2HHistory({ games, currentAwayTeamId, currentHomeTeamId }:
               initial="hidden"
               animate="visible"
               variants={fadeUp}
-              className="px-5 py-4 flex items-center gap-4"
+              className="px-4 py-3 flex items-center gap-3"
             >
               {/* Date */}
-              <div className="w-16 shrink-0">
-                <p className="text-xs text-white/35 font-medium">{dateStr}</p>
-              </div>
+              <p className="text-[10px] text-white/35 font-medium w-12 shrink-0">{dateStr}</p>
 
-              {/* Teams + score */}
-              <div className="flex-1 flex items-center gap-3">
-                {/* Away side */}
-                <div className={`flex items-center gap-1.5 ${awayWon ? "opacity-100" : "opacity-40"}`}>
-                  <PlayerImg src={teamLogoUrl(currentAwayTeamId)} alt={awayAbbr} className="w-5 h-5 object-contain" />
-                  <span className="text-sm font-black text-white">{awayAbbr}</span>
-                  <span className="text-lg font-black text-white tabular-nums ml-1">{awayScore}</span>
+              {/* Score block — always visible on mobile */}
+              <div className="flex-1 flex items-center justify-center gap-0">
+                {/* Away */}
+                <div className={`flex items-center gap-1.5 flex-1 justify-end ${awayWon ? "" : "opacity-40"}`}>
+                  <span className="text-xs font-black text-white">{awayAbbr}</span>
+                  <span
+                    className="text-xl font-black tabular-nums min-w-[1.5rem] text-center"
+                    style={{ color: awayWon ? awayColor : "white" }}
+                  >
+                    {awayScore}
+                  </span>
                 </div>
 
-                <span className="text-white/20 text-xs font-bold shrink-0">—</span>
+                <span className="text-white/20 text-xs font-bold mx-2">:</span>
 
-                {/* Home side */}
-                <div className={`flex items-center gap-1.5 ${!awayWon ? "opacity-100" : "opacity-40"}`}>
-                  <span className="text-lg font-black text-white tabular-nums mr-1">{homeScore}</span>
-                  <span className="text-sm font-black text-white">{homeAbbr}</span>
-                  <PlayerImg src={teamLogoUrl(currentHomeTeamId)} alt={homeAbbr} className="w-5 h-5 object-contain" />
+                {/* Home */}
+                <div className={`flex items-center gap-1.5 flex-1 ${!awayWon ? "" : "opacity-40"}`}>
+                  <span
+                    className="text-xl font-black tabular-nums min-w-[1.5rem] text-center"
+                    style={{ color: !awayWon ? homeColor : "white" }}
+                  >
+                    {homeScore}
+                  </span>
+                  <span className="text-xs font-black text-white">{homeAbbr}</span>
                 </div>
               </div>
 
-              {/* Venue + result pill */}
-              <div className="text-right shrink-0">
+              {/* Winner badge */}
+              <div className="shrink-0">
                 <span
-                  className="text-[10px] font-black px-2.5 py-0.5 rounded-full"
-                  style={{
-                    background: awayWon ? `${awayColor}20` : `${homeColor}20`,
-                    color:      awayWon ? awayColor          : homeColor,
-                  }}
+                  className="text-[9px] font-black px-2 py-0.5 rounded-full"
+                  style={{ background: `${winColor}25`, color: winColor }}
                 >
-                  {awayWon ? awayAbbr : homeAbbr} W
+                  {winAbbr} W
                 </span>
-                <p className="text-[9px] text-white/20 mt-0.5 truncate max-w-[80px]">{g.venue.split(" ")[0]}</p>
               </div>
             </motion.div>
           );
