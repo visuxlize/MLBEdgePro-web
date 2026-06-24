@@ -204,8 +204,12 @@ function BatterSummaryCard({ card, onClick, active }: { card: BatterCard; onClic
           <img
             src={playerHeadshotUrl(card.playerId)}
             alt={card.playerName}
-            className="w-full h-full object-cover"
-            style={{ objectPosition: "top center" }}
+            className="w-full h-full object-contain"
+            style={{
+              objectPosition: "top center",
+              maskImage: "radial-gradient(ellipse 80% 85% at 50% 30%, black 40%, transparent 100%)",
+              WebkitMaskImage: "radial-gradient(ellipse 80% 85% at 50% 30%, black 40%, transparent 100%)",
+            }}
             onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
           />
         </div>
@@ -253,8 +257,12 @@ function BatterDetailPanel({ card, pitcherName, onClose }: { card: BatterCard; p
         <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#818cf8]/30 shrink-0 bg-white/5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={playerHeadshotUrl(card.playerId)} alt={card.playerName}
-            className="w-full h-full object-cover"
-            style={{ objectPosition: "top center" }}
+            className="w-full h-full object-contain"
+            style={{
+              objectPosition: "top center",
+              maskImage: "radial-gradient(ellipse 80% 88% at 50% 30%, black 42%, transparent 100%)",
+              WebkitMaskImage: "radial-gradient(ellipse 80% 88% at 50% 30%, black 42%, transparent 100%)",
+            }}
             onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
         </div>
         <div className="flex-1">

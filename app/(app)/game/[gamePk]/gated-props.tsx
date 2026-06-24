@@ -27,6 +27,39 @@ function pctColor(pct: number) {
   return "#EB505A";
 }
 
+// Masked headshot — fades the grey MLB image background to transparent
+// so the player floats cleanly on any dark surface.
+function Headshot({
+  id,
+  name,
+  size = 80,
+  maskStyle = "radial-gradient(ellipse 78% 82% at 50% 32%, black 42%, transparent 100%)",
+  className = "",
+}: {
+  id: number;
+  name: string;
+  size?: number;
+  maskStyle?: string;
+  className?: string;
+}) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={playerHeadshotUrl(id)}
+      alt={name}
+      width={size}
+      height={size}
+      className={`object-contain ${className}`}
+      style={{
+        objectPosition: "top center",
+        maskImage: maskStyle,
+        WebkitMaskImage: maskStyle,
+      }}
+      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+    />
+  );
+}
+
 function UpsellBanner({
   tier,
   message,
@@ -86,36 +119,29 @@ function PropCardLarge({ row, index }: { row: PropRowData; index: number }) {
       variants={fadeUp}
       className="relative rounded-2xl border border-white/[0.07] bg-[#0D1320] overflow-hidden group hover:border-white/[0.12] transition-colors"
     >
+      {/* HOT badge */}
       {isHot && (
-        <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-[#FF7828]/15 border border-[#FF7828]/25 px-2 py-0.5">
+        <div className="absolute top-2.5 right-2.5 flex items-center gap-1 rounded-full bg-[#FF7828]/15 border border-[#FF7828]/25 px-2 py-0.5 z-10">
           <span className="text-[9px] font-black text-[#FF7828] tracking-widest">HOT</span>
         </div>
       )}
 
-      <div className="p-4 flex flex-col items-center gap-3 text-center">
-        {/* Headshot */}
-        <div className="relative">
-          <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white/10 bg-white/5">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={playerHeadshotUrl(row.batterId)}
-              alt={row.batterName}
-              className="w-full h-full object-cover"
-              style={{ objectPosition: "top center" }}
-              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-            />
-          </div>
-          {/* Pct badge */}
-          <div
-            className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 rounded-full px-2 py-0.5 text-[10px] font-black border"
-            style={{ background: `${c}20`, color: c, borderColor: `${c}40` }}
-          >
-            {row.pct}%
-          </div>
+      {/* Headshot — no circle, masked edges blend into card bg */}
+      <div className="flex justify-center pt-3">
+        <Headshot id={row.batterId} name={row.batterName} size={88} />
+      </div>
+
+      <div className="px-3 pb-4 flex flex-col items-center gap-2 text-center -mt-2">
+        {/* Pct badge */}
+        <div
+          className="rounded-full px-2.5 py-0.5 text-[11px] font-black border"
+          style={{ background: `${c}18`, color: c, borderColor: `${c}35` }}
+        >
+          {row.pct}%
         </div>
 
         {/* Name + info */}
-        <div className="mt-1">
+        <div>
           <p className="text-sm font-black text-white leading-tight">{row.batterName}</p>
           <p className="text-[10px] text-white/30 mt-0.5">
             {row.batterAvg} AVG · {row.batterHr} HR · vs {row.pitcherName.split(" ").pop()}
@@ -124,7 +150,7 @@ function PropCardLarge({ row, index }: { row: PropRowData; index: number }) {
 
         {/* Probability bar */}
         <div className="w-full">
-          <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+          <div className="h-1 rounded-full bg-white/[0.06] overflow-hidden">
             <motion.div
               className="h-full rounded-full"
               style={{ background: c }}
@@ -133,7 +159,7 @@ function PropCardLarge({ row, index }: { row: PropRowData; index: number }) {
               transition={{ duration: 0.6, delay: index * 0.05, ease: [0.22, 1, 0.36, 1] }}
             />
           </div>
-          <p className="text-[9px] font-bold mt-1" style={{ color: `${c}80` }}>{row.label}</p>
+          <p className="text-[9px] font-bold mt-1" style={{ color: `${c}70` }}>{row.label}</p>
         </div>
       </div>
     </motion.div>
@@ -148,16 +174,15 @@ function PropRowSmall({ row, index }: { row: PropRowData; index: number }) {
       initial="hidden"
       animate="visible"
       variants={fadeUp}
-      className="flex items-center gap-3 py-3 border-b border-white/[0.04] last:border-0"
+      className="flex items-center gap-3 py-2.5 border-b border-white/[0.04] last:border-0"
     >
-      <div className="w-10 h-10 rounded-full overflow-hidden border border-white/10 bg-white/5 shrink-0">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={playerHeadshotUrl(row.batterId)}
-          alt={row.batterName}
-          className="w-full h-full object-cover"
-          style={{ objectPosition: "top center" }}
-          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+      {/* Headshot — no circle, masked */}
+      <div className="w-11 h-11 shrink-0 flex items-center justify-center">
+        <Headshot
+          id={row.batterId}
+          name={row.batterName}
+          size={44}
+          maskStyle="radial-gradient(ellipse 80% 88% at 50% 28%, black 38%, transparent 100%)"
         />
       </div>
       <div className="flex-1 min-w-0">
@@ -168,7 +193,7 @@ function PropRowSmall({ row, index }: { row: PropRowData; index: number }) {
       </div>
       <div className="text-right shrink-0">
         <p className="text-lg font-black tabular-nums" style={{ color: c }}>{row.pct}%</p>
-        <p className="text-[9px] font-bold" style={{ color: `${c}80` }}>{row.label}</p>
+        <p className="text-[9px] font-bold" style={{ color: `${c}70` }}>{row.label}</p>
       </div>
     </motion.div>
   );
@@ -692,14 +717,12 @@ export function GatedLineups({ awayBatters, homeBatters, awayTeamId, homeTeamId 
               className="flex items-center gap-2.5 px-4 py-2.5 group hover:bg-white/[0.02] transition-colors"
             >
               <span className="text-[10px] font-black text-white/20 w-4 shrink-0">{i + 1}</span>
-              <div className="w-8 h-8 rounded-full overflow-hidden border border-white/10 bg-white/5 shrink-0">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={playerHeadshotUrl(b.id)}
-                  alt={b.fullName}
-                  className="w-full h-full object-cover"
-                  style={{ objectPosition: "top center" }}
-                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+              <div className="w-9 h-9 shrink-0 flex items-center justify-center">
+                <Headshot
+                  id={b.id}
+                  name={b.fullName}
+                  size={36}
+                  maskStyle="radial-gradient(ellipse 82% 88% at 50% 26%, black 35%, transparent 100%)"
                 />
               </div>
               <div className="flex-1 min-w-0">

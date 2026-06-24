@@ -100,22 +100,30 @@ function PitcherCard({
 
   return (
     <div className={`flex flex-col items-center gap-3 flex-1 ${isRight ? "items-end" : "items-start"}`}>
-      {/* Headshot with team badge */}
-      <div className="relative">
+      {/* Headshot — no circle, masked edges fade to card bg */}
+      <div className="relative flex flex-col items-center">
+        {/* Subtle glow ring beneath */}
         <div
-          className="w-20 h-20 rounded-full overflow-hidden border-2 bg-white/5"
-          style={{ borderColor: `${accentColor}50` }}
-        >
-          <PlayerImg
-            src={playerHeadshotUrl(pitcher.id)}
-            alt={pitcher.fullName}
-            className="w-full h-full object-cover"
-            objectPosition="top center"
-          />
-        </div>
-        {/* Team logo badge */}
+          className="absolute inset-0 rounded-full blur-2xl opacity-15 scale-125 -z-10"
+          style={{ background: accentColor }}
+        />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={playerHeadshotUrl(pitcher.id)}
+          alt={pitcher.fullName}
+          width={96}
+          height={96}
+          className="object-contain"
+          style={{
+            objectPosition: "top center",
+            maskImage: "radial-gradient(ellipse 80% 85% at 50% 32%, black 42%, transparent 100%)",
+            WebkitMaskImage: "radial-gradient(ellipse 80% 85% at 50% 32%, black 42%, transparent 100%)",
+          }}
+          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+        />
+        {/* Team logo — small, bottom right of headshot area */}
         <div
-          className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full overflow-hidden border-2 bg-[#0D1320]"
+          className="absolute bottom-0 right-0 w-6 h-6 rounded-full overflow-hidden border bg-[#0D1320]"
           style={{ borderColor: `${accentColor}40` }}
         >
           <PlayerImg
@@ -124,11 +132,6 @@ function PitcherCard({
             className="w-full h-full object-contain p-0.5"
           />
         </div>
-        {/* Color glow behind headshot */}
-        <div
-          className="absolute inset-0 rounded-full blur-xl opacity-20 -z-10 scale-110"
-          style={{ background: accentColor }}
-        />
       </div>
 
       <div className={isRight ? "text-right" : ""}>

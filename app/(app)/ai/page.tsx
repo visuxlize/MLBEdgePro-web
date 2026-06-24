@@ -216,8 +216,12 @@ function PickCard({ pick }: { pick: AIPick }) {
           <img
             src={playerHeadshotUrl(pick.playerId)}
             alt={pick.playerName}
-            className="w-full h-full object-cover"
-            style={{ objectPosition: "top center" }}
+            className="w-full h-full object-contain"
+            style={{
+              objectPosition: "top center",
+              maskImage: "radial-gradient(ellipse 80% 85% at 50% 30%, black 40%, transparent 100%)",
+              WebkitMaskImage: "radial-gradient(ellipse 80% 85% at 50% 30%, black 40%, transparent 100%)",
+            }}
             onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
           />
         </div>

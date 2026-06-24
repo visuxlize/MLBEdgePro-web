@@ -313,18 +313,22 @@ function BatterCard({ rank, row, propType, inSlip, onAdd }: {
       )}
 
       {/* Player info */}
-      <div className="pt-10 pb-3 px-4 flex flex-col items-center text-center">
-        <div className="w-16 h-16 rounded-full overflow-hidden border-2 bg-white/5 mb-2"
-          style={{ borderColor: `${color}40` }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={playerHeadshotUrl(row.id)}
-            alt={row.playerName}
-            className="w-full h-full object-cover"
-            style={{ objectPosition: "top center" }}
-            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-          />
-        </div>
+      <div className="pt-6 pb-3 px-4 flex flex-col items-center text-center">
+        {/* Headshot — no circle, masked to blend with card bg */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={playerHeadshotUrl(row.id)}
+          alt={row.playerName}
+          width={80}
+          height={80}
+          className="object-contain mb-1"
+          style={{
+            objectPosition: "top center",
+            maskImage: "radial-gradient(ellipse 80% 85% at 50% 32%, black 42%, transparent 100%)",
+            WebkitMaskImage: "radial-gradient(ellipse 80% 85% at 50% 32%, black 42%, transparent 100%)",
+          }}
+          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+        />
         <div className="px-2.5 py-1 rounded-full text-[10px] font-black border mb-2"
           style={{ color, borderColor: `${color}50`, backgroundColor: `${color}18` }}>
           {row.pct}%
@@ -943,8 +947,12 @@ function DailySlipCard({ slip }: { slip: DailySlip }) {
                   <img
                     src={playerHeadshotUrl(leg.playerId)}
                     alt=""
-                    className="w-full h-full object-cover"
-                    style={{ objectPosition: "top center" }}
+                    className="w-full h-full object-contain"
+                    style={{
+                      objectPosition: "top center",
+                      maskImage: "radial-gradient(ellipse 80% 85% at 50% 30%, black 40%, transparent 100%)",
+                      WebkitMaskImage: "radial-gradient(ellipse 80% 85% at 50% 30%, black 40%, transparent 100%)",
+                    }}
                     onError={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = "0"; }}
                   />
                 ) : leg.teamId ? (
