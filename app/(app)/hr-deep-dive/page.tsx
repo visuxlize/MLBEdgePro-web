@@ -205,6 +205,7 @@ function BatterSummaryCard({ card, onClick, active }: { card: BatterCard; onClic
             src={playerHeadshotUrl(card.playerId)}
             alt={card.playerName}
             className="w-full h-full object-cover"
+            style={{ objectPosition: "top center" }}
             onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
           />
         </div>
@@ -253,6 +254,7 @@ function BatterDetailPanel({ card, pitcherName, onClose }: { card: BatterCard; p
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={playerHeadshotUrl(card.playerId)} alt={card.playerName}
             className="w-full h-full object-cover"
+            style={{ objectPosition: "top center" }}
             onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
         </div>
         <div className="flex-1">

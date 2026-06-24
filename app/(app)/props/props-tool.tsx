@@ -321,6 +321,7 @@ function BatterCard({ rank, row, propType, inSlip, onAdd }: {
             src={playerHeadshotUrl(row.id)}
             alt={row.playerName}
             className="w-full h-full object-cover"
+            style={{ objectPosition: "top center" }}
             onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
           />
         </div>
@@ -943,6 +944,7 @@ function DailySlipCard({ slip }: { slip: DailySlip }) {
                     src={playerHeadshotUrl(leg.playerId)}
                     alt=""
                     className="w-full h-full object-cover"
+                    style={{ objectPosition: "top center" }}
                     onError={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = "0"; }}
                   />
                 ) : leg.teamId ? (

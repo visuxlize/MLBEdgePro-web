@@ -217,6 +217,7 @@ function PickCard({ pick }: { pick: AIPick }) {
             src={playerHeadshotUrl(pick.playerId)}
             alt={pick.playerName}
             className="w-full h-full object-cover"
+            style={{ objectPosition: "top center" }}
             onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
           />
         </div>

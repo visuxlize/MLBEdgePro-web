@@ -8,32 +8,34 @@ import { Container } from "./container";
 
 const FREE_FEATURES = [
   "Today's full game schedule",
-  "Live scores & game status",
-  "Win prediction (home / away)",
-  "Upcoming matchup overview",
-  "Stadium weather conditions",
+  "Live scores & inning-by-inning updates",
+  "Starting pitcher stats (ERA, WHIP, K/9)",
+  "Top 4 HR candidates per game",
+  "Basic matchup overview",
 ];
 
 const FAN_FEATURES = [
   "Everything in Free",
-  "Edge Report — AI-ranked value bets",
+  "Edge Report — AI-ranked value plays across all games",
   "Full Prop Builder (HR, 1+ Hit, 2+ Hits, K props)",
-  "Batter vs Pitcher matchup analysis",
-  "Multi-leg prop slips",
-  "Save & track your bet slips",
+  "Win probability model for every game",
+  "NRFI prediction with confidence score",
+  "Head-to-head history (last 5 meetings)",
+  "Full HR & hit prop rankings — all batters",
   "Priority data refresh",
+  "⚽ World Cup 2026 — Groups, bracket & AI picks",
 ];
 
 const PRO_FEATURES = [
   "Everything in Fan",
+  "Full team lineups with season stats",
   "HR Deep Dive — spray charts & grade",
   "Wall Clearance + Carry Analysis",
   "Pitch → Spray Connection",
   "Barrel Rate & Exit Velocity Analysis",
-  "Confident daily picks",
-  "Batter power & pitcher vulnerability",
-  "⚽ World Cup 2026 — Groups, bracket & AI picks",
-  "⚽ Live group standings & team deep dives",
+  "Post-game AI accuracy report",
+  "Batter power & pitcher vulnerability index",
+  "⚽ Live WC group standings & team deep dives",
   "⚽ ELO win probabilities for every match",
 ];
 
@@ -47,23 +49,24 @@ const fadeUp = {
 };
 
 const COMPARISON: [string, boolean, boolean, boolean][] = [
-  ["Game schedule",            true,  true,  true ],
-  ["Live scores",              true,  true,  true ],
-  ["Win predictions",          true,  true,  true ],
-  ["Weather conditions",       true,  true,  true ],
-  ["Home Run props",           false, true,  true ],
-  ["Hit & 2+ Hit props",       false, true,  true ],
-  ["Pitcher K projections",    false, true,  true ],
-  ["Edge Report",              false, true,  true ],
-  ["Matchup analysis",         false, true,  true ],
-  ["Prop Builder & slips",     false, true,  true ],
-  ["HR Deep Dive",             false, false, true ],
-  ["Wall Clearance Analysis",  false, false, true ],
-  ["Carry Conditions",         false, false, true ],
-  ["Pitch → Spray Connection",         false, false, true ],
-  ["⚽ WC Groups & Standings",         false, false, true ],
-  ["⚽ WC Bracket & Predictions",      false, false, true ],
-  ["⚽ Team Deep Dives & ELO Model",   false, false, true ],
+  ["Game schedule",                true,  true,  true ],
+  ["Live scores & status",         true,  true,  true ],
+  ["Starting pitcher stats",       true,  true,  true ],
+  ["Basic game breakdown",         true,  true,  true ],
+  ["Top 4 HR candidates",          true,  true,  true ],
+  ["Win probability model",        false, true,  true ],
+  ["NRFI prediction",              false, true,  true ],
+  ["Head-to-head history",         false, true,  true ],
+  ["Full HR & hit prop rankings",  false, true,  true ],
+  ["Edge Report (all games)",      false, true,  true ],
+  ["Prop Builder & slips",         false, true,  true ],
+  ["⚽ WC Groups & AI picks",      false, true,  true ],
+  ["Full team lineups",            false, false, true ],
+  ["HR Deep Dive",                 false, false, true ],
+  ["Wall Clearance Analysis",      false, false, true ],
+  ["Pitch → Spray Connection",     false, false, true ],
+  ["Post-game AI accuracy report", false, false, true ],
+  ["⚽ WC Bracket & ELO Model",    false, false, true ],
 ];
 
 function CheckIcon({ yes, color }: { yes: boolean; color?: string }) {
@@ -143,7 +146,7 @@ export function LandingPricing() {
               <span className="text-4xl font-black text-white">$0</span>
               <span className="text-white/35 text-base">/month</span>
             </div>
-            <p className="text-sm text-white/35 mb-7">Always free. No card required.</p>
+            <p className="text-sm text-white/35 mb-7">Always free. No credit card required.</p>
 
             <Link href="/sign-up">
               <Button variant="outline" className="w-full rounded-full h-11 font-bold border-white/10 hover:border-white/20">

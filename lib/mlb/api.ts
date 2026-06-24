@@ -402,6 +402,129 @@ export function gameStatusLabel(game: Game): string {
   });
 }
 
+// ── Head-to-Head History ──────────────────────────────────────────────────────
+
+export interface H2HGame {
+  gamePk: number;
+  date: string;
+  homeTeamId: number;
+  awayTeamId: number;
+  homeScore: number;
+  awayScore: number;
+  venue: string;
+  winnerTeamId: number;
+}
+
+export async function fetchH2HHistory(
+  team1Id: number,
+  team2Id: number,
+  limit = 5,
+): Promise<H2HGame[]> {
+  try {
+    const currentYear = new Date().getFullYear();
+    const results: H2HGame[] = [];
+
+    for (const year of [currentYear, currentYear - 1]) {
+      if (results.length >= limit) break;
+      const url = `${BASE}/schedule?teamId=${team1Id}&opponentId=${team2Id}&season=${year}&sportId=1&gameType=R`;
+      const res = await fetch(url, { next: { revalidate: 3600 } });
+      if (!res.ok) continue;
+      const data = await res.json();
+      const games: any[] = (data.dates ?? []).flatMap((d: any) => d.games ?? []).reverse();
+
+      for (const g of games) {
+        if (results.length >= limit) break;
+        if (g.status?.abstractGameState !== "Final") continue;
+        const homeTeamId = g.teams?.home?.team?.id ?? 0;
+        const awayTeamId = g.teams?.away?.team?.id ?? 0;
+        const homeScore  = g.teams?.home?.score ?? 0;
+        const awayScore  = g.teams?.away?.score ?? 0;
+        results.push({
+          gamePk: g.gamePk,
+          date: g.gameDate,
+          homeTeamId,
+          awayTeamId,
+          homeScore,
+          awayScore,
+          venue: g.venue?.name ?? "",
+          winnerTeamId: homeScore >= awayScore ? homeTeamId : awayTeamId,
+        });
+      }
+    }
+
+    return results.slice(0, limit);
+  } catch {
+    return [];
+  }
+}
+
+// ── NRFI Prediction ───────────────────────────────────────────────────────────
+
+export interface NRFIPrediction {
+  verdict: "YES" | "NO" | "PUSH";
+  confidence: number;
+  reason: string;
+}
+
+export function computeNRFI(
+  awayPitcher: PitcherSeasonStats | null,
+  homePitcher: PitcherSeasonStats | null,
+): NRFIPrediction {
+  if (!awayPitcher && !homePitcher) {
+    return { verdict: "PUSH", confidence: 50, reason: "No pitcher data available" };
+  }
+  const avgERA  = ((awayPitcher?.era ?? 4.5) + (homePitcher?.era ?? 4.5)) / 2;
+  const avgWHIP = ((awayPitcher?.whip ?? 1.3) + (homePitcher?.whip ?? 1.3)) / 2;
+
+  const eraScore  = Math.max(0, Math.min(100, (6.5 - avgERA) * 18));
+  const whipScore = Math.max(0, Math.min(100, (1.9 - avgWHIP) * 70));
+  const raw = Math.round((eraScore * 0.6 + whipScore * 0.4));
+
+  const awayERA = awayPitcher?.era.toFixed(2) ?? "N/A";
+  const homeERA = homePitcher?.era.toFixed(2) ?? "N/A";
+
+  if (raw >= 60) {
+    return {
+      verdict: "YES",
+      confidence: Math.min(82, raw),
+      reason: `${awayERA} ERA vs ${homeERA} ERA — elite starters shutting down lineups early`,
+    };
+  }
+  if (raw <= 38) {
+    return {
+      verdict: "NO",
+      confidence: Math.min(78, 100 - raw),
+      reason: `${awayERA} ERA vs ${homeERA} ERA — vulnerable pitching increases first-inning scoring`,
+    };
+  }
+  return {
+    verdict: "PUSH",
+    confidence: raw,
+    reason: `${awayERA} ERA vs ${homeERA} ERA — mixed signals, could go either way`,
+  };
+}
+
+// ── First-inning scoring (for NRFI post-game verify) ─────────────────────────
+
+export async function fetchFirstInningScores(
+  gamePk: number,
+): Promise<{ away: number; home: number } | null> {
+  try {
+    const url = `${BASE}/game/${gamePk}/linescore`;
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const inning1 = (data.innings ?? [])[0];
+    if (!inning1) return null;
+    return {
+      away: inning1.away?.runs ?? 0,
+      home: inning1.home?.runs ?? 0,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function formatDateLabel(dateStr: string): string {
   const d = new Date(dateStr + "T12:00:00");
   const today = new Date();
