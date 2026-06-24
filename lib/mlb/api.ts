@@ -506,6 +506,36 @@ export function computeNRFI(
 
 // ── First-inning scoring (for NRFI post-game verify) ─────────────────────────
 
+// Returns player IDs who hit a HR in a team's most recent completed game
+export async function fetchTeamLastGameHRHitters(teamId: number): Promise<Set<number>> {
+  try {
+    const today = new Date();
+    const startDate = new Date(today);
+    startDate.setDate(today.getDate() - 6);
+    const url = `${BASE}/schedule?teamId=${teamId}&season=${today.getFullYear()}&gameType=R&startDate=${startDate.toISOString().slice(0, 10)}&endDate=${today.toISOString().slice(0, 10)}&sportId=1`;
+    const res = await fetch(url, { next: { revalidate: 3600 } });
+    if (!res.ok) return new Set();
+    const data = await res.json();
+    const games: any[] = (data.dates ?? []).flatMap((d: any) => d.games ?? []);
+    const last = games.filter((g) => g.status?.abstractGameState === "Final").pop();
+    if (!last) return new Set();
+    const bsRes = await fetch(`${BASE}/game/${last.gamePk}/boxscore`, { next: { revalidate: 3600 } });
+    if (!bsRes.ok) return new Set();
+    const bsData = await bsRes.json();
+    const hrHitters = new Set<number>();
+    for (const side of ["home", "away"] as const) {
+      for (const p of Object.values(bsData.teams?.[side]?.players ?? {}) as any[]) {
+        if ((p.stats?.batting?.homeRuns ?? 0) > 0 && p.person?.id) {
+          hrHitters.add(p.person.id);
+        }
+      }
+    }
+    return hrHitters;
+  } catch {
+    return new Set();
+  }
+}
+
 export async function fetchFirstInningScores(
   gamePk: number,
 ): Promise<{ away: number; home: number } | null> {
