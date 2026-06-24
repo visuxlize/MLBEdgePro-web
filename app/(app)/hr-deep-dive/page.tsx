@@ -422,7 +422,7 @@ export default function HRDeepDivePage() {
             </div>
             <p className="text-[10px] font-bold text-[#818cf8] tracking-widest uppercase">Pro Feature</p>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white">HR Deep Dive</h1>
+          <h1 className="text-2xl sm:text-3xl font-black font-display text-white">HR Deep Dive</h1>
           <p className="text-sm text-white/35 mt-1">All batters vs today&apos;s pitchers — spray, wall clearance & power metrics</p>
         </div>
         <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-[#818cf8]/25 bg-[#818cf8]/10 px-3 py-1.5">

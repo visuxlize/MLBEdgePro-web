@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
   Send, RotateCcw, CircleDot, Layers,
-  Target, BookOpen, TrendingUp, Clock, Loader2, Bot,
+  Target, TrendingUp, Clock, Loader2, Bot,
   Plus, Check, ChevronRight, Zap, Trophy,
 } from "lucide-react";
 import { PaywallGate } from "@/components/web-tool/paywall-gate";
@@ -283,7 +283,7 @@ function PendingPicksBanner() {
 
   return (
     <Link
-      href="/props"
+      href="/analysis?tab=props"
       className="flex items-center gap-3 mx-4 mb-3 rounded-xl border border-[#FF7828]/30 bg-[#FF7828]/10 px-4 py-2.5 hover:bg-[#FF7828]/16 transition-colors"
     >
       <Zap size={13} className="text-[#FF7828] shrink-0" strokeWidth={2.5} />
@@ -366,7 +366,7 @@ const STARTERS = [
   { icon: TrendingUp, color: "#50C882",  label: "Best bet today",    prompt: "What's the single best bet on today's slate and why?" },
   { icon: Target,     color: "#FF7828",  label: "Hot HR plays",      prompt: "Which HR props are the hottest today? Give me the top 3 with reasoning." },
   { icon: Layers,     color: "#818cf8",  label: "3-leg safe parlay", prompt: "Build me a 3-leg safe parlay from today's slate. Walk me through each leg." },
-  { icon: BookOpen,   color: "#f472b6",  label: "Analyze my history",prompt: "Look at my bet history: where am I leaking value and what should I change?" },
+  { icon: TrendingUp, color: "#f472b6",  label: "Value leans",      prompt: "Which games today have the most model edge vs public perception?" },
   { icon: CircleDot,  color: "#fbbf24",  label: "1st inning locks",  prompt: "Which 1st inning Over 0.5 props look strongest today?" },
   { icon: Clock,      color: "#2dd4bf",  label: "Pitcher K edges",   prompt: "Which pitcher K Over lines have the best edge? Give me K/9, line, and probability." },
   { icon: TrendingUp, color: "#60B4F0",  label: "Moneyline value",   prompt: "Where does the model see the biggest moneyline edge today?" },
@@ -377,7 +377,7 @@ const CONTEXT_PILLS = [
   { icon: CircleDot,  label: "Today's Games", color: "#50C882"  },
   { icon: Target,     label: "HR Nuke Model", color: "#FF7828"  },
   { icon: Layers,     label: "Prop Data",     color: "#818cf8"  },
-  { icon: BookOpen,   label: "Bet History",   color: "#f472b6"  },
+  { icon: TrendingUp, label: "Value Leans",   color: "#f472b6"  },
   { icon: TrendingUp, label: "Edge Scores",   color: "#fbbf24"  },
   { icon: Clock,      label: "1st Inn Model", color: "#2dd4bf"  },
 ];

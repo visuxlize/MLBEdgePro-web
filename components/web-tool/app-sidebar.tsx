@@ -5,8 +5,8 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { useUser, useClerk } from "@clerk/nextjs";
 import {
-  CircleDot, BarChart3, Layers, TrendingUp, Target,
-  Settings, Lock, BookOpen, Menu, X, Zap, LogOut, ChevronRight, Bot,
+  CircleDot, BarChart3, TrendingUp, Target,
+  Settings, Lock, Menu, X, Zap, LogOut, ChevronRight, Bot,
 } from "lucide-react";
 import { useSubscription } from "@/lib/subscription";
 import { motion, AnimatePresence } from "framer-motion";
@@ -14,10 +14,8 @@ import { motion, AnimatePresence } from "framer-motion";
 const NAV = [
   { href: "/games",        icon: CircleDot,  label: "Today's Games", requiredTier: null           },
   { href: "/scores",       icon: BarChart3,  label: "Live Scores",   requiredTier: null           },
-  { href: "/analysis",     icon: TrendingUp, label: "Edge Report",   requiredTier: "fan" as const },
-  { href: "/props",        icon: Layers,     label: "Prop Builder",  requiredTier: "fan" as const },
+  { href: "/analysis",     icon: TrendingUp, label: "Analysis",      requiredTier: "fan" as const },
   { href: "/hr-deep-dive", icon: Target,     label: "HR Nuke",       requiredTier: "pro" as const },
-  { href: "/bet-tracker",  icon: BookOpen,   label: "Bet Tracker",   requiredTier: "pro" as const },
   { href: "/ai",           icon: Bot,        label: "Edge AI",       requiredTier: "pro" as const },
 ];
 
@@ -54,7 +52,7 @@ export function AppSidebar() {
         {/* Logo → /games */}
         <Link href="/games" className="flex items-center gap-2 hover:opacity-80 transition-opacity shrink-0">
           <DiamondLogo />
-          <span className="text-[15px] font-bold text-white">
+          <span className="text-[15px] font-bold text-white font-display tracking-wide">
             MLB Edge<span className="text-[#FF7828]"> Pro</span>
           </span>
         </Link>
@@ -167,7 +165,7 @@ export function AppSidebar() {
               <div className="flex items-center justify-between px-5 h-14 border-b border-white/[0.06] shrink-0">
                 <Link href="/games" onClick={() => setOpen(false)} className="flex items-center gap-2">
                   <DiamondLogo />
-                  <span className="text-[15px] font-bold text-white">MLB Edge<span className="text-[#FF7828]"> Pro</span></span>
+                  <span className="text-[15px] font-bold text-white font-display tracking-wide">MLB Edge<span className="text-[#FF7828]"> Pro</span></span>
                 </Link>
                 <button onClick={() => setOpen(false)} className="w-9 h-9 rounded-xl flex items-center justify-center text-white/40 hover:text-white hover:bg-white/[0.06] transition-colors">
                   <X size={20} strokeWidth={1.8} />

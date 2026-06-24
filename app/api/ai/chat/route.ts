@@ -6,7 +6,6 @@ import {
   fetchTodaysGames,
   fetchPitcherStats,
   fetchTeamBatters,
-  fetchVenueWeather,
   type PitcherSeasonStats,
   type RosterBatter,
 } from "@/lib/mlb/api";
@@ -91,12 +90,11 @@ async function buildGameContext(oddsMap: Record<string, string>): Promise<string
   await Promise.all(
     withPitchers.map(async (game) => {
       try {
-        const [hb, ab, hp, ap, wx] = await Promise.all([
+        const [hb, ab, hp, ap] = await Promise.all([
           fetchTeamBatters(game.teams.home.team.id).catch(() => [] as RosterBatter[]),
           fetchTeamBatters(game.teams.away.team.id).catch(() => [] as RosterBatter[]),
           game.teams.home.probablePitcher ? fetchPitcherStats(game.teams.home.probablePitcher.id).catch(() => null) : Promise.resolve(null as PitcherSeasonStats | null),
           game.teams.away.probablePitcher ? fetchPitcherStats(game.teams.away.probablePitcher.id).catch(() => null) : Promise.resolve(null as PitcherSeasonStats | null),
-          fetchVenueWeather(game.venue.id).catch(() => null),
         ]);
 
         const homeTeam = game.teams.home.team.name;
@@ -105,7 +103,6 @@ async function buildGameContext(oddsMap: Record<string, string>): Promise<string
         const apName   = game.teams.away.probablePitcher?.fullName ?? "TBD";
 
         let block = `\nGAME: ${awayTeam} @ ${homeTeam} | ${game.venue.name}`;
-        if (wx) block += ` | ${wx.tempF}°F, ${wx.windMph}mph ${wx.windDirection}, ${wx.conditions}`;
 
         if (hp) {
           const kp = kLineProp(hp);

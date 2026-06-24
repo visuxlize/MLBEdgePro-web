@@ -455,7 +455,7 @@ function FavoriteTeamPanel({
       <div className="grid grid-cols-2 gap-2">
         {[
           { href: "/analysis", icon: TrendingUp, label: "Edge Report", color: "#50C882" },
-          { href: "/props", icon: Target, label: "Prop Builder", color: "#818cf8" },
+          { href: "/analysis?tab=props", icon: Target, label: "Prop Builder", color: "#818cf8" },
         ].map(({ href, icon: Icon, label, color }) => (
           <Link key={href} href={href}
             className="flex items-center gap-2 rounded-xl border border-white/[0.07] bg-[#0D1117] px-3 py-2.5 hover:border-white/[0.14] transition-colors">
@@ -568,7 +568,7 @@ export default function GamesPage() {
           <div className="flex items-baseline justify-between mb-4">
             <div>
               <p className="text-[10px] font-bold text-white/25 tracking-widest uppercase">Schedule</p>
-              <h1 className="text-2xl sm:text-3xl font-black text-white leading-tight">
+              <h1 className="text-2xl sm:text-3xl font-black font-display text-white leading-tight">
                 {labelFor(date)}
                 {date === todayStr() && (
                   <span className="ml-3 text-sm font-normal text-white/25">

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion, useInView } from "framer-motion";
 import {
   TrendingUp, Zap, Target, ArrowRight, BarChart3,
-  ArrowLeft, Flame, Activity, BookOpen,
+  ArrowLeft, Flame, Activity,
 } from "lucide-react";
 import { Header } from "@/components/landing/header";
 import { LandingFooter } from "@/components/landing/footer";
@@ -410,10 +410,10 @@ export default function ResultsPage() {
                 <ArrowRight size={14} strokeWidth={2.5} />
               </button>
             </Link>
-            <Link href="/bet-tracker">
+            <Link href="/analysis">
               <button className="h-12 px-6 rounded-full border border-white/15 text-white/55 hover:text-white hover:border-white/25 font-medium flex items-center gap-2 transition-colors">
-                <BookOpen size={14} strokeWidth={2} />
-                Open Bet Tracker
+                <TrendingUp size={14} strokeWidth={2} />
+                Edge Report
               </button>
             </Link>
           </div>

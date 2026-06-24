@@ -1,9 +1,15 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { TRPCProvider } from "@/lib/trpc/client";
 import "./globals.css";
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://mlbedgepro.dev";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
@@ -38,6 +44,11 @@ export default function RootLayout({
       signUpFallbackRedirectUrl="/games"
     >
       <html lang="en" className="dark" suppressHydrationWarning>
+        <head>
+          <link rel="preconnect" href="https://api.fontshare.com" crossOrigin="anonymous" />
+          <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet" />
+          <link href="https://fonts.cdnfonts.com/css/integral-cf" rel="stylesheet" />
+        </head>
         <body className="font-sans antialiased overflow-x-hidden">
           <TRPCProvider>
             {children}

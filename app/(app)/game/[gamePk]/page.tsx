@@ -1,11 +1,10 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { ArrowLeft, Cloud, Wind, Thermometer, Droplets, RefreshCw, Zap, Star, TrendingUp } from "lucide-react";
+import { ArrowLeft, RefreshCw, Zap, Star, TrendingUp } from "lucide-react";
 import {
   fetchGamesByDate,
   fetchPitcherStats,
   fetchTeamBatters,
-  fetchVenueWeather,
   getStadiumImageUrl,
   playerHeadshotUrl,
   computeWinProbability,
@@ -17,6 +16,7 @@ import {
   type RosterBatter,
 } from "@/lib/mlb/api";
 import { PlayerImg } from "@/components/web-tool/player-img";
+import { GameTimeBadge } from "@/components/web-tool/game-time-badge";
 import { GatedPropList, GatedWinProb } from "./gated-props";
 
 export const dynamic = "force-dynamic";
@@ -113,48 +113,6 @@ function PitcherCard({
 
 // WinProbBar replaced by GatedWinProb client component
 
-function WeatherCard({ temp, wind, direction, conditions, humidity }: {
-  temp: number; wind: number; direction: string; conditions: string; humidity: number;
-}) {
-  const windImpact = wind >= 12 ? (direction.includes("out") || direction === "S" || direction === "SW" ? "HR Boost" : "HR Suppress") : "Neutral";
-  const windColor  = windImpact === "HR Boost" ? "#50C882" : windImpact === "HR Suppress" ? "#EB505A" : "rgba(255,255,255,0.35)";
-  return (
-    <div className="rounded-2xl border border-white/[0.07] bg-[#111622] p-5">
-      <p className="text-[10px] font-bold text-white/25 tracking-widest uppercase mb-4">Stadium Weather</p>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="flex flex-col gap-1 items-start">
-          <Thermometer size={14} className="text-[#FF7828]" strokeWidth={1.5} />
-          <p className="text-xl font-black text-white">{temp}°F</p>
-          <p className="text-[10px] text-white/30">Temperature</p>
-        </div>
-        <div className="flex flex-col gap-1 items-start">
-          <Wind size={14} className="text-[#818cf8]" strokeWidth={1.5} />
-          <p className="text-xl font-black text-white">{wind} mph</p>
-          <p className="text-[10px] text-white/30">{direction} wind</p>
-        </div>
-        <div className="flex flex-col gap-1 items-start">
-          <Cloud size={14} className="text-[#2dd4bf]" strokeWidth={1.5} />
-          <p className="text-base font-black text-white capitalize">{conditions}</p>
-          <p className="text-[10px] text-white/30">Conditions</p>
-        </div>
-        <div className="flex flex-col gap-1 items-start">
-          <Droplets size={14} className="text-[#60B4F0]" strokeWidth={1.5} />
-          <p className="text-xl font-black text-white">{humidity}%</p>
-          <p className="text-[10px] text-white/30">Humidity</p>
-        </div>
-      </div>
-      {wind >= 8 && (
-        <div className="mt-3 pt-3 border-t border-white/[0.05] flex items-center gap-2">
-          <Wind size={11} strokeWidth={2} style={{ color: windColor }} />
-          <p className="text-[11px]" style={{ color: windColor }}>
-            {wind}mph {direction} — {windImpact}
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}
-
 // PropRow moved to gated-props.tsx as GatedPropList
 
 // ── Main content ──────────────────────────────────────────────────────────────
@@ -169,19 +127,17 @@ async function GameDetailContent({ game }: { game: Game }) {
   const awayColor = TEAM_COLORS[away.team.id] ?? "#818cf8";
   const homeColor = TEAM_COLORS[home.team.id] ?? "#FF7828";
 
-  const [homePStats, awayPStats, homeBatters, awayBatters, weather] = await Promise.allSettled([
+  const [homePStats, awayPStats, homeBatters, awayBatters] = await Promise.allSettled([
     home.probablePitcher ? fetchPitcherStats(home.probablePitcher.id) : Promise.resolve(null),
     away.probablePitcher ? fetchPitcherStats(away.probablePitcher.id) : Promise.resolve(null),
     fetchTeamBatters(home.team.id),
     fetchTeamBatters(away.team.id),
-    fetchVenueWeather(game.venue.id),
   ]);
 
   const homeP = homePStats.status === "fulfilled" ? homePStats.value : null;
   const awayP = awayPStats.status === "fulfilled" ? awayPStats.value : null;
   const homeBats = homeBatters.status === "fulfilled" ? homeBatters.value : [];
   const awayBats = awayBatters.status === "fulfilled" ? awayBatters.value : [];
-  const wx = weather.status === "fulfilled" ? weather.value : null;
 
   const winProb = computeWinProbability(homeP, awayP);
 
@@ -220,9 +176,6 @@ async function GameDetailContent({ game }: { game: Game }) {
     ...homeBats.slice(0, 9).map((b) => toRowData(b, hitProb(b, awayP), "Hit Prob", away.probablePitcher?.fullName ?? "TBD")),
   ].sort((a, b) => b.pct - a.pct).slice(0, 10);
 
-  const gameTime = isLive ? "LIVE" : isFinal ? "Final" :
-    new Date(game.gameDate).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-
   return (
     <div className="min-h-screen bg-background">
       {/* Stadium hero */}
@@ -241,16 +194,7 @@ async function GameDetailContent({ game }: { game: Game }) {
             <ArrowLeft size={14} strokeWidth={2} />
             Games
           </Link>
-          <span className={`text-xs font-bold px-3 py-1.5 rounded-full border backdrop-blur-sm ${
-            isLive
-              ? "bg-red-500/20 border-red-500/30 text-red-400"
-              : isFinal
-              ? "bg-white/10 border-white/15 text-white/50"
-              : "bg-[#FF7828]/20 border-[#FF7828]/30 text-[#FF7828]"
-          }`}>
-            {isLive && <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse mr-1.5" />}
-            {gameTime}
-          </span>
+          <GameTimeBadge gameDate={game.gameDate} isLive={isLive} isFinal={isFinal} />
         </div>
 
         {/* Teams overlay */}
@@ -297,22 +241,6 @@ async function GameDetailContent({ game }: { game: Game }) {
 
         {/* ── Win probability — FAN tier ─────────────────────────────────── */}
         <GatedWinProb homeProb={winProb.home} awayTeam={away.team.name} homeTeam={home.team.name} />
-
-        {/* ── Weather (FREE) ──────────────────────────────────────────────── */}
-        {wx ? (
-          <WeatherCard
-            temp={wx.tempF}
-            wind={wx.windMph}
-            direction={wx.windDirection}
-            conditions={wx.conditions}
-            humidity={wx.humidity}
-          />
-        ) : (
-          <div className="rounded-2xl border border-white/[0.07] bg-[#111622] p-5 flex items-center gap-3">
-            <Cloud size={18} className="text-white/20" strokeWidth={1.5} />
-            <p className="text-sm text-white/30">Weather unavailable — add <code className="text-white/50 bg-white/[0.06] px-1 rounded">OPENWEATHER_API_KEY</code> to enable</p>
-          </div>
-        )}
 
         {/* ── Prop signals — 2 free, rest gated behind FAN ───────────────── */}
         <GatedPropList title="Top HR Candidates" rows={hrRows} freeCount={2} />

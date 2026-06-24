@@ -5,8 +5,8 @@ import { refreshPropsAction } from "./actions";
 import type { ElementType } from "react";
 import {
   Check, Flame, Layers, Plus, Receipt, Trash2, X,
-  Zap, TrendingUp, TrendingDown, Wind, Thermometer,
-  Activity, ChevronRight, BookOpen, RefreshCw,
+  Zap, TrendingUp, TrendingDown,
+  Activity, ChevronRight, RefreshCw,
   Clock, Trophy, Shield, Target, LayoutDashboard, Settings2, Bot,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -61,13 +61,11 @@ export interface TotalRunsProp {
   homeLineupOPS: number;
   awayLineupOPS: number;
   pitchingFactor: number;
-  weatherFactor: number;
   lineupFactor: number;
   factors: Array<{ label: string; impact: "over" | "under" | "neutral"; description: string }>;
   awayPitcher: { name: string; era: number | null; whip: number | null; k9: number | null; wins: number; losses: number };
   homePitcher: { name: string; era: number | null; whip: number | null; k9: number | null; wins: number; losses: number };
   venue: string;
-  weather: { tempF: number; windMph: number; windDirection: string; conditions: string; humidity: number } | null;
   bookLine?: number;
 }
 
@@ -759,34 +757,6 @@ function TotalRunsCard({ data, slip, onAdd }: {
         </div>
       </div>
 
-      {data.weather && (
-        <div className="rounded-2xl border border-white/[0.07] bg-[#111622] p-5">
-          <p className="text-[10px] font-bold text-white/25 tracking-widest uppercase mb-3">Conditions</p>
-          <div className="grid grid-cols-4 gap-2 mb-3">
-            {[
-              { icon: Thermometer, v: `${data.weather.tempF}°`, l: "Temp",  c: "#FF7828" },
-              { icon: Wind,        v: `${data.weather.windMph}`, l: "Wind mph", c: "#818cf8" },
-              { icon: Wind,        v: data.weather.windDirection, l: "Direction", c: "#2dd4bf" },
-              { icon: Activity,    v: data.weather.conditions.slice(0,8), l: "Sky", c: "#60B4F0" },
-            ].map(({ icon: Icon, v, l, c }) => (
-              <div key={l} className="rounded-xl border border-white/[0.05] bg-[#0D1117] p-2.5 text-center">
-                <Icon size={12} style={{ color: c }} strokeWidth={1.8} className="mx-auto mb-1" />
-                <p className="text-sm font-black text-white">{v}</p>
-                <p className="text-[8px] text-white/25 uppercase tracking-wider mt-0.5">{l}</p>
-              </div>
-            ))}
-          </div>
-          <div className="flex items-center gap-2 text-xs">
-            {data.weatherFactor > 1.02
-              ? <><TrendingUp size={11} className="text-[#50C882]" /><span className="text-[#50C882] font-bold">Weather boosts offense</span></>
-              : data.weatherFactor < 0.98
-              ? <><TrendingDown size={11} className="text-[#EB505A]" /><span className="text-[#EB505A] font-bold">Weather suppresses offense</span></>
-              : <><Activity size={11} className="text-[#818cf8]" /><span className="text-[#818cf8]">Weather is neutral</span></>
-            }
-            <span className="text-white/20">· {((data.weatherFactor - 1) * 100).toFixed(1)}% adjustment</span>
-          </div>
-        </div>
-      )}
 
       <div className="rounded-2xl border border-white/[0.07] bg-[#111622] p-5">
         <p className="text-[10px] font-bold text-white/25 tracking-widest uppercase mb-0.5">Why the Model Leans {lean}</p>
@@ -858,24 +828,22 @@ function AnimatedCardSlot({
   variants,
   exitDirection,
   tier,
-  onSave,
 }: {
   variants: DailySlip[];
   exitDirection: "left" | "right";
   tier: "safe" | "longshot";
-  onSave: (slip: DailySlip) => Promise<void>;
 }) {
-  const [index, setIndex]   = useState(0);
-  const [phase, setPhase]   = useState<"visible" | "exiting" | "reset" | "entering">("visible");
-  const hasAlternates       = variants.length > 1;
+  const [index, setIndex] = useState(0);
+  const [phase, setPhase] = useState<"visible" | "exiting" | "reset" | "entering">("visible");
+  const hasAlternates     = variants.length > 1;
 
-  const isSafe       = tier === "safe";
-  const headerColor  = isSafe ? "#50C882" : "#FF7828";
-  const HeaderIcon   = isSafe ? Shield : Target;
-  const headerLabel  = isSafe ? "Safe Pick" : "Long Shot";
-  const headerSub    = isSafe ? "High-probability" : "Higher risk, higher reward";
+  const isSafe      = tier === "safe";
+  const headerColor = isSafe ? "#50C882" : "#FF7828";
+  const HeaderIcon  = isSafe ? Shield : Target;
+  const headerLabel = isSafe ? "Safe Pick" : "Long Shot";
+  const headerSub   = isSafe ? "High-probability" : "Higher risk, higher reward";
 
-  const currentSlip  = variants.length > 0 ? variants[index % variants.length] : null;
+  const currentSlip = variants.length > 0 ? variants[index % variants.length] : null;
 
   const wrapStyle: React.CSSProperties = {
     transform:
@@ -890,11 +858,8 @@ function AnimatedCardSlot({
       : "transform 0.34s cubic-bezier(0.4,0,0.2,1), opacity 0.28s ease",
   };
 
-  async function handleSave(slip: DailySlip) {
-    await onSave(slip);
-
-    if (!hasAlternates) return;
-
+  function cycleNext() {
+    if (!hasAlternates || phase !== "visible") return;
     setPhase("exiting");
     setTimeout(() => {
       setIndex((i) => (i + 1) % variants.length);
@@ -918,14 +883,14 @@ function AnimatedCardSlot({
         <p className="text-[10px] font-black tracking-wider uppercase" style={{ color: headerColor }}>{headerLabel}</p>
         <p className="text-[10px] text-white/20">{headerSub}</p>
         {hasAlternates && (
-          <span className="ml-auto text-[9px] text-white/15 tabular-nums">
-            {(index % variants.length) + 1}/{variants.length}
-          </span>
+          <button onClick={cycleNext} className="ml-auto text-[9px] text-white/30 hover:text-white/60 transition-colors tabular-nums">
+            {(index % variants.length) + 1}/{variants.length} · next →
+          </button>
         )}
       </div>
       <div style={{ overflow: "hidden", borderRadius: "1rem" }}>
         <div style={wrapStyle}>
-          <DailySlipCard slip={currentSlip} onSave={() => handleSave(currentSlip)} />
+          <DailySlipCard slip={currentSlip} />
         </div>
       </div>
     </div>
@@ -934,28 +899,10 @@ function AnimatedCardSlot({
 
 // ── Daily slip card ───────────────────────────────────────────────────────────
 
-function DailySlipCard({ slip, onSave }: { slip: DailySlip; onSave: (s: DailySlip) => Promise<void> }) {
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved]   = useState(false);
-  const [error, setError]   = useState<string | null>(null);
-
+function DailySlipCard({ slip }: { slip: DailySlip }) {
   const isSafe    = slip.tier === "safe";
   const tierColor = isSafe ? "#50C882" : "#FF7828";
   const TierIcon  = isSafe ? Shield : Target;
-
-  async function handleSave() {
-    setSaving(true);
-    setError(null);
-    try {
-      await onSave(slip);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
-    } catch {
-      setError("Save failed — try again.");
-    } finally {
-      setSaving(false);
-    }
-  }
 
   return (
     <div className="rounded-2xl border bg-[#0D1117] overflow-hidden flex flex-col"
@@ -1022,26 +969,6 @@ function DailySlipCard({ slip, onSave }: { slip: DailySlip; onSave: (s: DailySli
 
       {/* Save button — always at the bottom, visually separated */}
       <div className="px-4 py-3.5 border-t border-white/[0.06] shrink-0">
-        {error && <p className="text-[10px] text-[#EB505A] mb-1.5">{error}</p>}
-        <button
-          onClick={handleSave}
-          disabled={saving || saved}
-          className={`w-full h-10 rounded-xl font-bold text-[13px] flex items-center justify-center gap-2 transition-all border ${
-            saved
-              ? "border-[#50C882]/40 bg-[#50C882]/10 text-[#50C882]"
-              : isSafe
-              ? "border-[#50C882]/30 bg-[#50C882]/10 text-[#50C882] hover:bg-[#50C882]/20 disabled:opacity-60"
-              : "border-[#FF7828]/30 bg-[#FF7828]/10 text-[#FF7828] hover:bg-[#FF7828]/20 disabled:opacity-60"
-          }`}
-        >
-          {saved ? (
-            <><Check size={13} strokeWidth={2.5} />Saved to Bet Tracker</>
-          ) : saving ? (
-            <div className="w-3.5 h-3.5 rounded-full border-2 border-current/30 border-t-current animate-spin" />
-          ) : (
-            <><BookOpen size={13} strokeWidth={2} />Save to Bet Tracker</>
-          )}
-        </button>
       </div>
     </div>
   );
@@ -1066,20 +993,6 @@ function DashboardView({
   const safeVariants      = slips.filter((s) => s.tier === "safe"     && s.legs.length === effectiveLegCount);
   const longshotVariants  = slips.filter((s) => s.tier === "longshot" && s.legs.length === effectiveLegCount);
 
-  async function saveDailySlip(slip: DailySlip) {
-    const res = await fetch("/api/bet-slips", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id:        crypto.randomUUID(),
-        createdAt: new Date().toISOString(),
-        status:    "pending",
-        wager:     10,
-        legs:      slip.legs.map((l) => ({ id: l.id, description: l.description, probability: l.probability, odds: "" })),
-      }),
-    });
-    if (!res.ok) throw new Error("Failed");
-  }
 
   if (slips.length === 0) {
     return (
@@ -1138,7 +1051,6 @@ function DashboardView({
             variants={safeVariants}
             exitDirection="left"
             tier="safe"
-            onSave={saveDailySlip}
           />
         ) : null}
         {longshotVariants.length > 0 ? (
@@ -1147,7 +1059,6 @@ function DashboardView({
             variants={longshotVariants}
             exitDirection="right"
             tier="longshot"
-            onSave={saveDailySlip}
           />
         ) : null}
         {safeVariants.length === 0 && longshotVariants.length === 0 && (
@@ -1173,40 +1084,11 @@ function SlipPanel({ slip, onRemove, onClear, onOddsChange }: {
   onOddsChange: (id: string, odds: string) => void;
 }) {
   const combined = combinedProbability(slip);
-  const [wager, setWager]   = useState("10");
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved]   = useState(false);
-  const [error, setError]   = useState<string | null>(null);
+  const [wager, setWager] = useState("10");
 
   const wagerNum = parseFloat(wager) || 0;
   const hasOdds  = slip.some((e) => e.odds);
   const toWin    = wagerNum > 0 ? parlayToWin(wagerNum, slip) : 0;
-
-  async function handleSave() {
-    setSaving(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/bet-slips", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id:        crypto.randomUUID(),
-          createdAt: new Date().toISOString(),
-          status:    "pending",
-          wager:     wagerNum || 10,
-          toWin:     hasOdds ? toWin : undefined,
-          legs:      slip.map((s) => ({ id: s.id, description: s.description, probability: s.probability, odds: s.odds })),
-        }),
-      });
-      if (!res.ok) throw new Error("Failed to save");
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
-    } catch {
-      setError("Couldn't save — check your connection and try again.");
-    } finally {
-      setSaving(false);
-    }
-  }
 
   return (
     <div className="rounded-2xl border border-white/[0.07] bg-[#111622] overflow-hidden lg:sticky lg:top-20 flex flex-col max-h-[calc(100vh-6rem)]">
@@ -1303,29 +1185,6 @@ function SlipPanel({ slip, onRemove, onClear, onOddsChange }: {
         </div>
       )}
 
-      {slip.length > 0 && (
-        <div className="px-4 pb-4 space-y-2">
-          {error && <p className="text-[11px] text-[#EB505A] text-center">{error}</p>}
-          <button
-            onClick={handleSave}
-            disabled={saving || saved}
-            className={`w-full h-11 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all border ${
-              saved
-                ? "border-[#50C882]/40 bg-[#50C882]/10 text-[#50C882]"
-                : "border-[#FF7828]/30 bg-[#FF7828]/10 text-[#FF7828] hover:bg-[#FF7828]/18 disabled:opacity-60"
-            }`}
-          >
-            {saved ? (
-              <><Check size={15} strokeWidth={2.5} />Saved to Bet Tracker!</>
-            ) : saving ? (
-              <><div className="w-4 h-4 rounded-full border-2 border-[#FF7828]/30 border-t-[#FF7828] animate-spin" />Saving…</>
-            ) : (
-              <><BookOpen size={15} strokeWidth={2} />Save to Bet Tracker</>
-            )}
-          </button>
-          {saved && <p className="text-[10px] text-white/30 text-center">Find it in Bet Tracker — mark Won or Lost when the game ends</p>}
-        </div>
-      )}
     </div>
   );
 }

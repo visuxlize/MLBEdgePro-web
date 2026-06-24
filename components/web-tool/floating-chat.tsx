@@ -326,7 +326,7 @@ export function FloatingChat() {
                                 Recommended picks
                               </p>
                               {picks.map((pick, i) => <PickCard key={i} pick={pick} />)}
-                              <Link href="/props"
+                              <Link href="/analysis?tab=props"
                                 className="flex items-center justify-center gap-1.5 rounded-xl py-2 text-[10px] font-black transition-all mt-1"
                                 style={{ background: "linear-gradient(135deg, rgba(255,120,40,0.15), rgba(255,120,40,0.08))", border: "1px solid rgba(255,120,40,0.25)", color: "#FF7828" }}>
                                 <TrendingUp size={10} strokeWidth={2.5} />
