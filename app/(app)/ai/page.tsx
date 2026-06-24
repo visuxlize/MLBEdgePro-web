@@ -201,7 +201,7 @@ function PickCard({ pick }: { pick: AIPick }) {
     <div className="flex items-center gap-3 rounded-xl border border-white/[0.08] bg-[#0D1117] p-2.5">
       {/* Headshot or team logo */}
       {pick.propType === "Moneyline" ? (
-        <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0 overflow-hidden">
+        <div className="w-10 h-10 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={teamLogoUrl(pick.teamId)}
@@ -211,16 +211,18 @@ function PickCard({ pick }: { pick: AIPick }) {
           />
         </div>
       ) : (
-        <div className="w-10 h-10 rounded-full overflow-hidden border border-white/10 bg-white/5 shrink-0">
+        <div className="w-10 h-10 shrink-0 flex items-center justify-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={playerHeadshotUrl(pick.playerId)}
             alt={pick.playerName}
-            className="w-full h-full object-contain"
+            width={40}
+            height={40}
+            className="object-contain"
             style={{
               objectPosition: "top center",
-              maskImage: "radial-gradient(ellipse 80% 85% at 50% 30%, black 40%, transparent 100%)",
-              WebkitMaskImage: "radial-gradient(ellipse 80% 85% at 50% 30%, black 40%, transparent 100%)",
+              maskImage: "radial-gradient(ellipse 82% 88% at 50% 26%, black 35%, transparent 100%)",
+              WebkitMaskImage: "radial-gradient(ellipse 82% 88% at 50% 26%, black 35%, transparent 100%)",
             }}
             onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
           />

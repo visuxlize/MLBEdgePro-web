@@ -941,17 +941,19 @@ function DailySlipCard({ slip }: { slip: DailySlip }) {
           return (
             <div key={leg.id} className="flex items-center gap-3 px-4 py-3.5">
               {/* Avatar */}
-              <div className="shrink-0 w-9 h-9 rounded-full overflow-hidden bg-white/[0.05] border border-white/[0.08] flex items-center justify-center">
+              <div className="shrink-0 w-9 h-9 flex items-center justify-center">
                 {leg.playerId ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={playerHeadshotUrl(leg.playerId)}
                     alt=""
-                    className="w-full h-full object-contain"
+                    width={36}
+                    height={36}
+                    className="object-contain"
                     style={{
                       objectPosition: "top center",
-                      maskImage: "radial-gradient(ellipse 80% 85% at 50% 30%, black 40%, transparent 100%)",
-                      WebkitMaskImage: "radial-gradient(ellipse 80% 85% at 50% 30%, black 40%, transparent 100%)",
+                      maskImage: "radial-gradient(ellipse 82% 88% at 50% 26%, black 35%, transparent 100%)",
+                      WebkitMaskImage: "radial-gradient(ellipse 82% 88% at 50% 26%, black 35%, transparent 100%)",
                     }}
                     onError={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = "0"; }}
                   />

@@ -14,6 +14,7 @@ import {
 } from "@/lib/mlb/api";
 import { PaywallGate } from "@/components/web-tool/paywall-gate";
 import { TeamLogoImg } from "@/components/web-tool/team-logo-img";
+import { Headshot } from "@/components/web-tool/headshot";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -199,19 +200,8 @@ function BatterSummaryCard({ card, onClick, active }: { card: BatterCard; onClic
       }`}
     >
       <div className="flex items-center gap-3 mb-3">
-        <div className="relative w-12 h-12 rounded-full overflow-hidden border border-white/10 shrink-0 bg-white/5">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={playerHeadshotUrl(card.playerId)}
-            alt={card.playerName}
-            className="w-full h-full object-contain"
-            style={{
-              objectPosition: "top center",
-              maskImage: "radial-gradient(ellipse 80% 85% at 50% 30%, black 40%, transparent 100%)",
-              WebkitMaskImage: "radial-gradient(ellipse 80% 85% at 50% 30%, black 40%, transparent 100%)",
-            }}
-            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-          />
+        <div className="shrink-0 w-12 h-12 flex items-center justify-center">
+          <Headshot id={card.playerId} name={card.playerName} size={48} variant="sm" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-black text-white truncate">{card.playerName}</p>
@@ -254,16 +244,8 @@ function BatterDetailPanel({ card, pitcherName, onClose }: { card: BatterCard; p
     >
       {/* Header */}
       <div className="flex items-center gap-4 mb-5 flex-wrap">
-        <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#818cf8]/30 shrink-0 bg-white/5">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={playerHeadshotUrl(card.playerId)} alt={card.playerName}
-            className="w-full h-full object-contain"
-            style={{
-              objectPosition: "top center",
-              maskImage: "radial-gradient(ellipse 80% 88% at 50% 30%, black 42%, transparent 100%)",
-              WebkitMaskImage: "radial-gradient(ellipse 80% 88% at 50% 30%, black 42%, transparent 100%)",
-            }}
-            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+        <div className="shrink-0 w-16 h-16 flex items-center justify-center">
+          <Headshot id={card.playerId} name={card.playerName} size={64} variant="md" />
         </div>
         <div className="flex-1">
           <p className="text-xl font-black text-white">{card.playerName}</p>

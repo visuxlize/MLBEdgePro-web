@@ -5,7 +5,6 @@ import {
   fetchPitcherStats,
   fetchTeamBatters,
   getStadiumImageUrl,
-  playerHeadshotUrl,
   computeWinProbability,
   computeNRFI,
   fetchH2HHistory,
@@ -18,6 +17,7 @@ import {
   type RosterBatter,
 } from "@/lib/mlb/api";
 import { PlayerImg } from "@/components/web-tool/player-img";
+import { Headshot } from "@/components/web-tool/headshot";
 import { GameTimeBadge } from "@/components/web-tool/game-time-badge";
 import { GameHero } from "./game-client";
 import {
@@ -100,28 +100,14 @@ function PitcherCard({
 
   return (
     <div className={`flex flex-col items-center gap-3 flex-1 ${isRight ? "items-end" : "items-start"}`}>
-      {/* Headshot — no circle, masked edges fade to card bg */}
+      {/* Headshot — client component handles onError, masked edges fade to card bg */}
       <div className="relative flex flex-col items-center">
-        {/* Subtle glow ring beneath */}
         <div
           className="absolute inset-0 rounded-full blur-2xl opacity-15 scale-125 -z-10"
           style={{ background: accentColor }}
         />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={playerHeadshotUrl(pitcher.id)}
-          alt={pitcher.fullName}
-          width={96}
-          height={96}
-          className="object-contain"
-          style={{
-            objectPosition: "top center",
-            maskImage: "radial-gradient(ellipse 80% 85% at 50% 32%, black 42%, transparent 100%)",
-            WebkitMaskImage: "radial-gradient(ellipse 80% 85% at 50% 32%, black 42%, transparent 100%)",
-          }}
-          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-        />
-        {/* Team logo — small, bottom right of headshot area */}
+        <Headshot id={pitcher.id} name={pitcher.fullName} size={96} variant="lg" />
+        {/* Team logo badge */}
         <div
           className="absolute bottom-0 right-0 w-6 h-6 rounded-full overflow-hidden border bg-[#0D1320]"
           style={{ borderColor: `${accentColor}40` }}
