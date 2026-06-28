@@ -311,16 +311,16 @@ function GroupCard({
     <motion.div
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-white/[0.08] overflow-hidden"
-      style={{ background: "linear-gradient(160deg, #10161f, #090d14)" }}
+      className="rounded-[var(--r-card)] overflow-hidden"
+      style={{ border: "1px solid var(--hairline)", background: "var(--panel)" }}
     >
       {/* Group header */}
       <div
-        className="px-4 py-3.5 flex items-center justify-between border-b border-white/[0.06]"
-        style={{ borderLeft: `3px solid ${accentColor}` }}
+        className="px-4 py-3.5 flex items-center justify-between"
+        style={{ borderLeft: `3px solid ${accentColor}`, borderBottom: "1px solid var(--hairline)" }}
       >
         <div className="flex items-center gap-2">
-          <span className="text-sm font-black tracking-widest uppercase" style={{ color: accentColor }}>
+          <span className="font-spot-sans text-sm font-black tracking-widest uppercase" style={{ color: accentColor }}>
             GROUP {group.id}
           </span>
           {completedMatches.some((m) => m.status === "live") && (
@@ -572,8 +572,8 @@ export function GroupStage() {
       <div className="flex items-center gap-3 mb-6 flex-wrap">
         <div className="flex items-center gap-2">
           <Trophy size={16} className="text-[#FBBF24]" strokeWidth={2} />
-          <h2 className="text-xl font-black text-white">Group Stage</h2>
-          <span className="text-xs text-white/30 font-medium">Jun 11 – 27, 2026</span>
+          <h2 className="font-spot-sans text-xl font-black" style={{ color: "var(--text)" }}>Group Stage</h2>
+          <span className="font-spot-sans text-xs font-medium" style={{ color: "var(--text-ghost)" }}>Jun 11 – 27, 2026</span>
         </div>
 
         <div className="ml-auto flex items-center gap-2">

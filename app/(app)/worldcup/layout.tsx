@@ -13,7 +13,7 @@ export default function WorldCupLayout({ children }: { children: React.ReactNode
         "Head-to-head lineup and matchup analysis",
       ]}
     >
-      <div className="min-h-screen bg-[#060C18] px-3 sm:px-4 py-6 sm:py-8">
+      <div className="spotlight min-h-screen px-3 sm:px-4 py-6 sm:py-8" style={{ background: "var(--bg)" }}>
         <div className="max-w-7xl mx-auto mb-5 sm:mb-6">
           <WorldCupNav />
         </div>

@@ -140,8 +140,8 @@ export function BlendedHeadshot({
         className="object-cover"
         style={{
           width: size, height: size, objectPosition: "top center",
-          maskImage: "radial-gradient(120% 120% at 30% 30%, #000 60%, transparent 100%)",
-          WebkitMaskImage: "radial-gradient(120% 120% at 30% 30%, #000 60%, transparent 100%)",
+          maskImage: "radial-gradient(ellipse 150% 150% at 50% 18%, #000 68%, transparent 96%)",
+          WebkitMaskImage: "radial-gradient(ellipse 150% 150% at 50% 18%, #000 68%, transparent 96%)",
         }}
         onError={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = "0"; }}
       />

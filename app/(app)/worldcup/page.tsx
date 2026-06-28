@@ -122,12 +122,12 @@ function TodayMatchCard({ match }: { match: TodayMatch }) {
 
   return (
     <div
-      className="relative shrink-0 w-52 rounded-2xl border p-3.5 overflow-hidden"
+      className="relative shrink-0 w-52 rounded-[var(--r-card)] p-3.5 overflow-hidden"
       style={{
-        borderColor: isLive ? "rgba(239,68,68,0.35)" : "rgba(255,255,255,0.07)",
+        border: isLive ? "1px solid rgba(239,68,68,0.35)" : "1px solid var(--hairline)",
         background: isLive
-          ? "linear-gradient(135deg, rgba(239,68,68,0.08), rgba(13,17,23,0.95))"
-          : "rgba(255,255,255,0.02)",
+          ? "linear-gradient(135deg, rgba(239,68,68,0.09), var(--panel))"
+          : "var(--panel)",
       }}
     >
       {isLive && (
@@ -135,32 +135,32 @@ function TodayMatchCard({ match }: { match: TodayMatch }) {
           <LiveBadge />
         </div>
       )}
-      <div className="text-[9px] font-bold text-white/30 uppercase tracking-wider mb-2">
+      <div className="font-spot-sans text-[9px] font-bold uppercase tracking-wider mb-2" style={{ color: "var(--text-ghost)" }}>
         Group {match.groupId}
       </div>
       <div className="flex items-center justify-between gap-2 mb-2">
         <div className="flex items-center gap-1.5 flex-1 min-w-0">
           <FlagImg src={match.homeFlagUrl} alt={match.home} className="w-5 h-5 rounded-full border border-white/10 shrink-0" />
-          <span className="text-xs font-bold text-white truncate">{WC_TEAMS[match.homeId]?.shortName ?? match.home.slice(0,3).toUpperCase()}</span>
+          <span className="font-spot-sans text-xs font-bold truncate" style={{ color: "var(--text)" }}>{WC_TEAMS[match.homeId]?.shortName ?? match.home.slice(0,3).toUpperCase()}</span>
         </div>
         <div className="flex items-center gap-1 shrink-0">
           {(isLive || isDone) && match.homeScore !== null ? (
-            <span className="text-sm font-black text-white">
+            <span className="font-spot-mono text-sm font-black" style={{ color: "var(--text)" }}>
               {match.homeScore} – {match.awayScore}
             </span>
           ) : (
-            <span className="text-[10px] font-bold text-white/40">vs</span>
+            <span className="font-spot-mono text-[10px] font-bold" style={{ color: "var(--text-ghost)" }}>vs</span>
           )}
         </div>
         <div className="flex items-center gap-1.5 flex-1 min-w-0 justify-end">
-          <span className="text-xs font-bold text-white truncate text-right">{WC_TEAMS[match.awayId]?.shortName ?? match.away.slice(0,3).toUpperCase()}</span>
+          <span className="font-spot-sans text-xs font-bold truncate text-right" style={{ color: "var(--text)" }}>{WC_TEAMS[match.awayId]?.shortName ?? match.away.slice(0,3).toUpperCase()}</span>
           <FlagImg src={match.awayFlagUrl} alt={match.away} className="w-5 h-5 rounded-full border border-white/10 shrink-0" />
         </div>
       </div>
-      <div className="flex items-center gap-1 text-[9px] text-white/30">
+      <div className="flex items-center gap-1 font-spot-sans text-[9px]" style={{ color: "var(--text-ghost)" }}>
         <Clock size={9} />
         <span>{match.time}</span>
-        <span className="text-white/15">·</span>
+        <span style={{ color: "var(--text-faint)" }}>·</span>
         <span className="truncate">{match.venue.split(",")[0]}</span>
       </div>
     </div>
@@ -171,16 +171,16 @@ function GroupMiniCard({ group }: { group: WCGroup }) {
   const top2 = sortedTeams(group.teams).slice(0, 2);
   return (
     <Link href="/worldcup/groups" className="block group">
-      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 hover:border-white/[0.12] transition-colors">
-        <div className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-2">Group {group.id}</div>
+      <div className="rounded-[var(--r-tile)] p-3 transition-all" style={{ border: "1px solid var(--hairline)", background: "var(--panel)" }}>
+        <div className="font-spot-sans text-[9px] font-black uppercase tracking-widest mb-2" style={{ color: "var(--text-ghost)" }}>Group {group.id}</div>
         {top2.map((t, i) => {
           const team = WC_TEAMS[t.teamId];
           return (
             <div key={t.teamId} className="flex items-center gap-2 mb-1 last:mb-0">
-              <span className="text-[9px] text-white/20 w-2.5">{i + 1}</span>
+              <span className="font-spot-mono text-[9px] w-2.5" style={{ color: "var(--text-faint)" }}>{i + 1}</span>
               <FlagImg src={flagUrl(team?.countryCode ?? t.teamId)} alt={team?.shortName ?? t.teamId.toUpperCase()} className="w-3.5 h-3.5 rounded-full border border-white/10" />
-              <span className="text-[10px] font-bold text-white/80 flex-1 truncate">{team?.shortName ?? t.teamId.toUpperCase()}</span>
-              <span className="text-[10px] font-black text-[#FBBF24]">{t.pts}pt</span>
+              <span className="font-spot-sans text-[10px] font-bold flex-1 truncate" style={{ color: "var(--text-2)" }}>{team?.shortName ?? t.teamId.toUpperCase()}</span>
+              <span className="font-spot-mono text-[10px] font-black" style={{ color: "#FBBF24" }}>{t.pts}pt</span>
             </div>
           );
         })}
@@ -317,7 +317,7 @@ export default function WorldCupHubPage() {
   }, []);
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 pb-10">
+    <div className="max-w-5xl mx-auto space-y-8 pb-10 px-4 sm:px-0">
 
       {/* ── Hero ── */}
       <div
@@ -400,11 +400,11 @@ export default function WorldCupHubPage() {
         <section>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <Zap size={14} className="text-[#FF7828]" />
-              <span className="text-sm font-black text-white">Today&apos;s Matches</span>
+              <Zap size={14} style={{ color: "var(--orange)" }} />
+              <span className="font-spot-sans text-sm font-black" style={{ color: "var(--text)" }}>Today&apos;s Matches</span>
               {hasLive && <LiveBadge />}
             </div>
-            <Link href="/worldcup/groups" className="text-[10px] font-bold text-white/40 hover:text-white/70 flex items-center gap-1">
+            <Link href="/worldcup/groups" className="font-spot-sans text-[10px] font-bold flex items-center gap-1" style={{ color: "var(--text-muted)" }}>
               All matches <ChevronRight size={10} />
             </Link>
           </div>
@@ -420,10 +420,10 @@ export default function WorldCupHubPage() {
       <section>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Map size={14} className="text-[#34D399]" />
-            <span className="text-sm font-black text-white">Host Stadiums</span>
+            <Map size={14} style={{ color: "#34D399" }} />
+            <span className="font-spot-sans text-sm font-black" style={{ color: "var(--text)" }}>Host Stadiums</span>
           </div>
-          <Link href="/worldcup/map" className="text-[10px] font-bold text-white/40 hover:text-white/70 flex items-center gap-1">
+          <Link href="/worldcup/map" className="font-spot-sans text-[10px] font-bold flex items-center gap-1" style={{ color: "var(--text-muted)" }}>
             View map <ChevronRight size={10} />
           </Link>
         </div>
@@ -438,10 +438,10 @@ export default function WorldCupHubPage() {
       <section>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <LayoutGrid size={14} className="text-[#38BDF8]" />
-            <span className="text-sm font-black text-white">Group Standings</span>
+            <LayoutGrid size={14} style={{ color: "#38BDF8" }} />
+            <span className="font-spot-sans text-sm font-black" style={{ color: "var(--text)" }}>Group Standings</span>
           </div>
-          <Link href="/worldcup/groups" className="text-[10px] font-bold text-white/40 hover:text-white/70 flex items-center gap-1">
+          <Link href="/worldcup/groups" className="font-spot-sans text-[10px] font-bold flex items-center gap-1" style={{ color: "var(--text-muted)" }}>
             Full standings <ChevronRight size={10} />
           </Link>
         </div>
@@ -455,7 +455,7 @@ export default function WorldCupHubPage() {
       {/* ── Navigation Tiles ── */}
       <section>
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-sm font-black text-white">Explore</span>
+          <span className="font-spot-sans text-sm font-black" style={{ color: "var(--text)" }}>Explore</span>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {SECTIONS.map(({ href, icon: Icon, title, desc, accent }) => (
@@ -463,17 +463,18 @@ export default function WorldCupHubPage() {
               <motion.div
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4 h-full hover:border-white/[0.13] transition-colors"
+                className="spot-lift rounded-[var(--r-card)] p-4 h-full"
+                style={{ border: "1px solid var(--hairline)", background: "var(--panel)" }}
               >
                 <div
-                  className="w-9 h-9 rounded-xl flex items-center justify-center mb-3"
+                  className="w-9 h-9 rounded-[var(--r-tile)] flex items-center justify-center mb-3"
                   style={{ background: `${accent}18`, border: `1px solid ${accent}28` }}
                 >
                   <Icon size={16} style={{ color: accent }} strokeWidth={2} />
                 </div>
-                <div className="text-sm font-black text-white mb-1">{title}</div>
-                <p className="text-[10px] text-white/35 leading-relaxed mb-3">{desc}</p>
-                <div className="flex items-center gap-1 text-[10px] font-bold" style={{ color: accent }}>
+                <div className="font-spot-sans text-sm font-black mb-1" style={{ color: "var(--text)" }}>{title}</div>
+                <p className="font-spot-sans text-[10px] leading-relaxed mb-3" style={{ color: "var(--text-muted)" }}>{desc}</p>
+                <div className="flex items-center gap-1 font-spot-sans text-[10px] font-bold" style={{ color: accent }}>
                   Open
                   <ArrowRight size={10} strokeWidth={2.5} className="transition-transform group-hover:translate-x-0.5" />
                 </div>
@@ -483,7 +484,7 @@ export default function WorldCupHubPage() {
         </div>
       </section>
 
-      <p className="text-center text-[10px] text-white/20">
+      <p className="font-spot-sans text-center text-[10px]" style={{ color: "var(--text-faint)" }}>
         Live data: ESPN · ELO model · Updated in real-time
       </p>
     </div>

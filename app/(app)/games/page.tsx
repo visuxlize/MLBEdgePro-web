@@ -279,7 +279,7 @@ function SpotlightCard({ game, fav, onClick }: { game: Game; fav: boolean; onCli
 
         {/* Park name pill (top-left, always legible) */}
         <div className="absolute top-3 left-4 flex items-center gap-1 rounded-full px-2.5 py-1"
-          style={{ background: "rgba(6,7,13,.6)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", boxShadow: "0 2px 8px rgba(0,0,0,.4)" }}>
+          style={{ background: "rgba(6,7,13,.6)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", boxShadow: "0 2px 8px rgba(0,0,0,.4)", position: "relative", zIndex: 10 }}>
           <MapPin size={9} style={{ color: "#fff" }} />
           <span className="font-spot-sans text-[10px] font-semibold text-white">{game.venue.name}</span>
         </div>

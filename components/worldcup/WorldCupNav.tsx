@@ -25,7 +25,7 @@ export function WorldCupNav() {
         <ArrowLeft size={13} strokeWidth={2.4} />
         Back to MLBEdgePro
       </Link>
-      <nav className="flex items-center gap-1 rounded-2xl border border-white/[0.07] bg-[#0D1420]/80 backdrop-blur-md p-1.5 overflow-x-auto">
+      <nav className="flex items-center gap-1 rounded-2xl p-1.5 overflow-x-auto" style={{ background: "var(--surface)", border: "1px solid var(--hairline)", backdropFilter: "blur(12px)" }}>
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || (href !== "/worldcup" && pathname.startsWith(href));
 
