@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import Link from "next/link";
-import { teamLogoUrl, teamLogoDarkUrl, TEAM_COLORS, TEAM_ABBR, type Game } from "@/lib/mlb/api";
+import { playerHeadshotUrl, TEAM_COLORS, TEAM_ABBR, type Game } from "@/lib/mlb/api";
 
 /* ── Model estimate (deterministic from schedule data, no extra fetches) ─────── */
 
@@ -35,6 +35,22 @@ export function alpha(hex: string, aa: string): string {
 
 export function teamCode(teamId: number, name?: string): string {
   return TEAM_ABBR[teamId] ?? name?.split(" ").pop()?.slice(0, 3).toUpperCase() ?? "MLB";
+}
+
+/** WCAG relative luminance of a 6-digit hex. */
+function luminance(hex: string): number {
+  const c = hex.replace("#", "");
+  if (c.length < 6) return 0;
+  const ch = (i: number) => {
+    const v = parseInt(c.slice(i, i + 2), 16) / 255;
+    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  };
+  return 0.2126 * ch(0) + 0.7152 * ch(2) + 0.0722 * ch(4);
+}
+
+/** Contrast-safe text color for a colored plate — dark ink on light teams, white on dark. */
+export function contrastText(hex: string): string {
+  return luminance(hex) > 0.45 ? "#0a1018" : "#ffffff";
 }
 
 /** Grade → semantic color. A = green, B = orange, C = purple. */
@@ -74,39 +90,63 @@ export function SectionLabel({
 /* ── Team logo badge — rounded-square, team-color, inset ring ───────────────── */
 
 export function LogoBadge({
-  teamId, name, size = 38, radius,
-}: { teamId: number; name: string; size?: number; radius?: number }) {
-  const [src, setSrc] = useState<"primary" | "dark" | "fallback">("primary");
+  teamId, name, size = 38, radius, logoUrl,
+}: { teamId: number; name: string; size?: number; radius?: number; logoUrl?: string }) {
   const hex = teamHex(teamId);
   const code = teamCode(teamId, name);
   const r = radius ?? Math.round(size * 0.3);
+  const ink = contrastText(hex);
   const pad = Math.round(size * 0.16);
 
   return (
     <div
       className="shrink-0 flex items-center justify-center relative overflow-hidden"
       style={{
-        width: size, height: size, borderRadius: r,
-        background: `linear-gradient(150deg, ${hex}, ${alpha(hex, "cc")})`,
-        boxShadow: "var(--ring-inset), var(--shadow-badge)",
+        width: size, height: size, borderRadius: r, background: hex,
+        boxShadow: "inset 0 0 0 1.5px rgba(255,255,255,.55), 0 3px 8px rgba(0,0,0,.4)",
       }}
+      title={name}
     >
-      {src === "fallback" ? (
-        <span className="font-spot-sans font-black text-white" style={{ fontSize: size * 0.32, letterSpacing: "-0.5px" }}>
-          {code.slice(0, 3)}
-        </span>
-      ) : (
+      {logoUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={src === "primary" ? teamLogoUrl(teamId) : teamLogoDarkUrl(teamId)}
+          src={logoUrl}
           alt={name}
-          style={{
-            width: size - pad * 2, height: size - pad * 2, objectFit: "contain",
-            filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.55))",
-          }}
-          onError={() => setSrc(src === "primary" ? "dark" : "fallback")}
+          style={{ width: size - pad * 2, height: size - pad * 2, objectFit: "contain", filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.55))" }}
         />
+      ) : (
+        <span className="font-spot-sans font-black" style={{ fontSize: size * 0.34, letterSpacing: "-0.5px", color: ink }}>
+          {code.slice(0, 3)}
+        </span>
       )}
+    </div>
+  );
+}
+
+/* ── Blended player headshot (fades into the card) ──────────────────────────── */
+
+export function BlendedHeadshot({
+  id, name, size = 64, teamId,
+}: { id: number; name: string; size?: number; teamId?: number }) {
+  const hex = teamId !== undefined ? teamHex(teamId) : "#7c5cfa";
+  return (
+    <div className="relative shrink-0" style={{ width: size, height: size }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={playerHeadshotUrl(id)}
+        alt={name}
+        width={size}
+        height={size}
+        className="object-cover"
+        style={{
+          width: size, height: size, objectPosition: "top center",
+          maskImage: "radial-gradient(120% 120% at 30% 30%, #000 60%, transparent 100%)",
+          WebkitMaskImage: "radial-gradient(120% 120% at 30% 30%, #000 60%, transparent 100%)",
+        }}
+        onError={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = "0"; }}
+      />
+      <div className="absolute inset-0 pointer-events-none"
+        style={{ background: `linear-gradient(135deg, ${alpha(hex, "33")}, transparent 45%, rgba(6,7,13,.55))` }} />
     </div>
   );
 }

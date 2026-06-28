@@ -3,12 +3,21 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, RefreshCw, MapPin, ChevronRight as Arrow } from "lucide-react";
+import { ChevronLeft, ChevronRight, RefreshCw, MapPin, ChevronRight as Arrow, Check, X, Trophy } from "lucide-react";
 import { fetchGamesByDate, getScore, type Game } from "@/lib/mlb/api";
 import {
   LogoBadge, WinProbBar, LivePill, BaseDiamond, GradePill,
   SectionLabel, teamHex, teamCode, alpha, modelEdge,
 } from "@/components/web-tool/spotlight";
+
+/** Did the model's pick win this final game? */
+function pickResult(game: Game) {
+  const awayScore = getScore(game.teams.away, game.linescore, "away") ?? 0;
+  const homeScore = getScore(game.teams.home, game.linescore, "home") ?? 0;
+  const winnerId = awayScore > homeScore ? game.teams.away.team.id : game.teams.home.team.id;
+  const { favId, favCode } = modelEdge(game);
+  return { hit: favId === winnerId, favCode, favId, winnerId };
+}
 
 function todayStr() { return new Date().toISOString().slice(0, 10); }
 function addDays(d: string, n: number) {
@@ -134,6 +143,60 @@ function FinalRow({ game }: { game: Game }) {
   );
 }
 
+// ── Final result card (day-complete grid) ──────────────────────────────────────
+
+function FinalResultCard({ game }: { game: Game }) {
+  const away = game.teams.away, home = game.teams.home;
+  const awayHex = teamHex(away.team.id), homeHex = teamHex(home.team.id);
+  const awayScore = getScore(away, game.linescore, "away") ?? 0;
+  const homeScore = getScore(home, game.linescore, "home") ?? 0;
+  const awayWin = awayScore > homeScore;
+  const { hit, favCode } = pickResult(game);
+
+  const Row = ({ s, sc, win }: { s: typeof away; sc: number; win: boolean }) => (
+    <div className="flex items-center gap-2.5" style={{ opacity: win ? 1 : 0.5 }}>
+      <LogoBadge teamId={s.team.id} name={s.team.name} size={30} />
+      <span className="flex-1 font-spot-sans font-black text-sm" style={{ color: "var(--text)" }}>{teamCode(s.team.id, s.team.name)}</span>
+      {win && <span className="spot-label-sm rounded-full px-1.5 py-0.5" style={{ color: "var(--green)", background: "var(--green-bg)" }}>WIN</span>}
+      <span className="font-spot-mono text-2xl font-extrabold" style={{ color: "var(--text)" }}>{sc}</span>
+    </div>
+  );
+
+  return (
+    <Link href={`/game/${game.gamePk}`}
+      className="spot-lift block rounded-[var(--r-card)] p-4"
+      style={{
+        background: `linear-gradient(120deg, ${alpha(awayHex, "1c")}, var(--panel) 55%, ${alpha(homeHex, "1c")})`,
+        border: "1px solid var(--hairline)", boxShadow: "var(--shadow-card)",
+      }}>
+      <div className="flex items-center justify-between mb-3">
+        <span className="spot-label-sm" style={{ color: "var(--text-ghost)" }}>Final</span>
+        <span className="inline-flex items-center gap-1 spot-label-sm rounded-full px-2 py-0.5"
+          style={hit
+            ? { color: "var(--green)", background: "var(--green-bg)", border: "1px solid rgba(52,211,153,.35)" }
+            : { color: "var(--red-soft)", background: "var(--red-bg)", border: "1px solid rgba(239,68,68,.35)" }}>
+          {hit ? <Check size={10} strokeWidth={3} /> : <X size={10} strokeWidth={3} />}
+          {hit ? "Hit" : "Miss"}
+        </span>
+      </div>
+
+      <div className="space-y-2.5">
+        <Row s={away} sc={awayScore} win={awayWin} />
+        <Row s={home} sc={homeScore} win={!awayWin} />
+      </div>
+
+      <div className="mt-3 pt-3 flex items-center justify-between gap-2" style={{ borderTop: "1px solid var(--hairline-2)" }}>
+        <span className="font-spot-sans text-[11px]" style={{ color: "var(--text-muted)" }}>
+          Model took <span className="font-black" style={{ color: "var(--purple-2)" }}>◆ {favCode}</span>
+        </span>
+        <span className="inline-flex items-center gap-1 font-spot-sans text-[11px] font-semibold" style={{ color: "var(--text-3)" }}>
+          Box score &amp; recap <Arrow size={12} />
+        </span>
+      </div>
+    </Link>
+  );
+}
+
 // ── Upcoming row ───────────────────────────────────────────────────────────────
 
 function UpcomingRow({ game }: { game: Game }) {
@@ -176,6 +239,9 @@ export default function ScoresPage() {
   const final = games.filter((g) => ["Final", "Game Over"].includes(g.status.detailedState));
   const upcoming = games.filter((g) => g.status.abstractGameState === "Preview");
 
+  const slateComplete = final.length > 0 && live.length === 0 && upcoming.length === 0;
+  const aiHits = final.reduce((n, g) => (pickResult(g).hit ? n + 1 : n), 0);
+
   return (
     <div className="spotlight min-h-screen">
       <div className="px-4 sm:px-8 py-6 max-w-screen-xl mx-auto">
@@ -213,36 +279,69 @@ export default function ScoresPage() {
             </motion.div>
           ) : (
             <motion.div key={date} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="space-y-8">
-              {/* Live */}
-              {live.length > 0 && (
-                <div>
-                  <SectionLabel className="mb-3 inline-flex items-center gap-2" style={{ color: "var(--red-soft)" }}>
-                    <span className="spot-live-dot inline-block rounded-full" style={{ width: 6, height: 6, background: "var(--red)" }} /> Live · {live.length} {live.length === 1 ? "game" : "games"}
-                  </SectionLabel>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {live.map((g) => <LiveCard key={g.gamePk} game={g} />)}
+              {slateComplete ? (
+                <>
+                  {/* Slate-complete banner */}
+                  <div className="rounded-[var(--r-panel)] p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                    style={{ background: "linear-gradient(120deg, var(--purple-tint), var(--panel) 60%)", border: "1px solid var(--purple-line)", boxShadow: "var(--shadow-card)" }}>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--purple-tint)", border: "1px solid var(--purple-line)" }}>
+                        <Trophy size={18} style={{ color: "var(--purple-2)" }} strokeWidth={2} />
+                      </div>
+                      <div>
+                        <p className="font-spot-sans text-lg font-black" style={{ color: "var(--text)" }}>Slate complete · {labelFor(date)}</p>
+                        <p className="font-spot-sans text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+                          Live games appear pinned at the top here while in progress.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <SectionLabel style={{ color: "var(--text-faint)" }}>Model record</SectionLabel>
+                      <p className="font-spot-mono text-2xl font-extrabold mt-0.5" style={{ color: aiHits * 2 >= final.length ? "var(--green)" : "var(--orange-2)" }}>
+                        {aiHits} / {final.length} <span className="font-spot-sans text-sm font-bold" style={{ color: "var(--text-muted)" }}>hit</span>
+                      </p>
+                    </div>
                   </div>
-                </div>
-              )}
 
-              {/* Final */}
-              {final.length > 0 && (
-                <div>
-                  <SectionLabel className="mb-3" style={{ color: "var(--text-ghost)" }}>Final — {final.length}</SectionLabel>
-                  <div className="space-y-2">
-                    {final.map((g) => <FinalRow key={g.gamePk} game={g} />)}
+                  {/* Final result grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {final.map((g) => <FinalResultCard key={g.gamePk} game={g} />)}
                   </div>
-                </div>
-              )}
+                </>
+              ) : (
+                <>
+                  {/* Live (pinned above) */}
+                  {live.length > 0 && (
+                    <div>
+                      <SectionLabel className="mb-3 inline-flex items-center gap-2" style={{ color: "var(--red-soft)" }}>
+                        <span className="spot-live-dot inline-block rounded-full" style={{ width: 6, height: 6, background: "var(--red)" }} /> Live · {live.length} {live.length === 1 ? "game" : "games"}
+                      </SectionLabel>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        {live.map((g) => <LiveCard key={g.gamePk} game={g} />)}
+                      </div>
+                    </div>
+                  )}
 
-              {/* Upcoming */}
-              {upcoming.length > 0 && (
-                <div>
-                  <SectionLabel className="mb-3">Upcoming — {upcoming.length}</SectionLabel>
-                  <div className="space-y-2">
-                    {upcoming.map((g) => <UpcomingRow key={g.gamePk} game={g} />)}
-                  </div>
-                </div>
+                  {/* Final */}
+                  {final.length > 0 && (
+                    <div>
+                      <SectionLabel className="mb-3" style={{ color: "var(--text-ghost)" }}>Final — {final.length}</SectionLabel>
+                      <div className="space-y-2">
+                        {final.map((g) => <FinalRow key={g.gamePk} game={g} />)}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Upcoming */}
+                  {upcoming.length > 0 && (
+                    <div>
+                      <SectionLabel className="mb-3">Upcoming — {upcoming.length}</SectionLabel>
+                      <div className="space-y-2">
+                        {upcoming.map((g) => <UpcomingRow key={g.gamePk} game={g} />)}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </motion.div>
           )}

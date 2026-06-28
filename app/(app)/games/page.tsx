@@ -260,22 +260,31 @@ function SpotlightCard({ game, fav, onClick }: { game: Game; fav: boolean; onCli
         minHeight: 188,
       }}
     >
-      {/* Left: arched ballpark window (~42%) */}
-      <div className="relative shrink-0 spot-window" style={{ width: "42%", minWidth: 130 }}>
-        {stadium ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={stadium} alt="" className="absolute inset-0 w-full h-full object-cover"
-            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-        ) : (
-          <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${alpha(awayHex, "40")}, var(--panel))` }} />
-        )}
-        <div className="absolute inset-0" style={{ background: `linear-gradient(90deg, ${alpha(awayHex, "40")}, transparent 55%, rgba(6,7,13,.5))` }} />
-        <div className="absolute bottom-2.5 left-3 flex items-center gap-1">
-          <MapPin size={9} style={{ color: "var(--text-3)" }} />
-          <span className="font-spot-sans text-[9px] font-semibold" style={{ color: "var(--text-3)" }}>{game.venue.name}</span>
+      {/* Left: arched ballpark window (~42%) — photo feathers into the card, no hard seam */}
+      <div className="relative shrink-0" style={{ width: "42%", minWidth: 130, borderRadius: "96px 0 0 96px", overflow: "hidden" }}>
+        {/* Masked layer: image + away tint + vertical darkening all fade out to the right together */}
+        <div className="absolute inset-0" style={{ maskImage: "linear-gradient(90deg, #000 58%, transparent 100%)", WebkitMaskImage: "linear-gradient(90deg, #000 58%, transparent 100%)" }}>
+          {stadium ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={stadium} alt="" className="absolute inset-0 w-full h-full object-cover"
+              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+          ) : (
+            <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${alpha(awayHex, "55")}, var(--panel))` }} />
+          )}
+          {/* light away-color tint */}
+          <div className="absolute inset-0" style={{ background: alpha(awayHex, "26") }} />
+          {/* top/bottom dark gradients for legibility */}
+          <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(6,7,13,.55), transparent 32%, transparent 64%, rgba(6,7,13,.6))" }} />
+        </div>
+
+        {/* Park name pill (top-left, always legible) */}
+        <div className="absolute top-3 left-4 flex items-center gap-1 rounded-full px-2.5 py-1"
+          style={{ background: "rgba(6,7,13,.6)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", boxShadow: "0 2px 8px rgba(0,0,0,.4)" }}>
+          <MapPin size={9} style={{ color: "#fff" }} />
+          <span className="font-spot-sans text-[10px] font-semibold text-white">{game.venue.name}</span>
         </div>
         {fav && (
-          <span className="absolute top-2.5 left-3"><Star size={13} style={{ color: "var(--orange)" }} fill="currentColor" /></span>
+          <span className="absolute bottom-3 left-4"><Star size={13} style={{ color: "var(--orange)" }} fill="currentColor" /></span>
         )}
       </div>
 

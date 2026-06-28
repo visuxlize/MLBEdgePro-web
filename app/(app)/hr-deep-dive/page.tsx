@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Zap, RefreshCw, Plus, Check, Flame, Clock } from "lucide-react";
+import { Zap, RefreshCw, Plus, Check, Flame, Clock, ChevronDown } from "lucide-react";
 import {
   fetchPitcherStats,
   fetchTeamBatters,
@@ -12,8 +12,7 @@ import {
   type RosterBatter,
 } from "@/lib/mlb/api";
 import { PaywallGate } from "@/components/web-tool/paywall-gate";
-import { Headshot } from "@/components/web-tool/headshot";
-import { LogoBadge, SectionLabel, GradePill, teamHex, teamCode, alpha } from "@/components/web-tool/spotlight";
+import { LogoBadge, BlendedHeadshot, SectionLabel, GradePill, teamHex, teamCode, alpha } from "@/components/web-tool/spotlight";
 
 const AI_SLIP_KEY = "edge-ai-pending-picks";
 
@@ -191,7 +190,7 @@ function SprayChart({ card }: { card: BatterCard }) {
       x: home.x - Math.cos(angle) * dist,
       y: home.y - Math.sin(angle) * dist,
       isHR,
-      color: isPull ? "#34d399" : isCenter ? "#60a5fa" : "#f97316",
+      color: isPull ? "#f97316" : isCenter ? "#34d399" : "#60a5fa",
     };
   });
 
@@ -225,12 +224,12 @@ function SprayChart({ card }: { card: BatterCard }) {
         {[first, sec, third].map((b, i) => (
           <rect key={i} x={b.x - 4} y={b.y - 4} width={8} height={8} fill="rgba(255,255,255,0.4)" rx={1} transform={`rotate(45 ${b.x} ${b.y})`} />
         ))}
-        <text x={home.x + 88}  y={home.y - 55}  fill="rgba(52,211,153,0.8)"  fontSize="10" fontWeight="bold">PULL {card.pull.pct}%</text>
-        <text x={home.x - 12}  y={home.y - 140} fill="rgba(96,165,250,0.8)"  fontSize="10" fontWeight="bold">CTR {card.center.pct}%</text>
-        <text x={home.x - 120} y={home.y - 55}  fill="rgba(249,115,22,0.8)"  fontSize="10" fontWeight="bold">OPPO {card.oppo.pct}%</text>
+        <text x={home.x + 88}  y={home.y - 55}  fill="rgba(249,115,22,0.85)" fontSize="10" fontWeight="bold">PULL {card.pull.pct}%</text>
+        <text x={home.x - 12}  y={home.y - 140} fill="rgba(52,211,153,0.85)" fontSize="10" fontWeight="bold">CTR {card.center.pct}%</text>
+        <text x={home.x - 120} y={home.y - 55}  fill="rgba(96,165,250,0.85)" fontSize="10" fontWeight="bold">OPPO {card.oppo.pct}%</text>
       </svg>
       <div className="flex items-center gap-4 px-5 pb-4">
-        {([["#34d399","Pull"],["#60a5fa","Center"],["#f97316","Oppo"]] as const).map(([c,l]) => (
+        {([["#f97316","Pull"],["#34d399","Center"],["#60a5fa","Oppo"]] as const).map(([c,l]) => (
           <div key={l} className="flex items-center gap-1.5">
             <div className="rounded-full" style={{ width: 8, height: 8, backgroundColor: c }} />
             <span className="font-spot-sans text-[10px]" style={{ color: "var(--text-muted)" }}>{l}</span>
@@ -272,8 +271,9 @@ function BatterRailCard({ card, onClick, active, onAdd, added }: {
         boxShadow: "var(--shadow-card)",
       }}
     >
-      <div className="flex items-center gap-3 mb-3">
-        <HRRing pct={card.hrProbability} size={52} />
+      <div className="flex items-center gap-2.5 mb-3">
+        <HRRing pct={card.hrProbability} size={50} />
+        <BlendedHeadshot id={card.playerId} name={card.playerName} size={46} teamId={card.teamId} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 mb-1">
             <LogoBadge teamId={card.teamId} name={card.teamName} size={18} radius={5} />
@@ -321,11 +321,8 @@ function BatterSpotlight({ card, pitcherName, onClose, onAdd, added }: {
         <div className="space-y-4">
           <div className="rounded-[var(--r-card)] p-5 relative overflow-hidden"
             style={{ background: `linear-gradient(135deg, ${alpha(hex, "2e")}, var(--panel-2))`, border: "1px solid var(--hairline)" }}>
-            <button onClick={onClose} className="absolute top-3 right-3 font-spot-sans text-xs font-bold px-2 py-1 rounded-lg" style={{ color: "var(--text-muted)" }}>✕</button>
+            <button onClick={onClose} className="absolute top-3 right-3 z-10 font-spot-sans text-xs font-bold px-2 py-1 rounded-lg" style={{ color: "var(--text-muted)" }}>✕</button>
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 flex items-center justify-center shrink-0">
-                <Headshot id={card.playerId} name={card.playerName} size={64} variant="md" />
-              </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 mb-1">
                   <LogoBadge teamId={card.teamId} name={card.teamName} size={20} radius={6} />
@@ -334,6 +331,7 @@ function BatterSpotlight({ card, pitcherName, onClose, onAdd, added }: {
                 <p className="font-spot-sans text-xl font-black leading-tight" style={{ color: "var(--text)" }}>{card.playerName}</p>
                 <p className="font-spot-sans text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>vs {pitcherName}</p>
               </div>
+              <BlendedHeadshot id={card.playerId} name={card.playerName} size={70} teamId={card.teamId} />
             </div>
             <div className="flex items-center justify-between mt-4 pt-4" style={{ borderTop: "1px solid var(--hairline-2)" }}>
               <div>
@@ -387,11 +385,11 @@ function BatterSpotlight({ card, pitcherName, onClose, onAdd, added }: {
                   <p className="font-spot-mono text-[10px]" style={{ color: "var(--text-muted)" }}>{p.usage}% · SLG {p.slg}</p>
                 </div>
                 <div className="flex-1 flex items-center gap-0.5 h-3">
-                  <div className="h-full rounded-l-full" style={{ width: `${p.pullPct}%`, background: "#34d399" }} />
-                  <div className="h-full" style={{ width: `${p.centerPct}%`, background: "#60a5fa" }} />
-                  <div className="h-full rounded-r-full" style={{ width: `${p.oppoPct}%`, background: "#f97316" }} />
+                  <div className="h-full rounded-l-full" style={{ width: `${p.pullPct}%`, background: "#f97316" }} />
+                  <div className="h-full" style={{ width: `${p.centerPct}%`, background: "#34d399" }} />
+                  <div className="h-full rounded-r-full" style={{ width: `${p.oppoPct}%`, background: "#60a5fa" }} />
                 </div>
-                <p className="font-spot-sans text-xs font-bold shrink-0" style={{ color: p.pullPct > p.oppoPct ? "#34d399" : "#f97316" }}>
+                <p className="font-spot-sans text-xs font-bold shrink-0" style={{ color: p.pullPct > p.oppoPct ? "#f97316" : "#60a5fa" }}>
                   {p.pullPct > p.oppoPct ? `PULL ${p.pullPct}%` : `OPPO ${p.oppoPct}%`}
                 </p>
               </div>
@@ -400,6 +398,49 @@ function BatterSpotlight({ card, pitcherName, onClose, onAdd, added }: {
         </div>
       </div>
     </motion.div>
+  );
+}
+
+// ── "How to read this page" explainer ──────────────────────────────────────────
+
+const READ_DEFS: { dot: string; term: string; desc: string }[] = [
+  { dot: "var(--purple)",   term: "HR Probability",      desc: "The model's chance this batter homers today — 20%+ is a strong spot." },
+  { dot: "var(--orange)",   term: "Barrel %",            desc: "How often he hits the sweet spot (hard + ideal angle) — above ~10% is elite." },
+  { dot: "var(--orange-2)", term: "Avg Exit Velocity",   desc: "How hard he hits it, in mph — 90+ means consistent loud contact." },
+  { dot: "var(--green)",    term: "Pull %",              desc: "How often he pulls to his power side — high pull + a short porch = more HRs." },
+  { dot: "var(--blue)",     term: "Spray Chart",         desc: "Where his batted balls land — orange dots are pulled (most power), blue is opposite field." },
+  { dot: "var(--red)",      term: "Pitcher Vulnerability", desc: "How hittable today's pitcher is — high barrel/EV allowed + HR/9 means he gives up homers." },
+];
+
+function HowToRead() {
+  const [open, setOpen] = useState(true);
+  return (
+    <div className="mb-6 rounded-[var(--r-panel)] overflow-hidden" style={{ background: "var(--purple-tint)", border: "1px solid var(--purple-line)" }}>
+      <button onClick={() => setOpen((v) => !v)} className="w-full flex items-center justify-between gap-3 px-5 py-3.5">
+        <span className="inline-flex items-center gap-2 spot-label" style={{ color: "var(--purple-soft)" }}>
+          <Zap size={12} strokeWidth={2.4} /> How to read this page — plain-English guide
+        </span>
+        <ChevronDown size={16} style={{ color: "var(--purple-2)", transform: open ? "rotate(180deg)" : "none", transition: "transform .2s" }} />
+      </button>
+      {open && (
+        <div className="px-5 pb-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-3.5">
+            {READ_DEFS.map((d) => (
+              <div key={d.term} className="flex items-start gap-2.5">
+                <span className="rounded-full mt-1.5 shrink-0" style={{ width: 8, height: 8, background: d.dot }} />
+                <div>
+                  <p className="font-spot-sans text-xs font-black" style={{ color: "var(--text)" }}>{d.term}</p>
+                  <p className="font-spot-sans text-[11px] leading-snug mt-0.5" style={{ color: "var(--text-muted)" }}>{d.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="mt-4 pt-3 font-spot-sans text-xs font-semibold" style={{ borderTop: "1px solid var(--purple-line)", color: "var(--purple-soft)" }}>
+            Rule of thumb: high HR Prob + elite Barrel% + a vulnerable pitcher = the best home-run spots.
+          </p>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -493,6 +534,9 @@ export default function HRDeepDivePage() {
           <Zap size={10} strokeWidth={2.5} /> Pro $14.99/mo
         </span>
       </div>
+
+      {/* Plain-English explainer */}
+      <HowToRead />
 
       {loading ? (
         <div className="flex items-center gap-3 py-20 justify-center" style={{ color: "var(--text-muted)" }}>
