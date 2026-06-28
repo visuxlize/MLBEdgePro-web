@@ -1,20 +1,22 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { TrendingUp, RefreshCw, Zap, Target, ExternalLink, Layers } from "lucide-react";
+import { TrendingUp, RefreshCw, Zap, Target, Layers } from "lucide-react";
 import {
   fetchTodaysGames,
   fetchPitcherStats,
   fetchTeamBatters,
   computeWinProbability,
-  teamLogoUrl,
   type Game,
   type PitcherSeasonStats,
   type RosterBatter,
 } from "@/lib/mlb/api";
+import {
+  EdgeRing, LogoBadge, SectionLabel,
+  teamHex, teamCode, alpha,
+} from "@/components/web-tool/spotlight";
 import { unstable_noStore as noStore } from "next/cache";
 import { generateJSON, hasAnthropicKey } from "@/lib/anthropic";
 import { PaywallGate } from "@/components/web-tool/paywall-gate";
-import { PlayerImg } from "@/components/web-tool/player-img";
 import { fetchFanDuelOddsMap, lookupLine, lookupGameTotal } from "@/lib/odds";
 import {
   PropsTool,
@@ -57,9 +59,9 @@ interface DailyPicksResult {
 }
 
 const CONFIDENCE_COLOR: Record<string, string> = {
-  LOCK:   "#50C882",
-  STRONG: "#FF7828",
-  LEAN:   "#818cf8",
+  LOCK:   "var(--green)",
+  STRONG: "var(--orange-2)",
+  LEAN:   "var(--purple-2)",
 };
 
 // ── Rule-based fallback edge scoring ─────────────────────────────────────────
@@ -197,16 +199,9 @@ Respond ONLY with this JSON (no markdown, no code fences):
 
 // ── Edge UI Components ────────────────────────────────────────────────────────
 
-function GradeChip({ grade }: { grade: string }) {
-  const color = grade.startsWith("A") ? "#50C882" : grade.startsWith("B") ? "#FF7828" : "#818cf8";
-  return (
-    <div
-      className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black border"
-      style={{ color, borderColor: `${color}40`, backgroundColor: `${color}15` }}
-    >
-      {grade}
-    </div>
-  );
+/** Normalize a win-prob value that may be 0-1 (AI) or 0-100 (rule-based) to a % integer. */
+function toPct(v: number): number {
+  return v <= 1 ? Math.round(v * 100) : Math.round(v);
 }
 
 function MatchupRow({
@@ -223,16 +218,16 @@ function MatchupRow({
   opponentOPS: number;
 }) {
   const advantage = era < 3.8 && opponentOPS < 0.75;
-  const color = advantage ? "#50C882" : opponentOPS > 0.8 ? "#EB505A" : "#FF7828";
+  const color = advantage ? "var(--green)" : opponentOPS > 0.8 ? "var(--red)" : "var(--grade-b)";
   return (
-    <div className="flex items-center justify-between gap-3 py-2 border-b border-white/[0.04] last:border-0">
+    <div className="flex items-center justify-between gap-3 py-2" style={{ borderBottom: "1px solid var(--hairline-2)" }}>
       <div className="min-w-0">
-        <p className="text-xs font-semibold text-white truncate">{pitcherName.split(" ").pop()}</p>
-        <p className="text-[10px] text-white/30">{era.toFixed(2)} ERA · {whip.toFixed(2)} WHIP · {k9.toFixed(1)} K/9</p>
+        <p className="font-spot-sans text-xs font-bold truncate" style={{ color: "var(--text)" }}>{pitcherName.split(" ").pop()}</p>
+        <p className="font-spot-mono text-[10px]" style={{ color: "var(--text-muted)" }}>{era.toFixed(2)} ERA · {whip.toFixed(2)} WHIP · {k9.toFixed(1)} K/9</p>
       </div>
       <div className="text-right shrink-0">
-        <p className="text-[10px] text-white/30">vs lineup OPS</p>
-        <p className="text-sm font-black" style={{ color }}>{opponentOPS.toFixed(3)}</p>
+        <p className="spot-label-sm" style={{ color: "var(--text-faint)" }}>vs lineup OPS</p>
+        <p className="font-spot-mono text-sm font-black" style={{ color }}>{opponentOPS.toFixed(3)}</p>
       </div>
     </div>
   );
@@ -242,112 +237,107 @@ function EdgeCard({ data }: { data: GameWithScore }) {
   const { game, score, homePitcher, awayPitcher, homeLineupOPS, awayLineupOPS } = data;
   const away = game.teams.away;
   const home = game.teams.home;
-  const edgeColor = score.edgeScore >= 75 ? "#50C882" : score.edgeScore >= 60 ? "#FF7828" : "#818cf8";
+  const awayHex = teamHex(away.team.id), homeHex = teamHex(home.team.id);
+  const homePct = toPct(score.winProbability.home);
+  const awayPct = toPct(score.winProbability.away);
+  const favHome = homePct >= awayPct;
+  const favTeam = favHome ? home : away;
+  const favCode = teamCode(favTeam.team.id, favTeam.team.name);
+  const favPct = Math.max(homePct, awayPct);
 
   return (
-    <Link href={`/game/${game.gamePk}`} className="block group">
-      <div className="rounded-2xl border border-white/[0.07] bg-[#111622] p-5 flex flex-col gap-3 hover:border-white/[0.14] transition-colors h-full">
+    <Link href={`/game/${game.gamePk}`} className="block">
+      <div
+        className="spot-lift rounded-[var(--r-card)] p-5 flex flex-col gap-3 h-full"
+        style={{
+          background: `linear-gradient(120deg, ${alpha(awayHex, "26")}, var(--panel) 52%, ${alpha(homeHex, "2e")})`,
+          border: "1px solid var(--hairline)", boxShadow: "var(--shadow-card)",
+        }}
+      >
         {/* Header */}
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <PlayerImg src={teamLogoUrl(away.team.id)} alt="" className="w-7 h-7 object-contain" />
-            <div>
-              <p className="text-sm font-bold text-white">
-                {away.team.name.split(" ").pop()} <span className="text-white/25 font-normal">@</span> {home.team.name.split(" ").pop()}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex items-center -space-x-1.5">
+              <LogoBadge teamId={away.team.id} name={away.team.name} size={32} />
+              <LogoBadge teamId={home.team.id} name={home.team.name} size={32} />
+            </div>
+            <div className="min-w-0">
+              <p className="font-spot-sans text-sm font-black" style={{ color: "var(--text)" }}>
+                {teamCode(away.team.id, away.team.name)} <span style={{ color: "var(--text-ghost)" }}>@</span> {teamCode(home.team.id, home.team.name)}
               </p>
               {away.probablePitcher && home.probablePitcher && (
-                <p className="text-[11px] text-white/30 mt-0.5">
+                <p className="font-spot-sans text-[11px] mt-0.5 truncate" style={{ color: "var(--text-muted)" }}>
                   {away.probablePitcher.fullName.split(" ").pop()} vs {home.probablePitcher.fullName.split(" ").pop()}
                 </p>
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <GradeChip grade={score.grade} />
-            <div className="text-right">
-              <p className="text-[10px] text-white/25 tracking-widest uppercase">Edge Score</p>
-              <p className="text-2xl font-black" style={{ color: edgeColor }}>{score.edgeScore}</p>
-            </div>
-          </div>
+          <EdgeRing value={score.edgeScore} grade={score.grade} />
         </div>
 
-        {/* Progress bar */}
-        <div className="w-full h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-          <div className="h-full rounded-full transition-all" style={{ width: `${score.edgeScore}%`, backgroundColor: edgeColor }} />
-        </div>
-
-        {/* Insight */}
-        <p className="text-xs text-white/50 leading-relaxed italic">&ldquo;{score.insight}&rdquo;</p>
+        {/* Model projection line */}
+        <p className="font-spot-sans text-xs italic leading-relaxed" style={{ color: "var(--text-3)" }}>
+          Model projects {favPct}% win prob for {favTeam.team.name.split(" ").pop()}
+        </p>
 
         {/* Key edges */}
         {score.keyEdges.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {score.keyEdges.slice(0, 3).map((k) => (
-              <span key={k} className="text-[10px] text-white/40 border border-white/[0.06] bg-white/[0.03] rounded-full px-2.5 py-0.5">{k}</span>
+              <span key={k} className="font-spot-sans text-[10px] rounded-full px-2.5 py-0.5"
+                style={{ color: "var(--text-3)", border: "1px solid var(--hairline)", background: "rgba(255,255,255,.03)" }}>{k}</span>
             ))}
           </div>
         )}
 
-        {/* H2H Matchup rows */}
+        {/* Pitcher vs Lineup */}
         {(homePitcher || awayPitcher) && (
-          <div className="rounded-xl bg-white/[0.02] border border-white/[0.05] px-3 py-2">
-            <p className="text-[9px] font-bold text-white/20 tracking-widest uppercase mb-1.5">Pitcher vs Lineup</p>
+          <div className="rounded-[var(--r-tile)] px-3 py-2" style={{ background: "var(--inset-soft)", border: "1px solid var(--hairline-2)" }}>
+            <SectionLabel className="mb-1.5">Pitcher vs Lineup</SectionLabel>
             {awayPitcher && away.probablePitcher && (
-              <MatchupRow
-                pitcherName={away.probablePitcher.fullName}
-                era={awayPitcher.era}
-                whip={awayPitcher.whip}
-                k9={awayPitcher.strikeoutsPer9Inn}
-                opponentOPS={homeLineupOPS}
-              />
+              <MatchupRow pitcherName={away.probablePitcher.fullName} era={awayPitcher.era} whip={awayPitcher.whip} k9={awayPitcher.strikeoutsPer9Inn} opponentOPS={homeLineupOPS} />
             )}
             {homePitcher && home.probablePitcher && (
-              <MatchupRow
-                pitcherName={home.probablePitcher.fullName}
-                era={homePitcher.era}
-                whip={homePitcher.whip}
-                k9={homePitcher.strikeoutsPer9Inn}
-                opponentOPS={awayLineupOPS}
-              />
+              <MatchupRow pitcherName={home.probablePitcher.fullName} era={homePitcher.era} whip={homePitcher.whip} k9={homePitcher.strikeoutsPer9Inn} opponentOPS={awayLineupOPS} />
             )}
           </div>
         )}
 
-        {/* Footer */}
-        <div className="flex items-center justify-between text-[10px] text-white/25 pt-1 border-t border-white/[0.04]">
-          <span>
-            {Math.round(score.winProbability.home * 100)}% home · {Math.round(score.winProbability.away * 100)}% away
+        {/* Win prob + O/U meta */}
+        <div className="flex items-center justify-between font-spot-mono text-[10px] pt-1" style={{ color: "var(--text-muted)", borderTop: "1px solid var(--hairline-2)" }}>
+          <span>{awayPct}% {teamCode(away.team.id, away.team.name)} · {homePct}% {teamCode(home.team.id, home.team.name)}</span>
+          <span style={{ color: score.overUnderLean === "OVER" ? "var(--green)" : score.overUnderLean === "UNDER" ? "var(--red)" : "var(--text-muted)" }}>
+            {score.overUnderLean} · {score.totalRunEstimate}
           </span>
-          <div className="flex items-center gap-2">
-            <span className={score.overUnderLean === "OVER" ? "text-[#50C882]" : score.overUnderLean === "UNDER" ? "text-red-400" : ""}>
-              {score.overUnderLean} · {score.totalRunEstimate} est. runs
-            </span>
-            {!score.isAI && (
-              <span className="text-white/15 text-[9px]">model</span>
-            )}
-          </div>
         </div>
 
-        {/* Recommended bet */}
-        {score.recommendedBets.length > 0 && (
-          <div className="rounded-xl bg-[#FF7828]/[0.08] border border-[#FF7828]/15 px-3 py-2 flex items-center justify-between gap-2">
-            <div>
-              <p className="text-[9px] text-[#FF7828]/60 font-bold uppercase tracking-widest mb-0.5">Recommended</p>
-              <p className="text-xs text-[#FF7828] font-bold">{score.recommendedBets[0]}</p>
-            </div>
-            <ExternalLink size={12} className="text-[#FF7828]/40 shrink-0 group-hover:text-[#FF7828]/70 transition-colors" />
-          </div>
-        )}
+        {/* Recommended footer */}
+        <div className="mt-auto">
+          <RecommendedFooter pick={`${favCode} ML`} />
+        </div>
       </div>
     </Link>
   );
 }
 
-function PickBadge({ level }: { level: string }) {
-  const color = CONFIDENCE_COLOR[level] ?? "#818cf8";
+/** Orange "Recommended / {TEAM} ML ↗" footer. */
+function RecommendedFooter({ pick }: { pick: string }) {
   return (
-    <span className="text-[9px] font-black px-2 py-0.5 rounded-full border" style={{ color, borderColor: `${color}40`, backgroundColor: `${color}15` }}>
+    <div className="flex items-center justify-between gap-3 rounded-[var(--r-tile)] px-3.5 py-2.5"
+      style={{ background: "var(--orange-tint)", border: "1px solid var(--orange-line)" }}>
+      <span className="spot-label-sm" style={{ color: "var(--orange-soft)" }}>Recommended</span>
+      <span className="inline-flex items-center gap-1.5 font-spot-sans font-black text-[13px]" style={{ color: "var(--orange-2)" }}>
+        {pick} <span style={{ color: "var(--orange)" }}>↗</span>
+      </span>
+    </div>
+  );
+}
+
+function PickBadge({ level }: { level: string }) {
+  const color = CONFIDENCE_COLOR[level] ?? "var(--purple-2)";
+  return (
+    <span className="spot-label-sm rounded-full px-2 py-0.5"
+      style={{ color, background: `color-mix(in srgb, ${color} 14%, transparent)`, border: `1px solid color-mix(in srgb, ${color} 36%, transparent)` }}>
       {level}
     </span>
   );
@@ -387,31 +377,32 @@ Return ONLY this JSON (no markdown, no code fences):
 
   if (!picks?.strongPicks?.length) return null;
 
-  const dayColor = picks.dayRating === "JUICY" ? "#50C882" : picks.dayRating === "GOOD" ? "#FF7828" : "#818cf8";
+  const dayColor = picks.dayRating === "JUICY" ? "var(--green)" : picks.dayRating === "GOOD" ? "var(--orange-2)" : "var(--purple-2)";
 
   return (
-    <div className="mb-8 rounded-2xl border border-[#50C882]/20 bg-[#50C882]/[0.04] p-5 overflow-hidden relative">
-      <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-[#50C882]/[0.06] blur-3xl pointer-events-none" />
+    <div className="mb-8 rounded-[var(--r-panel)] p-5 overflow-hidden relative"
+      style={{ border: "1px solid rgba(52,211,153,.2)", background: "linear-gradient(135deg, rgba(52,211,153,.06), var(--panel) 60%)" }}>
+      <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full pointer-events-none" style={{ background: "rgba(52,211,153,.07)", filter: "blur(48px)" }} />
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <div className="flex items-center gap-2">
-          <Target size={16} className="text-[#50C882]" strokeWidth={2} />
-          <p className="text-sm font-black text-white">Today&apos;s Strong Picks</p>
+          <Target size={16} style={{ color: "var(--green)" }} strokeWidth={2} />
+          <p className="font-spot-sans text-sm font-black" style={{ color: "var(--text)" }}>Today&apos;s Strong Picks</p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-bold tracking-widest uppercase" style={{ color: dayColor }}>{picks.dayRating} SLATE</span>
-          <span className="text-[10px] text-white/25">·</span>
-          <span className="text-[10px] text-white/35">{picks.dayNote}</span>
+          <span className="spot-label" style={{ color: dayColor }}>{picks.dayRating} SLATE</span>
+          <span style={{ color: "var(--text-ghost)" }}>·</span>
+          <span className="font-spot-sans text-[10px]" style={{ color: "var(--text-muted)" }}>{picks.dayNote}</span>
         </div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {picks.strongPicks.map((p, i) => (
-          <div key={i} className="rounded-xl border border-white/[0.06] bg-[#111622] p-3.5">
+          <div key={i} className="rounded-[var(--r-tile)] p-3.5" style={{ border: "1px solid var(--hairline)", background: "var(--panel)" }}>
             <div className="flex items-center justify-between mb-1.5">
-              <p className="text-[10px] text-white/35">{p.game}</p>
+              <p className="font-spot-sans text-[10px]" style={{ color: "var(--text-muted)" }}>{p.game}</p>
               <PickBadge level={p.confidenceLevel} />
             </div>
-            <p className="text-sm font-black text-white mb-1">{p.pick}</p>
-            <p className="text-[11px] text-white/40 leading-relaxed">{p.reasoning}</p>
+            <p className="font-spot-sans text-sm font-black mb-1" style={{ color: "var(--text)" }}>{p.pick}</p>
+            <p className="font-spot-sans text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>{p.reasoning}</p>
           </div>
         ))}
       </div>
@@ -447,9 +438,9 @@ async function EdgeContent() {
 
     if (!scored.length) {
       return (
-        <div className="rounded-2xl border border-white/[0.07] bg-[#111622] p-8 text-center">
-          <Zap size={38} className="mx-auto mb-3 text-white/10" strokeWidth={1.2} />
-          <p className="text-white/45">Could not load game data. Please try again shortly.</p>
+        <div className="spot-card p-8 text-center">
+          <Zap size={38} className="mx-auto mb-3" style={{ color: "var(--text-ghost)" }} strokeWidth={1.2} />
+          <p style={{ color: "var(--text-3)" }}>Could not load game data. Please try again shortly.</p>
         </div>
       );
     }
@@ -474,10 +465,10 @@ async function EdgeContent() {
           </Suspense>
         )}
         {!hasAnthropicKey() && (
-          <div className="mb-5 rounded-xl border border-[#FF7828]/20 bg-[#FF7828]/[0.05] px-4 py-3 flex items-center gap-3">
-            <TrendingUp size={14} className="text-[#FF7828] shrink-0" strokeWidth={2} />
-            <p className="text-xs text-white/50">
-              <span className="text-[#FF7828] font-bold">Tip:</span> Add <code className="text-white/70 bg-white/[0.08] px-1 rounded">ANTHROPIC_API_KEY</code> to your Vercel env vars to enable AI-powered edge scoring.
+          <div className="mb-5 rounded-[var(--r-tile)] px-4 py-3 flex items-center gap-3" style={{ border: "1px solid var(--orange-line)", background: "var(--orange-tint)" }}>
+            <TrendingUp size={14} className="shrink-0" style={{ color: "var(--orange)" }} strokeWidth={2} />
+            <p className="font-spot-sans text-xs" style={{ color: "var(--text-3)" }}>
+              <span className="font-bold" style={{ color: "var(--orange-soft)" }}>Tip:</span> Add <code className="px-1 rounded" style={{ color: "var(--text-2)", background: "rgba(255,255,255,.08)" }}>ANTHROPIC_API_KEY</code> to your Vercel env vars to enable AI-powered edge scoring.
             </p>
           </div>
         )}
@@ -490,10 +481,10 @@ async function EdgeContent() {
     );
   } catch {
     return (
-      <div className="rounded-2xl border border-white/[0.07] bg-[#111622] p-8 text-center">
-        <Zap size={38} className="mx-auto mb-3 text-white/10" strokeWidth={1.2} />
-        <p className="text-white/45 mb-2">Edge data temporarily unavailable.</p>
-        <p className="text-xs text-white/25">Check back in a moment — MLB data may be refreshing.</p>
+      <div className="spot-card p-8 text-center">
+        <Zap size={38} className="mx-auto mb-3" style={{ color: "var(--text-ghost)" }} strokeWidth={1.2} />
+        <p className="mb-2" style={{ color: "var(--text-3)" }}>Edge data temporarily unavailable.</p>
+        <p className="text-xs" style={{ color: "var(--text-muted)" }}>Check back in a moment — MLB data may be refreshing.</p>
       </div>
     );
   }
@@ -1096,34 +1087,33 @@ export default async function AnalysisPage({
   const activeTab = tab === "props" ? "props" : "edge";
 
   return (
-    <div className="px-4 py-5 sm:px-8 sm:py-7 max-w-screen-xl mx-auto">
+    <div className="spotlight min-h-screen">
+    <div className="px-4 py-6 sm:px-8 sm:py-8 max-w-screen-xl mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <p className="text-[10px] font-bold text-white/25 tracking-widest uppercase mb-1">Analysis</p>
-        <h1 className="text-3xl font-black font-display text-white mb-1">Edge Report</h1>
-        <p className="text-sm text-white/35">Pitcher matchup grades · Prop signals · Today&apos;s best plays</p>
+        <SectionLabel>Analysis</SectionLabel>
+        <h1 className="font-spot-sans text-3xl sm:text-4xl font-black mt-1 mb-1" style={{ color: "var(--text)" }}>Edge Report</h1>
+        <p className="font-spot-sans text-sm" style={{ color: "var(--text-muted)" }}>Pitcher matchup grades · Prop signals · Today&apos;s best plays</p>
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 mb-6 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.06] w-fit">
+      <div className="flex items-center gap-1 mb-6 p-1 rounded-[var(--r-pill)] w-fit" style={{ background: "rgba(255,255,255,.04)", border: "1px solid var(--hairline)" }}>
         <Link
           href="/analysis"
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-            activeTab === "edge"
-              ? "bg-[#FF7828] text-white shadow-lg"
-              : "text-white/40 hover:text-white"
-          }`}
+          className="flex items-center gap-2 px-4 py-2 rounded-[var(--r-tile)] font-spot-sans text-sm font-bold transition-all"
+          style={activeTab === "edge"
+            ? { background: "var(--grad-orange)", color: "#fff", boxShadow: "0 6px 18px rgba(249,115,22,.3)" }
+            : { color: "var(--text-muted)" }}
         >
           <TrendingUp size={14} strokeWidth={2} />
           Edge Report
         </Link>
         <Link
           href="/analysis?tab=props"
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-            activeTab === "props"
-              ? "bg-[#818cf8] text-white shadow-lg"
-              : "text-white/40 hover:text-white"
-          }`}
+          className="flex items-center gap-2 px-4 py-2 rounded-[var(--r-tile)] font-spot-sans text-sm font-bold transition-all"
+          style={activeTab === "props"
+            ? { background: "var(--grad-purple)", color: "#fff", boxShadow: "0 6px 18px rgba(124,92,250,.3)" }
+            : { color: "var(--text-muted)" }}
         >
           <Layers size={14} strokeWidth={2} />
           Prop Builder
@@ -1168,6 +1158,7 @@ export default async function AnalysisPage({
           </Suspense>
         </PaywallGate>
       )}
+    </div>
     </div>
   );
 }

@@ -14,9 +14,17 @@ export interface Linescore {
   currentInning?: number;
   currentInningOrdinal?: string;
   inningState?: string;
+  balls?: number;
+  strikes?: number;
+  outs?: number;
   teams?: {
     away?: { runs?: number; hits?: number; errors?: number };
     home?: { runs?: number; hits?: number; errors?: number };
+  };
+  offense?: {
+    first?: { id?: number };
+    second?: { id?: number };
+    third?: { id?: number };
   };
 }
 export interface Game {
@@ -143,7 +151,7 @@ export interface RosterBatter {
 // ── Fetchers ───────────────────────────────────────────────────────────────────
 
 export async function fetchGamesByDate(date: string): Promise<Game[]> {
-  const url = `${BASE}/schedule?sportId=1&date=${date}&hydrate=probablePitcher,linescore(teams),team`;
+  const url = `${BASE}/schedule?sportId=1&date=${date}&hydrate=probablePitcher,linescore,team`;
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error("MLB API error");
   const data = await res.json();
