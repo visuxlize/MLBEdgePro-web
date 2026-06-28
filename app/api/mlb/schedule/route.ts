@@ -9,7 +9,7 @@ export async function GET(req: Request) {
   const startDate = searchParams.get("startDate");
   const endDate   = searchParams.get("endDate");
 
-  const hydrate = "probablePitcher,linescore(teams),team";
+  const hydrate = "probablePitcher,linescore,team";
   let url = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&hydrate=${hydrate}`;
 
   if (teamId && startDate && endDate) {

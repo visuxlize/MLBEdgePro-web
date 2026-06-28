@@ -236,3 +236,107 @@ html {
 /* Internal link (sign in / sign up) */
 .cl-identityPreviewText { color: #ffffff !important; }
 .cl-identityPreviewEditButton { color: #FF7828 !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   SPOTLIGHT DESIGN SYSTEM — scoped to .spotlight on the redesigned user pages.
+   Tokens are additive so the landing/marketing/other app pages are untouched.
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+.spotlight {
+  /* ---- Surfaces ---- */
+  --bg:            #06070d;
+  --panel:         #0b0d15;
+  --panel-2:       #0c0e16;
+  --panel-wash:    radial-gradient(130% 70% at 50% -8%, #161126, #06070d 58%);
+  --hairline:      rgba(255,255,255,.06);
+  --hairline-2:    rgba(255,255,255,.05);
+  --ring-inset:    inset 0 0 0 2px rgba(255,255,255,.18);
+  --inset-soft:    rgba(0,0,0,.25);
+
+  /* ---- Accents ---- */
+  --orange:        #f97316;
+  --orange-2:      #fb923c;
+  --orange-soft:   #f8a878;
+  --orange-tint:   rgba(249,115,22,.10);
+  --orange-line:   rgba(249,115,22,.30);
+  --grad-orange:   linear-gradient(135deg,#f97316,#fb923c);
+
+  --purple:        #7c5cfa;
+  --purple-2:      #a78bfa;
+  --purple-soft:   #c9bdf3;
+  --purple-tint:   rgba(124,92,250,.10);
+  --purple-line:   rgba(167,139,250,.30);
+  --grad-purple:   linear-gradient(135deg,#7c5cfa,#a78bfa);
+
+  /* ---- Grades / status ---- */
+  --green:         #34d399;   --green-bg:  rgba(52,211,153,.16);
+  --grade-b:       #fb923c;   --grade-b-bg:rgba(251,146,60,.16);
+  --grade-c:       #a78bfa;   --grade-c-bg:rgba(167,139,250,.18);
+  --red:           #ef4444;   --red-soft:  #fda4a4;  --red-bg: rgba(239,68,68,.16);
+  --blue:          #60a5fa;
+
+  /* ---- Text ---- */
+  --text:          #ffffff;
+  --text-2:        #cfd6e0;
+  --text-3:        #aab2bd;
+  --text-muted:    #8b94a1;
+  --text-dim:      #6b7280;
+  --text-faint:    #5b6472;
+  --text-ghost:    #4d5563;
+
+  /* ---- Radii ---- */
+  --r-pill:        20px;   --r-panel: 20px;  --r-card: 18px;
+  --r-tile:        12px;   --r-badge: 11px;  --r-chip: 10px;  --r-sm: 8px;
+  --r-window:      96px 16px 16px 96px;
+
+  /* ---- Shadows ---- */
+  --shadow-panel:  0 28px 80px rgba(0,0,0,.5);
+  --shadow-card:   0 20px 60px rgba(0,0,0,.45);
+  --shadow-badge:  0 8px 22px rgba(0,0,0,.5);
+  --glow-edge:     0 6px 30px rgba(52,211,153,.40);
+
+  /* ---- Type ---- */
+  --font-spot-sans: 'Archivo', system-ui, sans-serif;
+  --font-spot-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  font-family: var(--font-spot-sans);
+  color: var(--text);
+  background: var(--panel-wash);
+  background-attachment: fixed;
+}
+
+/* Numbers & stats — JetBrains Mono everywhere inside spotlight */
+.spotlight .font-mono,
+.spotlight .tabular-nums { font-family: var(--font-spot-mono); font-feature-settings: 'tnum' 1; }
+.font-spot-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; font-feature-settings: 'tnum' 1; }
+.font-spot-sans { font-family: 'Archivo', system-ui, sans-serif; }
+
+/* Section labels */
+.spot-label    { font: 700 11px/1 'Archivo', sans-serif; text-transform: uppercase; letter-spacing: .14em; }
+.spot-label-sm { font: 800 10px/1 'Archivo', sans-serif; text-transform: uppercase; letter-spacing: .12em; }
+
+/* Surfaces */
+.spot-panel { background: var(--panel);   border: 1px solid var(--hairline); border-radius: var(--r-panel); }
+.spot-card  { background: var(--panel);   border: 1px solid var(--hairline); border-radius: var(--r-card); }
+
+/* Conic grade / HR ring — drive with --grade (color) and --edge (0-100) */
+.spot-ring {
+  position: relative; width: 58px; height: 58px; border-radius: 50%;
+  background: conic-gradient(var(--grade) calc(var(--edge) * 1%), rgba(255,255,255,.08) 0);
+  display: grid; place-items: center;
+}
+.spot-ring::before {
+  content: ""; position: absolute; inset: 5px; border-radius: 50%; background: var(--panel);
+}
+.spot-ring > * { position: relative; z-index: 1; }
+
+/* Arched ballpark window */
+.spot-window { border-radius: var(--r-window); overflow: hidden; }
+
+/* Animated live dot */
+@keyframes spot-pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+.spot-live-dot { animation: spot-pulse 1.3s ease-in-out infinite; }
+
+/* Card hover lift */
+.spot-lift { transition: transform .25s cubic-bezier(.4,0,.2,1), border-color .2s ease, box-shadow .25s ease; }
+.spot-lift:hover { transform: translateY(-3px); box-shadow: var(--shadow-card); }
