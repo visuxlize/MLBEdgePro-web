@@ -149,6 +149,7 @@ function EditorialHero({ game, onClick }: { game: Game; onClick: () => void }) {
   const awayHex = teamHex(away.team.id), homeHex = teamHex(home.team.id);
   const stadium = getStadiumImageUrl(game.venue.id);
   const { edge, grade, homeProb, favId, favCode } = quickEdge(game);
+  const favTeam = favId === away.team.id ? away.team : home.team;
 
   return (
     <motion.button
@@ -213,7 +214,7 @@ function EditorialHero({ game, onClick }: { game: Game; onClick: () => void }) {
                 awayCode={teamCode(away.team.id, away.team.name)} homeCode={teamCode(home.team.id, home.team.name)} />
             </div>
             <div className="w-full mt-1">
-              <AIPredictionButton pick={`${favCode} ML`} />
+              <AIPredictionButton pick={`${favCode} ML`} teamId={favId} teamName={favTeam.name} />
             </div>
           </div>
         </div>
@@ -241,7 +242,7 @@ function SpotlightCard({ game, fav, onClick }: { game: Game; fav: boolean; onCli
   const isFinal = ["Final", "Game Over"].includes(game.status.detailedState);
   const awayScore = getScore(away, game.linescore, "away");
   const homeScore = getScore(home, game.linescore, "home");
-  const { edge, grade, homeProb, favCode } = quickEdge(game);
+  const { edge, grade, homeProb, favId, favCode } = quickEdge(game);
   const ls = game.linescore;
   const statusLabel = isLive
     ? `${ls?.inningState ?? ""} ${ls?.currentInningOrdinal ?? ""}`.trim().toUpperCase() || "LIVE"
@@ -277,25 +278,24 @@ function SpotlightCard({ game, fav, onClick }: { game: Game; fav: boolean; onCli
           <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(6,7,13,.55), transparent 32%, transparent 64%, rgba(6,7,13,.6))" }} />
         </div>
 
-        {/* Park name pill (top-left, always legible) */}
-        <div className="absolute top-3 left-4 flex items-center gap-1 rounded-full px-2.5 py-1"
-          style={{ background: "rgba(6,7,13,.6)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", boxShadow: "0 2px 8px rgba(0,0,0,.4)", position: "relative", zIndex: 10 }}>
-          <MapPin size={9} style={{ color: "#fff" }} />
-          <span className="font-spot-sans text-[10px] font-semibold text-white">{game.venue.name}</span>
-        </div>
         {fav && (
-          <span className="absolute bottom-3 left-4"><Star size={13} style={{ color: "var(--orange)" }} fill="currentColor" /></span>
+          <span className="absolute bottom-3 left-4" style={{ zIndex: 1 }}><Star size={13} style={{ color: "var(--orange)" }} fill="currentColor" /></span>
         )}
       </div>
 
       {/* Right column */}
       <div className="flex-1 min-w-0 p-4 flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
-          <span className="font-spot-sans text-[11px] font-bold inline-flex items-center gap-1.5"
-            style={{ color: isLive ? "var(--red-soft)" : isFinal ? "var(--text-muted)" : "var(--orange-soft)" }}>
-            {isLive && <span className="spot-live-dot inline-block rounded-full" style={{ width: 6, height: 6, background: "var(--red)" }} />}
-            {statusLabel}
-          </span>
+          <div className="flex flex-col gap-0.5">
+            <span className="font-spot-sans text-[11px] font-bold inline-flex items-center gap-1.5"
+              style={{ color: isLive ? "var(--red-soft)" : isFinal ? "var(--text-muted)" : "var(--orange-soft)" }}>
+              {isLive && <span className="spot-live-dot inline-block rounded-full" style={{ width: 6, height: 6, background: "var(--red)" }} />}
+              {statusLabel}
+            </span>
+            <span className="font-spot-sans text-[9px] inline-flex items-center gap-1" style={{ color: "var(--text-ghost)" }}>
+              <MapPin size={8} /> {game.venue.name}
+            </span>
+          </div>
           <div className="flex items-center gap-2">
             <GradePill grade={grade} edge={edge} />
           </div>
@@ -328,7 +328,7 @@ function SpotlightCard({ game, fav, onClick }: { game: Game; fav: boolean; onCli
 
         {/* Footer */}
         <div className="mt-auto">
-          <AIPredictionButton pick={`${favCode} ML`} />
+          <AIPredictionButton pick={`${favCode} ML`} teamId={favId} />
         </div>
       </div>
     </motion.button>

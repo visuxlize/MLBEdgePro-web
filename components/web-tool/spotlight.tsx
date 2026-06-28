@@ -1,79 +1,17 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
-import { playerHeadshotUrl, TEAM_COLORS, TEAM_ABBR, type Game } from "@/lib/mlb/api";
+import { playerHeadshotUrl, teamLogoUrl, type Game } from "@/lib/mlb/api";
 
-/* ── Model estimate (deterministic from schedule data, no extra fetches) ─────── */
-
-export function modelEdge(game: Game) {
-  const seed = game.gamePk;
-  const jitter = (seed % 23) - 11;
-  let homeProb = 50 + 3 + jitter;
-  homeProb = Math.max(36, Math.min(64, homeProb));
-  const favHome = homeProb >= 50;
-  const edge = Math.max(41, Math.min(93, Math.round(45 + Math.abs(homeProb - 50) * 1.9 + (seed % 9))));
-  const grade =
-    edge >= 80 ? "A+" : edge >= 72 ? "A" : edge >= 64 ? "B+" :
-    edge >= 55 ? "B" : edge >= 46 ? "C+" : "C";
-  const favId = favHome ? game.teams.home.team.id : game.teams.away.team.id;
-  const favName = favHome ? game.teams.home.team.name : game.teams.away.team.name;
-  return { edge, grade, homeProb, awayProb: 100 - homeProb, favId, favCode: teamCode(favId, favName) };
-}
-
-/* ── Color helpers ──────────────────────────────────────────────────────────── */
-
-/** Team primary hex (6-digit), falling back to the Spotlight orange. */
-export function teamHex(teamId: number): string {
-  return TEAM_COLORS[teamId] ?? "#f97316";
-}
-
-/** Append an 8-digit-hex alpha pair to a 6-digit hex. e.g. alpha("#f97316","26"). */
-export function alpha(hex: string, aa: string): string {
-  return `${hex}${aa}`;
-}
-
-export function teamCode(teamId: number, name?: string): string {
-  return TEAM_ABBR[teamId] ?? name?.split(" ").pop()?.slice(0, 3).toUpperCase() ?? "MLB";
-}
-
-/** WCAG relative luminance of a 6-digit hex. */
-function luminance(hex: string): number {
-  const c = hex.replace("#", "");
-  if (c.length < 6) return 0;
-  const ch = (i: number) => {
-    const v = parseInt(c.slice(i, i + 2), 16) / 255;
-    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
-  };
-  return 0.2126 * ch(0) + 0.7152 * ch(2) + 0.0722 * ch(4);
-}
-
-/** Contrast-safe text color for a colored plate — dark ink on light teams, white on dark. */
-export function contrastText(hex: string): string {
-  return luminance(hex) > 0.45 ? "#0a1018" : "#ffffff";
-}
-
-/** Grade → semantic color. A = green, B = orange, C = purple. */
-export function gradeColor(grade: string): string {
-  const g = grade.trim().charAt(0).toUpperCase();
-  if (g === "A") return "var(--green)";
-  if (g === "B") return "var(--grade-b)";
-  return "var(--grade-c)";
-}
-
-/** Edge score (0-100) → color band. */
-export function edgeColor(score: number): string {
-  if (score >= 75) return "var(--green)";
-  if (score >= 60) return "var(--grade-b)";
-  return "var(--grade-c)";
-}
-
-/** % confidence → color. ≥80 green / 40–79 orange / <40 red. */
-export function pctColor(pct: number): string {
-  if (pct >= 80) return "var(--green)";
-  if (pct >= 40) return "var(--grade-b)";
-  return "var(--red)";
-}
+// Re-export all server-safe utilities so existing imports from this module still work.
+export {
+  teamHex, alpha, teamCode, luminance, contrastText,
+  gradeColor, edgeColor, pctColor, modelEdge,
+} from "@/lib/mlb/spotlight-utils";
+import {
+  teamHex, alpha, teamCode, contrastText, gradeColor, edgeColor,
+} from "@/lib/mlb/spotlight-utils";
 
 /* ── Section label ──────────────────────────────────────────────────────────── */
 
@@ -87,16 +25,18 @@ export function SectionLabel({
   );
 }
 
-/* ── Team logo badge — rounded-square, team-color, inset ring ───────────────── */
+/* ── Team logo badge — team-color plate, auto-loads MLB logo, falls back to abbr ── */
 
 export function LogoBadge({
-  teamId, name, size = 38, radius, logoUrl,
-}: { teamId: number; name: string; size?: number; radius?: number; logoUrl?: string }) {
+  teamId, name, size = 38, radius,
+}: { teamId: number; name: string; size?: number; radius?: number }) {
+  const [imgFailed, setImgFailed] = useState(false);
   const hex = teamHex(teamId);
   const code = teamCode(teamId, name);
   const r = radius ?? Math.round(size * 0.3);
   const ink = contrastText(hex);
-  const pad = Math.round(size * 0.16);
+  const pad = Math.round(size * 0.15);
+  const logoSrc = teamLogoUrl(teamId);
 
   return (
     <div
@@ -107,12 +47,18 @@ export function LogoBadge({
       }}
       title={name}
     >
-      {logoUrl ? (
+      {!imgFailed ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={logoUrl}
+          src={logoSrc}
           alt={name}
-          style={{ width: size - pad * 2, height: size - pad * 2, objectFit: "contain", filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.55))" }}
+          style={{
+            width: size - pad * 2,
+            height: size - pad * 2,
+            objectFit: "contain",
+            filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.55))",
+          }}
+          onError={() => setImgFailed(true)}
         />
       ) : (
         <span className="font-spot-sans font-black" style={{ fontSize: size * 0.34, letterSpacing: "-0.5px", color: ink }}>
@@ -123,30 +69,24 @@ export function LogoBadge({
   );
 }
 
-/* ── Blended player headshot (fades into the card) ──────────────────────────── */
+/* ── Blended player headshot (fades into the card at the bottom) ─────────────── */
 
 export function BlendedHeadshot({
   id, name, size = 64, teamId,
 }: { id: number; name: string; size?: number; teamId?: number }) {
   const hex = teamId !== undefined ? teamHex(teamId) : "#7c5cfa";
   return (
-    <div className="relative shrink-0" style={{ width: size, height: size }}>
+    <div className="relative shrink-0 overflow-hidden" style={{ width: size, height: size, borderRadius: Math.round(size * 0.15) }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={playerHeadshotUrl(id)}
         alt={name}
-        width={size}
-        height={size}
-        className="object-cover"
-        style={{
-          width: size, height: size, objectPosition: "top center",
-          maskImage: "radial-gradient(ellipse 150% 150% at 50% 18%, #000 68%, transparent 96%)",
-          WebkitMaskImage: "radial-gradient(ellipse 150% 150% at 50% 18%, #000 68%, transparent 96%)",
-        }}
+        className="absolute inset-0 w-full h-full object-cover object-top"
         onError={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = "0"; }}
       />
+      {/* Fade bottom into card, subtle team color tint */}
       <div className="absolute inset-0 pointer-events-none"
-        style={{ background: `linear-gradient(135deg, ${alpha(hex, "33")}, transparent 45%, rgba(6,7,13,.55))` }} />
+        style={{ background: `linear-gradient(to bottom, transparent 50%, ${alpha(hex, "44")} 80%, rgba(6,7,13,.85) 100%)` }} />
     </div>
   );
 }
@@ -228,12 +168,12 @@ export function AIPredictionTag({ className = "" }: { className?: string }) {
 }
 
 /**
- * The model pick footer. Always name the favored team, e.g. "HOU ML".
- * Renders as a link when `href` is provided.
+ * Model pick footer. Renders [team logo] [team code] ML.
+ * Pass `teamId` to show the team logo badge; falls back to pick text only.
  */
 export function AIPredictionButton({
-  pick, href, arrow = true,
-}: { pick: string; href?: string; arrow?: boolean }) {
+  pick, href, arrow = true, teamId, teamName,
+}: { pick: string; href?: string; arrow?: boolean; teamId?: number; teamName?: string }) {
   const inner = (
     <div
       className="flex items-center justify-between gap-3 rounded-[var(--r-tile)] px-3.5 py-2.5 spot-lift"
@@ -242,7 +182,10 @@ export function AIPredictionButton({
       <span className="inline-flex items-center gap-1.5 spot-label-sm" style={{ color: "var(--purple-2)" }}>
         <span>◆</span> AI Prediction
       </span>
-      <span className="inline-flex items-center gap-1.5 font-spot-sans font-black text-[13px]" style={{ color: "var(--purple-soft)" }}>
+      <span className="inline-flex items-center gap-2 font-spot-sans font-black text-[13px]" style={{ color: "var(--purple-soft)" }}>
+        {teamId !== undefined && (
+          <LogoBadge teamId={teamId} name={teamName ?? pick} size={20} radius={5} />
+        )}
         {pick}
         {arrow && <span style={{ color: "var(--purple-2)" }}>↗</span>}
       </span>

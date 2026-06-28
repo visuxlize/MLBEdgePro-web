@@ -12,8 +12,8 @@ import {
 } from "@/lib/mlb/api";
 import {
   EdgeRing, LogoBadge, SectionLabel,
-  teamHex, teamCode, alpha,
 } from "@/components/web-tool/spotlight";
+import { teamHex, teamCode, alpha } from "@/lib/mlb/spotlight-utils";
 import { unstable_noStore as noStore } from "next/cache";
 import { generateJSON, hasAnthropicKey } from "@/lib/anthropic";
 import { PaywallGate } from "@/components/web-tool/paywall-gate";
