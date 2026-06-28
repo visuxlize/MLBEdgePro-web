@@ -261,10 +261,10 @@ function SpotlightCard({ game, fav, onClick }: { game: Game; fav: boolean; onCli
         minHeight: 188,
       }}
     >
-      {/* Left: arched ballpark window (~42%) — photo feathers into the card, no hard seam */}
-      <div className="relative shrink-0" style={{ width: "42%", minWidth: 130, borderRadius: "96px 0 0 96px", overflow: "hidden" }}>
-        {/* Masked layer: image + away tint + vertical darkening all fade out to the right together */}
-        <div className="absolute inset-0" style={{ maskImage: "linear-gradient(90deg, #000 58%, transparent 100%)", WebkitMaskImage: "linear-gradient(90deg, #000 58%, transparent 100%)" }}>
+      {/* Left: ballpark photo — bleeds to card edge, fades right */}
+      <div className="relative shrink-0 self-stretch" style={{ width: "42%", minWidth: 130 }}>
+        {/* Masked layer: image + tints fade out right */}
+        <div className="absolute inset-0" style={{ maskImage: "linear-gradient(90deg, #000 55%, transparent 100%)", WebkitMaskImage: "linear-gradient(90deg, #000 55%, transparent 100%)" }}>
           {stadium ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={stadium} alt="" className="absolute inset-0 w-full h-full object-cover"

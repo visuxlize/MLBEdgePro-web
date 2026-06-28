@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
-import { playerHeadshotUrl, teamLogoUrl, type Game } from "@/lib/mlb/api";
+import { playerHeadshotUrl, teamLogoDarkUrl, type Game } from "@/lib/mlb/api";
 
 // Re-export all server-safe utilities so existing imports from this module still work.
 export {
@@ -36,7 +36,8 @@ export function LogoBadge({
   const r = radius ?? Math.round(size * 0.3);
   const ink = contrastText(hex);
   const pad = Math.round(size * 0.15);
-  const logoSrc = teamLogoUrl(teamId);
+  // Use the cap-on-dark variant — always white/light, visible on any team-color plate
+  const logoSrc = teamLogoDarkUrl(teamId);
 
   return (
     <div
@@ -69,24 +70,29 @@ export function LogoBadge({
   );
 }
 
-/* ── Blended player headshot (fades into the card at the bottom) ─────────────── */
+/* ── Blended player headshot — portrait crop, full face, team-color bottom fade ─ */
 
 export function BlendedHeadshot({
   id, name, size = 64, teamId,
 }: { id: number; name: string; size?: number; teamId?: number }) {
   const hex = teamId !== undefined ? teamHex(teamId) : "#7c5cfa";
+  // Portrait: 1.3× taller than wide so the full head + shoulders shows without clipping
+  const w = size;
+  const h = Math.round(size * 1.35);
+  const r = Math.round(size * 0.15);
   return (
-    <div className="relative shrink-0 overflow-hidden" style={{ width: size, height: size, borderRadius: Math.round(size * 0.15) }}>
+    <div className="relative shrink-0 overflow-hidden" style={{ width: w, height: h, borderRadius: r }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={playerHeadshotUrl(id)}
         alt={name}
-        className="absolute inset-0 w-full h-full object-cover object-top"
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{ objectPosition: "50% 5%" }}
         onError={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = "0"; }}
       />
-      {/* Fade bottom into card, subtle team color tint */}
+      {/* Subtle team-color gradient fades the lower third into the card */}
       <div className="absolute inset-0 pointer-events-none"
-        style={{ background: `linear-gradient(to bottom, transparent 50%, ${alpha(hex, "44")} 80%, rgba(6,7,13,.85) 100%)` }} />
+        style={{ background: `linear-gradient(to bottom, transparent 55%, ${alpha(hex, "55")} 82%, rgba(6,7,13,.92) 100%)` }} />
     </div>
   );
 }
