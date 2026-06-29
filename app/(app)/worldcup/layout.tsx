@@ -1,21 +1,21 @@
 import { PaywallGate } from "@/components/web-tool/paywall-gate";
-import { WorldCupNav } from "@/components/worldcup/WorldCupNav";
+import { WCNav } from "@/components/worldcup/WCNav";
 
-export default function WorldCupLayout({ children }: { children: React.ReactNode }) {
+export default function WCLayout({ children }: { children: React.ReactNode }) {
   return (
     <PaywallGate
       requiredTier="pro"
-      feature="FIFA World Cup Analysis"
+      feature="FIFA World Cup 2026"
       benefits={[
-        "Tournament bracket and simulation insights",
-        "Host city map with venue context",
-        "Live World Cup betting/props dashboard",
-        "Head-to-head lineup and matchup analysis",
+        "Live group standings & match scores",
+        "Full knockout bracket with AI predictions",
+        "Match analysis & xG metrics",
+        "AI tournament simulation (10,000 runs)",
       ]}
     >
-      <div className="spotlight min-h-screen px-3 sm:px-4 py-6 sm:py-8" style={{ background: "var(--bg)" }}>
-        <div className="max-w-7xl mx-auto mb-5 sm:mb-6">
-          <WorldCupNav />
+      <div className="spotlight min-h-screen" style={{ background: "var(--bg)" }}>
+        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 pt-4 pb-2">
+          <WCNav />
         </div>
         {children}
       </div>

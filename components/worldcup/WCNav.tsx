@@ -6,12 +6,12 @@ import { Globe, LayoutGrid, Trophy, Gamepad2, BarChart3, Cpu, ArrowLeft } from "
 import { motion } from "framer-motion";
 
 const NAV_ITEMS = [
-  { href: "/wc",          label: "Hub",      emoji: "🌐", icon: Globe },
-  { href: "/wc/groups",   label: "Groups",   emoji: null, icon: LayoutGrid },
-  { href: "/wc/bracket",  label: "Bracket",  emoji: "🏆", icon: Trophy },
-  { href: "/wc/games",    label: "Games",    emoji: "⚽", icon: Gamepad2 },
-  { href: "/wc/analysis", label: "Analysis", emoji: "📊", icon: BarChart3 },
-  { href: "/wc/ai-sim",   label: "AI Sim",   emoji: "⬡",  icon: Cpu },
+  { href: "/worldcup",          label: "Hub",      emoji: "🌐", icon: Globe },
+  { href: "/worldcup/groups",   label: "Groups",   emoji: null, icon: LayoutGrid },
+  { href: "/worldcup/bracket",  label: "Bracket",  emoji: "🏆", icon: Trophy },
+  { href: "/worldcup/games",    label: "Games",    emoji: "⚽", icon: Gamepad2 },
+  { href: "/worldcup/analysis", label: "Analysis", emoji: "📊", icon: BarChart3 },
+  { href: "/worldcup/ai-sim",   label: "AI Sim",   emoji: "⬡",  icon: Cpu },
 ];
 
 export function WCNav() {
@@ -44,7 +44,7 @@ export function WCNav() {
         {/* Tab pills */}
         <nav className="flex items-center gap-1 overflow-x-auto">
           {NAV_ITEMS.map(({ href, label, emoji }) => {
-            const active = pathname === href || (href !== "/wc" && pathname.startsWith(href));
+            const active = pathname === href || (href !== "/worldcup" && pathname.startsWith(href));
             return (
               <Link key={href} href={href} className="shrink-0">
                 <motion.div

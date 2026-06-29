@@ -1,492 +1,835 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import {
-  Trophy, Map, Users, ArrowRight, Globe2, Clock,
-  LayoutGrid, Zap, ChevronRight,
-} from "lucide-react";
-import type { WCGroup } from "@/lib/worldcup/types";
-import type { TodayMatch } from "@/app/api/worldcup/today/route";
-import { WC_GROUPS, WC_TEAMS } from "@/lib/worldcup/data";
+import { WC_TEAMS, WC_GROUPS, eloWinProb } from "@/lib/worldcup/data";
+import type { WCGroup, GSMatch, GSTeam } from "@/lib/worldcup/types";
 
-// ── Stadium data with real photo URLs ─────────────────────────────────────────
+// ── Flag helpers ──────────────────────────────────────────────────────────────
 
-const STADIUMS = [
-  {
-    name: "MetLife Stadium",  city: "New York/NJ",  capacity: "82,500", matches: 8,
-    from: "#1B4D8E", to: "#0F2D56", country: "us", isFinal: true,
-    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/MetLife_Stadium.jpg?width=400",
-  },
-  {
-    name: "Estadio Azteca",   city: "Mexico City",  capacity: "87,523", matches: 7,
-    from: "#006341", to: "#004225", country: "mx",
-    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Azteca_Stadium.jpg?width=400",
-  },
-  {
-    name: "SoFi Stadium",     city: "Los Angeles",  capacity: "70,240", matches: 7,
-    from: "#002244", to: "#0085CA", country: "us",
-    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/SoFi_Stadium_aerial_view.jpg?width=400",
-  },
-  {
-    name: "Hard Rock Stadium", city: "Miami",        capacity: "65,326", matches: 7,
-    from: "#008E97", to: "#005C62", country: "us",
-    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Hard_Rock_Stadium.jpg?width=400",
-  },
-  {
-    name: "AT&T Stadium",     city: "Dallas",       capacity: "80,000", matches: 6,
-    from: "#002647", to: "#869397", country: "us",
-    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/AT%26T_Stadium.jpg?width=400",
-  },
-  {
-    name: "Levi's Stadium",   city: "Bay Area",     capacity: "68,500", matches: 6,
-    from: "#AA0000", to: "#890000", country: "us",
-    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Levi%27s_Stadium.jpg?width=400",
-  },
-  {
-    name: "Lumen Field",      city: "Seattle",      capacity: "69,000", matches: 6,
-    from: "#002244", to: "#69BE28", country: "us",
-    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Lumen_Field.jpg?width=400",
-  },
-  {
-    name: "BMO Field",        city: "Toronto",      capacity: "45,000", matches: 6,
-    from: "#231F20", to: "#BE0000", country: "ca",
-    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/BMO_Field.jpg?width=400",
-  },
-  {
-    name: "BC Place",         city: "Vancouver",    capacity: "54,500", matches: 6,
-    from: "#00205B", to: "#001440", country: "ca",
-    imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/BC_Place.jpg?width=400",
-  },
-];
-
-// ── Nav Sections ──────────────────────────────────────────────────────────────
-
-const SECTIONS = [
-  { href: "/worldcup/groups",  icon: LayoutGrid, title: "Groups",   desc: "Live standings for all 12 groups",               accent: "#38BDF8" },
-  { href: "/worldcup/bracket", icon: Trophy,     title: "Bracket",  desc: "32-team knockout with ELO simulation & predictor", accent: "#FBBF24" },
-  { href: "/worldcup/map",     icon: Map,        title: "Venues",   desc: "Interactive host city & stadium map",              accent: "#34D399" },
-  { href: "/worldcup/h2h",     icon: Users,      title: "Analysis", desc: "AI match analysis, props & tournament predictor",  accent: "#818CF8" },
-];
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function flagUrl(countryCode: string) {
-  return `https://flagcdn.com/w80/${countryCode.toLowerCase()}.png`;
+function flagUrl(cc: string) {
+  return `https://flagcdn.com/24x18/${cc.split("-")[0]}.png`;
 }
 
-function FlagImg({ src, alt, className }: { src: string; alt: string; className?: string }) {
-  const [failed, setFailed] = useState(false);
-  if (failed) {
-    return (
-      <div className={`${className ?? ""} flex items-center justify-center bg-white/[0.12] text-white/50 font-black`}
-           style={{ fontSize: "6px" }}>
-        {alt.slice(0, 3).toUpperCase()}
-      </div>
-    );
-  }
+function FlagImg({ cc, size = 20 }: { cc: string; size?: number }) {
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img src={src} alt={alt} className={`${className ?? ""} object-cover`} onError={() => setFailed(true)} />
+    <img
+      src={flagUrl(cc)}
+      alt=""
+      width={size}
+      height={Math.round(size * 0.75)}
+      style={{ borderRadius: 2, objectFit: "cover", flexShrink: 0 }}
+    />
   );
 }
 
-function sortedTeams(teams: WCGroup["teams"]) {
+// ── Derived stat helpers ──────────────────────────────────────────────────────
+
+function computeStats(groups: WCGroup[]) {
+  let goals = 0;
+  let played = 0;
+  let cleanSheets = 0;
+
+  for (const g of groups) {
+    for (const m of g.matches) {
+      if (m.status === "completed" && m.homeScore !== null && m.awayScore !== null) {
+        goals += m.homeScore + m.awayScore;
+        played++;
+        if (m.homeScore === 0 || m.awayScore === 0) cleanSheets++;
+      }
+    }
+  }
+
+  const today = new Date("2026-06-28");
+  const finalDate = new Date("2026-07-19");
+  const daysToFinal = Math.ceil((finalDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+  return { goals, played, cleanSheets, daysToFinal, avgGoals: played > 0 ? goals / played : 0 };
+}
+
+function sortTeams(teams: GSTeam[]): GSTeam[] {
   return [...teams].sort((a, b) => {
     if (b.pts !== a.pts) return b.pts - a.pts;
-    const gdA = a.gf - a.ga, gdB = b.gf - b.ga;
-    if (gdB !== gdA) return gdB - gdA;
-    return b.gf - a.gf;
+    return (b.gf - b.ga) - (a.gf - a.ga);
   });
 }
 
-// ── Sub-components ─────────────────────────────────────────────────────────────
+function getTodayMatches(groups: WCGroup[]): Array<{ groupId: string; match: GSMatch }> {
+  const results: Array<{ groupId: string; match: GSMatch }> = [];
+  for (const g of groups) {
+    for (const m of g.matches) {
+      if (m.date === "Jun 28" || m.status === "live") {
+        results.push({ groupId: g.id, match: m });
+      }
+    }
+  }
+  return results.slice(0, 4);
+}
 
-function LiveBadge() {
+function getRecentResults(groups: WCGroup[]): Array<{ groupId: string; match: GSMatch }> {
+  const results: Array<{ groupId: string; match: GSMatch }> = [];
+  for (const g of groups) {
+    for (const m of g.matches) {
+      if (m.status === "completed") {
+        results.push({ groupId: g.id, match: m });
+      }
+    }
+  }
+  return results.slice(0, 3);
+}
+
+function getMustWatchMatches(groups: WCGroup[]): Array<{ groupId: string; match: GSMatch; strength: number }> {
+  const upcoming: Array<{ groupId: string; match: GSMatch; strength: number }> = [];
+  for (const g of groups) {
+    for (const m of g.matches) {
+      if (m.status === "scheduled") {
+        const homeTeam = WC_TEAMS[m.home];
+        const awayTeam = WC_TEAMS[m.away];
+        if (homeTeam && awayTeam) {
+          upcoming.push({ groupId: g.id, match: m, strength: homeTeam.strength + awayTeam.strength });
+        }
+      }
+    }
+  }
+  return upcoming.sort((a, b) => b.strength - a.strength).slice(0, 3);
+}
+
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+function WinProbBar({ home, away }: { home: string; away: string }) {
+  const homeTeam = WC_TEAMS[home];
+  const awayTeam = WC_TEAMS[away];
+  if (!homeTeam || !awayTeam) return null;
+
+  const homeProb = eloWinProb(homeTeam.strength, awayTeam.strength);
+  const awayProb = eloWinProb(awayTeam.strength, homeTeam.strength);
+  const drawProb = Math.max(0, 1 - homeProb - awayProb);
+
+  const hPct = Math.round(homeProb * 100);
+  const dPct = Math.round(drawProb * 100);
+  const aPct = 100 - hPct - dPct;
+
   return (
-    <div className="inline-flex items-center gap-1.5">
-      <motion.span
-        className="w-2 h-2 rounded-full bg-red-500"
-        animate={{ opacity: [1, 0.3, 1] }}
-        transition={{ duration: 1.2, repeat: Infinity }}
-      />
-      <span className="text-red-400 text-[10px] font-black uppercase tracking-widest">Live Now</span>
+    <div style={{ display: "flex", height: 4, borderRadius: 4, overflow: "hidden", gap: 1, marginTop: 6 }}>
+      <div style={{ flex: hPct, background: "var(--blue)", borderRadius: "4px 0 0 4px" }} title={`Home win: ${hPct}%`} />
+      <div style={{ flex: dPct, background: "rgba(255,255,255,0.2)" }} title={`Draw: ${dPct}%`} />
+      <div style={{ flex: aPct, background: "var(--red)", borderRadius: "0 4px 4px 0" }} title={`Away win: ${aPct}%`} />
     </div>
   );
 }
 
-function TodayMatchCard({ match }: { match: TodayMatch }) {
+function MatchCard({ groupId, match }: { groupId: string; match: GSMatch }) {
+  const homeTeam = WC_TEAMS[match.home];
+  const awayTeam = WC_TEAMS[match.away];
   const isLive = match.status === "live";
-  const isDone = match.status === "completed";
 
   return (
     <div
-      className="relative shrink-0 w-52 rounded-[var(--r-card)] p-3.5 overflow-hidden"
       style={{
-        border: isLive ? "1px solid rgba(239,68,68,0.35)" : "1px solid var(--hairline)",
-        background: isLive
-          ? "linear-gradient(135deg, rgba(239,68,68,0.09), var(--panel))"
-          : "var(--panel)",
+        background: "var(--panel)",
+        border: `1px solid ${isLive ? "var(--red)" : "var(--hairline)"}`,
+        borderRadius: "var(--r-tile)",
+        padding: "10px 12px",
+        marginBottom: 8,
       }}
     >
-      {isLive && (
-        <div className="absolute top-2 right-2">
-          <LiveBadge />
-        </div>
-      )}
-      <div className="font-spot-sans text-[9px] font-bold uppercase tracking-wider mb-2" style={{ color: "var(--text-ghost)" }}>
-        Group {match.groupId}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+        <span
+          style={{
+            fontSize: 9,
+            fontWeight: 700,
+            letterSpacing: "0.08em",
+            color: "var(--gold-2)",
+            background: "var(--gold-tint)",
+            border: "1px solid var(--gold-line)",
+            borderRadius: "var(--r-badge)",
+            padding: "2px 7px",
+            textTransform: "uppercase",
+          }}
+        >
+          GROUP {groupId}
+        </span>
+        {isLive && (
+          <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: "var(--red)" }}>
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                background: "var(--red)",
+                animation: "pulse 1.5s infinite",
+              }}
+            />
+            LIVE
+          </span>
+        )}
       </div>
-      <div className="flex items-center justify-between gap-2 mb-2">
-        <div className="flex items-center gap-1.5 flex-1 min-w-0">
-          <FlagImg src={match.homeFlagUrl} alt={match.home} className="w-5 h-5 rounded-full border border-white/10 shrink-0" />
-          <span className="font-spot-sans text-xs font-bold truncate" style={{ color: "var(--text)" }}>{WC_TEAMS[match.homeId]?.shortName ?? match.home.slice(0,3).toUpperCase()}</span>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          {homeTeam && <FlagImg cc={homeTeam.countryCode} size={16} />}
+          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>
+            {homeTeam?.shortName ?? match.home.toUpperCase()}
+          </span>
         </div>
-        <div className="flex items-center gap-1 shrink-0">
-          {(isLive || isDone) && match.homeScore !== null ? (
-            <span className="font-spot-mono text-sm font-black" style={{ color: "var(--text)" }}>
-              {match.homeScore} – {match.awayScore}
-            </span>
-          ) : (
-            <span className="font-spot-mono text-[10px] font-bold" style={{ color: "var(--text-ghost)" }}>vs</span>
-          )}
-        </div>
-        <div className="flex items-center gap-1.5 flex-1 min-w-0 justify-end">
-          <span className="font-spot-sans text-xs font-bold truncate text-right" style={{ color: "var(--text)" }}>{WC_TEAMS[match.awayId]?.shortName ?? match.away.slice(0,3).toUpperCase()}</span>
-          <FlagImg src={match.awayFlagUrl} alt={match.away} className="w-5 h-5 rounded-full border border-white/10 shrink-0" />
+        <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", fontFamily: "var(--font-spot-mono, monospace)" }}>
+          {match.status === "completed" || match.status === "live"
+            ? `${match.homeScore ?? 0} – ${match.awayScore ?? 0}`
+            : match.time}
+        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>
+            {awayTeam?.shortName ?? match.away.toUpperCase()}
+          </span>
+          {awayTeam && <FlagImg cc={awayTeam.countryCode} size={16} />}
         </div>
       </div>
-      <div className="flex items-center gap-1 font-spot-sans text-[9px]" style={{ color: "var(--text-ghost)" }}>
-        <Clock size={9} />
-        <span>{match.time}</span>
-        <span style={{ color: "var(--text-faint)" }}>·</span>
-        <span className="truncate">{match.venue.split(",")[0]}</span>
-      </div>
+      {match.status === "scheduled" && <WinProbBar home={match.home} away={match.away} />}
+      <div style={{ fontSize: 10, color: "var(--text-ghost)", marginTop: 5 }}>{match.venue}</div>
     </div>
   );
 }
 
-function GroupMiniCard({ group }: { group: WCGroup }) {
-  const top2 = sortedTeams(group.teams).slice(0, 2);
+function MiniGroupCard({ group }: { group: WCGroup }) {
+  const sorted = sortTeams(group.teams);
+  const played = group.matches.filter((m) => m.status === "completed").length;
+
   return (
-    <Link href="/worldcup/groups" className="block group">
-      <div className="rounded-[var(--r-tile)] p-3 transition-all" style={{ border: "1px solid var(--hairline)", background: "var(--panel)" }}>
-        <div className="font-spot-sans text-[9px] font-black uppercase tracking-widest mb-2" style={{ color: "var(--text-ghost)" }}>Group {group.id}</div>
-        {top2.map((t, i) => {
+    <div
+      style={{
+        background: "var(--panel)",
+        border: "1px solid var(--hairline)",
+        borderRadius: "var(--r-tile)",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          borderLeft: "3px solid var(--gold)",
+          padding: "8px 10px 6px",
+        }}
+      >
+        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", color: "var(--gold-2)", textTransform: "uppercase" }}>
+          Group {group.id}
+        </div>
+        <div style={{ fontSize: 10, color: "var(--text-ghost)", marginTop: 1 }}>{played} played</div>
+      </div>
+      <div>
+        {sorted.map((t, i) => {
           const team = WC_TEAMS[t.teamId];
+          const rowBorderColor = i < 2 ? "var(--green)" : i === 2 ? "var(--gold)" : "transparent";
+          const ptsColor = i < 2 ? "var(--green)" : i === 2 ? "var(--gold)" : "var(--text-ghost)";
+
           return (
-            <div key={t.teamId} className="flex items-center gap-2 mb-1 last:mb-0">
-              <span className="font-spot-mono text-[9px] w-2.5" style={{ color: "var(--text-faint)" }}>{i + 1}</span>
-              <FlagImg src={flagUrl(team?.countryCode ?? t.teamId)} alt={team?.shortName ?? t.teamId.toUpperCase()} className="w-3.5 h-3.5 rounded-full border border-white/10" />
-              <span className="font-spot-sans text-[10px] font-bold flex-1 truncate" style={{ color: "var(--text-2)" }}>{team?.shortName ?? t.teamId.toUpperCase()}</span>
-              <span className="font-spot-mono text-[10px] font-black" style={{ color: "#FBBF24" }}>{t.pts}pt</span>
+            <div
+              key={t.teamId}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "5px 10px",
+                borderLeft: `3px solid ${rowBorderColor}`,
+                background: i < 2 ? "rgba(52,211,153,0.04)" : "transparent",
+              }}
+            >
+              <span style={{ fontSize: 9, color: "var(--text-ghost)", width: 10 }}>{i + 1}</span>
+              {team && <FlagImg cc={team.countryCode} size={14} />}
+              <span style={{ fontSize: 11, color: "var(--text)", flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {team?.shortName ?? t.teamId.toUpperCase()}
+              </span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: ptsColor }}>{t.pts}</span>
             </div>
           );
         })}
       </div>
-    </Link>
-  );
-}
-
-function StadiumCard({ s }: { s: typeof STADIUMS[number] }) {
-  const [imgFailed, setImgFailed] = useState(false);
-
-  return (
-    <Link href="/worldcup/map" className="block shrink-0 group">
-      <div className="relative w-48 h-32 rounded-2xl overflow-hidden border border-white/[0.06] group-hover:border-white/[0.18] transition-all duration-200">
-        {/* Real stadium photo */}
-        {!imgFailed && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={s.imageUrl}
-            alt={s.name}
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{ opacity: 0.55 }}
-            onError={() => setImgFailed(true)}
-          />
-        )}
-        {/* Color tint overlay */}
-        <div
-          className="absolute inset-0"
-          style={{ background: imgFailed ? `linear-gradient(135deg, ${s.from}, ${s.to})` : `linear-gradient(135deg, ${s.from}99, ${s.to}66)` }}
-        />
-        {/* Bottom fade */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
-
-        {/* Final badge */}
-        {s.isFinal && (
-          <div className="absolute top-2 left-2">
-            <div className="flex items-center gap-1 rounded-full bg-[#FBBF24]/20 border border-[#FBBF24]/40 px-1.5 py-0.5 backdrop-blur-sm">
-              <Trophy size={8} className="text-[#FBBF24]" />
-              <span className="text-[8px] font-black text-[#FBBF24]">FINAL</span>
-            </div>
-          </div>
-        )}
-
-        {/* Country flag */}
-        <div className="absolute top-2 right-2">
-          <FlagImg
-            src={flagUrl(s.country)}
-            alt={s.country}
-            className="w-5 h-3.5 rounded overflow-hidden border border-white/20"
-          />
-        </div>
-
-        <div className="absolute bottom-0 left-0 right-0 p-2.5">
-          <div className="text-[10px] font-black text-white leading-tight">{s.name}</div>
-          <div className="text-[8px] text-white/50 mt-0.5">{s.city} · {s.matches} matches · {s.capacity}</div>
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-// ── WC Trophy Hero visual ─────────────────────────────────────────────────────
-
-function TrophyHero() {
-  return (
-    <div className="hidden md:flex flex-col items-center justify-center relative shrink-0 w-52">
-      {/* Outer glow ring */}
-      <motion.div
-        className="absolute rounded-full"
-        style={{ width: 180, height: 180, background: "radial-gradient(ellipse, rgba(251,191,36,0.18), transparent 70%)" }}
-        animate={{ scale: [1, 1.08, 1], opacity: [0.7, 1, 0.7] }}
-        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-      />
-      {/* Stars orbit */}
-      {[0, 60, 120, 180, 240, 300].map((deg, i) => (
-        <motion.div
-          key={i}
-          className="absolute text-[10px]"
-          style={{
-            transform: `rotate(${deg}deg) translateY(-72px) rotate(-${deg}deg)`,
-          }}
-          animate={{ opacity: [0.4, 0.9, 0.4] }}
-          transition={{ duration: 2, delay: i * 0.3, repeat: Infinity }}
-        >
-          ⭐
-        </motion.div>
-      ))}
-      {/* Trophy icon */}
-      <div className="relative z-10 flex flex-col items-center">
-        <Trophy
-          size={80}
-          strokeWidth={1.5}
-          style={{
-            color: "#FBBF24",
-            filter: "drop-shadow(0 0 24px rgba(251,191,36,0.7)) drop-shadow(0 0 6px rgba(251,191,36,0.9))",
-          }}
-        />
-        <div className="mt-2 text-5xl font-black tracking-tight" style={{ color: "#FBBF24", textShadow: "0 0 20px rgba(251,191,36,0.5)" }}>
-          2026
-        </div>
-        {/* Three-nation accent */}
-        <div className="flex items-center gap-1 mt-2">
-          {["us", "ca", "mx"].map((cc) => (
-            <FlagImg key={cc} src={flagUrl(cc)} alt={cc} className="w-6 h-4 rounded overflow-hidden border border-white/20" />
-          ))}
-        </div>
-      </div>
     </div>
   );
+}
+
+// ── Top contenders for AI panel ───────────────────────────────────────────────
+
+function getContenders() {
+  return Object.values(WC_TEAMS)
+    .sort((a, b) => b.strength - a.strength)
+    .slice(0, 8)
+    .map((team) => ({
+      team,
+      trophyPct: ((team.strength - 1400) / (1900 - 1400)) * 28 + 2,
+    }));
+}
+
+function getTopThree() {
+  return getContenders().slice(0, 3);
 }
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
-export default function WorldCupHubPage() {
-  const [todayMatches, setTodayMatches] = useState<TodayMatch[]>([]);
+export default function WCHubPage() {
   const [groups, setGroups] = useState<WCGroup[]>(WC_GROUPS);
-  const [hasLive, setHasLive] = useState(false);
 
   useEffect(() => {
     fetch("/api/worldcup/today")
       .then((r) => r.json())
-      .then(({ matches }: { matches: TodayMatch[] }) => {
-        setTodayMatches(matches ?? []);
-        setHasLive((matches ?? []).some((m) => m.status === "live"));
-      })
-      .catch(() => {});
+      .catch(() => null);
 
     fetch("/api/worldcup/groups")
       .then((r) => r.json())
-      .then(({ groups: g }: { groups: WCGroup[] }) => {
-        if (g?.length) setGroups(g);
+      .then((data: WCGroup[]) => {
+        if (Array.isArray(data) && data.length > 0) setGroups(data);
       })
-      .catch(() => {});
+      .catch(() => null);
   }, []);
 
+  const stats = computeStats(groups);
+  const todayMatches = getTodayMatches(groups);
+  const recentResults = getRecentResults(groups);
+  const mustWatch = getMustWatchMatches(groups);
+  const contenders = getContenders();
+  const topThree = getTopThree();
+
+  const rankLabel = ["1st", "2nd", "3rd"];
+
   return (
-    <div className="max-w-5xl mx-auto space-y-8 pb-10 px-4 sm:px-0">
+    <>
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.3; }
+        }
+        @keyframes livePulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+          50% { box-shadow: 0 0 0 6px rgba(239,68,68,0.15); }
+        }
+      `}</style>
 
-      {/* ── Hero ── */}
+      {/* ── Hero ───────────────────────────────────────────────────── */}
       <div
-        className="relative rounded-3xl overflow-hidden"
-        style={{ background: "linear-gradient(135deg, #051128 0%, #0E2450 35%, #081830 65%, #130D00 100%)" }}
+        style={{
+          background: "var(--panel)",
+          borderBottom: "1px solid var(--hairline)",
+          position: "relative",
+          overflow: "hidden",
+          minHeight: 220,
+        }}
       >
-        {/* Background radial glows */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse 60% 70% at 75% 50%, rgba(251,191,36,0.12), transparent)" }} />
-          <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse 40% 60% at 15% 50%, rgba(30,90,200,0.10), transparent)" }} />
-          <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse 30% 40% at 50% 100%, rgba(180,50,0,0.06), transparent)" }} />
-          {/* Subtle grid overlay */}
-          <div className="absolute inset-0 opacity-[0.04]"
-            style={{ backgroundImage: "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
-        </div>
+        {/* gold glow */}
+        <div
+          style={{
+            position: "absolute",
+            top: -60,
+            right: -60,
+            width: 400,
+            height: 400,
+            borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(245,158,11,0.18) 0%, transparent 70%)",
+            pointerEvents: "none",
+          }}
+        />
 
-        <div className="relative flex items-center gap-6 px-8 py-10">
-          {/* Left: Text */}
-          <div className="flex-1 min-w-0">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#FBBF24]/20 bg-[#FBBF24]/[0.06] px-4 py-1.5 mb-5">
-              <Globe2 size={11} className="text-[#FBBF24]" />
-              <span className="text-[9px] font-black text-[#FBBF24] tracking-[0.2em] uppercase">FIFA World Cup 2026</span>
-              {hasLive && (
-                <>
-                  <span className="text-white/15 mx-1">·</span>
-                  <LiveBadge />
-                </>
-              )}
+        <div
+          style={{
+            maxWidth: 1400,
+            margin: "0 auto",
+            padding: "28px 28px 24px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 32,
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
+          {/* Left content */}
+          <div>
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                background: "var(--gold-tint)",
+                border: "1px solid var(--gold-line)",
+                borderRadius: "var(--r-badge)",
+                padding: "3px 10px",
+                marginBottom: 12,
+              }}
+            >
+              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: "var(--gold)", textTransform: "uppercase" }}>
+                FIFA World Cup 2026
+              </span>
             </div>
 
-            <h1 className="text-5xl sm:text-6xl font-black text-white leading-none tracking-tight mb-1">
-              WORLD
+            <h1
+              style={{
+                fontSize: 52,
+                fontWeight: 900,
+                lineHeight: 1,
+                margin: "0 0 10px",
+                background: "var(--grad-gold)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
+              WORLD CUP
             </h1>
-            <h1 className="text-5xl sm:text-6xl font-black leading-none tracking-tight mb-4" style={{ color: "#FBBF24", textShadow: "0 0 40px rgba(251,191,36,0.3)" }}>
-              CUP
-            </h1>
 
-            {/* Country flags row */}
-            <div className="flex items-center gap-2 mb-2">
-              {[
-                { cc: "us", name: "USA" },
-                { cc: "ca", name: "Canada" },
-                { cc: "mx", name: "Mexico" },
-              ].map(({ cc, name }) => (
-                <div key={cc} className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-1">
-                  <FlagImg src={flagUrl(cc)} alt={name} className="w-4 h-3 rounded overflow-hidden" />
-                  <span className="text-[9px] font-bold text-white/60">{name}</span>
-                </div>
-              ))}
-            </div>
+            <p style={{ fontSize: 15, color: "var(--text-2)", margin: "0 0 20px" }}>
+              2026 · USA 🇺🇸 · Canada 🇨🇦 · Mexico 🇲🇽
+            </p>
 
-            <p className="text-white/35 text-xs mb-6">48 teams · Jun 11 – Jul 21, 2026</p>
-
-            <div className="flex items-center gap-3 flex-wrap">
-              <Link
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <a
                 href="/worldcup/groups"
-                className="inline-flex items-center gap-2 rounded-xl bg-[#FBBF24] text-black text-xs font-black px-5 py-2.5 hover:bg-[#F59E0B] transition-colors shadow-lg"
-                style={{ boxShadow: "0 4px 20px rgba(251,191,36,0.35)" }}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  background: "var(--gold)",
+                  color: "#000",
+                  border: "none",
+                  borderRadius: "var(--r-chip)",
+                  padding: "9px 18px",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  textDecoration: "none",
+                }}
               >
-                <LayoutGrid size={13} />
                 Live Groups
-              </Link>
-              <Link
+              </a>
+              <a
                 href="/worldcup/bracket"
-                className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/[0.06] text-white text-xs font-black px-5 py-2.5 hover:bg-white/[0.10] transition-colors"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  background: "transparent",
+                  color: "var(--text)",
+                  border: "1px solid var(--hairline)",
+                  borderRadius: "var(--r-chip)",
+                  padding: "9px 18px",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  textDecoration: "none",
+                }}
               >
-                <Trophy size={13} />
-                Bracket
-              </Link>
+                Full Bracket
+              </a>
+              <a
+                href="/worldcup/ai-sim"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  background: "rgba(124,92,250,0.12)",
+                  color: "var(--purple-2)",
+                  border: "1px solid rgba(124,92,250,0.3)",
+                  borderRadius: "var(--r-chip)",
+                  padding: "9px 18px",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  textDecoration: "none",
+                }}
+              >
+                ⬡ Run AI Sim
+              </a>
             </div>
           </div>
 
-          {/* Right: Trophy visual (desktop only) */}
-          <TrophyHero />
+          {/* Right: AI Favorites podium */}
+          <div
+            style={{
+              display: "flex",
+              gap: 10,
+              flexShrink: 0,
+            }}
+            className="hidden md:flex"
+          >
+            {topThree.map((c, i) => (
+              <motion.div
+                key={c.team.id}
+                whileHover={{ scale: 1.04 }}
+                style={{
+                  background: "var(--panel-2)",
+                  border: `1px solid ${i === 0 ? "var(--gold-line)" : "var(--hairline)"}`,
+                  borderRadius: "var(--r-tile)",
+                  padding: "12px 14px",
+                  minWidth: 110,
+                  textAlign: "center",
+                  cursor: "default",
+                }}
+              >
+                <div style={{ fontSize: 10, color: "var(--text-ghost)", marginBottom: 6, letterSpacing: "0.06em" }}>
+                  {rankLabel[i]}
+                </div>
+                <div style={{ display: "flex", justifyContent: "center", marginBottom: 6 }}>
+                  <FlagImg cc={c.team.countryCode} size={28} />
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: i === 0 ? "var(--gold-2)" : "var(--text)", marginBottom: 4 }}>
+                  {c.team.shortName}
+                </div>
+                <div
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: "var(--gold)",
+                    fontFamily: "var(--font-spot-mono, monospace)",
+                  }}
+                >
+                  {c.trophyPct.toFixed(1)}%
+                </div>
+                <div style={{ fontSize: 9, color: "var(--text-ghost)", marginTop: 2 }}>trophy</div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* ── Today's Matches ── */}
-      {todayMatches.length > 0 && (
-        <section>
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Zap size={14} style={{ color: "var(--orange)" }} />
-              <span className="font-spot-sans text-sm font-black" style={{ color: "var(--text)" }}>Today&apos;s Matches</span>
-              {hasLive && <LiveBadge />}
+      {/* ── Stats Strip ─────────────────────────────────────────────── */}
+      <div
+        style={{
+          background: "var(--panel-2)",
+          borderBottom: "1px solid var(--hairline)",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 1400,
+            margin: "0 auto",
+            padding: "0 28px",
+            display: "flex",
+            alignItems: "stretch",
+          }}
+        >
+          {[
+            { value: stats.goals.toString(), label: "Goals Scored", sub: "group stage" },
+            { value: stats.avgGoals.toFixed(1), label: "Avg Goals/Match", sub: "per game" },
+            { value: stats.played.toString(), label: "Matches Played", sub: "of 48 group" },
+            { value: stats.cleanSheets.toString(), label: "Clean Sheets", sub: "shutouts" },
+            { value: stats.daysToFinal.toString(), label: "Days to Final", sub: "Jul 19 · MetLife" },
+          ].map((s, i, arr) => (
+            <div
+              key={s.label}
+              style={{
+                flex: 1,
+                padding: "14px 20px",
+                borderRight: i < arr.length - 1 ? "1px solid var(--hairline)" : "none",
+                textAlign: "center",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 24,
+                  fontWeight: 700,
+                  color: "var(--gold)",
+                  fontFamily: "var(--font-spot-mono, monospace)",
+                  lineHeight: 1,
+                }}
+              >
+                {s.value}
+              </div>
+              <div style={{ fontSize: 11, color: "var(--text-2)", marginTop: 4 }}>{s.label}</div>
+              <div style={{ fontSize: 9, color: "var(--text-ghost)", marginTop: 2 }}>{s.sub}</div>
             </div>
-            <Link href="/worldcup/groups" className="font-spot-sans text-[10px] font-bold flex items-center gap-1" style={{ color: "var(--text-muted)" }}>
-              All matches <ChevronRight size={10} />
-            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* ── 3-col Body ──────────────────────────────────────────────── */}
+      <div
+        style={{
+          maxWidth: 1400,
+          margin: "0 auto",
+          padding: "22px 28px",
+          display: "flex",
+          gap: 20,
+          alignItems: "flex-start",
+        }}
+      >
+        {/* ── Left Column ─────────────────────────────────────────────── */}
+        <div style={{ width: 300, flexShrink: 0 }}>
+          {/* Today's Matches */}
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+              <span
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  background: "var(--red)",
+                  animation: "pulse 1.5s infinite",
+                  flexShrink: 0,
+                }}
+              />
+              <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                Today&apos;s Matches
+              </span>
+            </div>
+            {todayMatches.length === 0 ? (
+              <div style={{ fontSize: 12, color: "var(--text-ghost)", padding: "16px 0" }}>No matches today</div>
+            ) : (
+              todayMatches.map(({ groupId, match }, i) => (
+                <MatchCard key={i} groupId={groupId} match={match} />
+              ))
+            )}
           </div>
-          <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
-            {todayMatches.map((m, i) => (
-              <TodayMatchCard key={i} match={m} />
+
+          {/* Yesterday's Results */}
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>
+              Recent Results
+            </div>
+            {recentResults.map(({ groupId, match }, i) => {
+              const homeTeam = WC_TEAMS[match.home];
+              const awayTeam = WC_TEAMS[match.away];
+              return (
+                <div
+                  key={i}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "7px 0",
+                    borderBottom: "1px solid var(--hairline)",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: 9,
+                      fontWeight: 700,
+                      color: "var(--gold-2)",
+                      background: "var(--gold-tint)",
+                      border: "1px solid var(--gold-line)",
+                      borderRadius: "var(--r-badge)",
+                      padding: "1px 6px",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {groupId}
+                  </span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--text)" }}>
+                    {homeTeam && <FlagImg cc={homeTeam.countryCode} size={14} />}
+                    <span style={{ fontWeight: 600 }}>{homeTeam?.shortName ?? match.home.toUpperCase()}</span>
+                    <span
+                      style={{
+                        fontFamily: "var(--font-spot-mono, monospace)",
+                        fontWeight: 700,
+                        color: "var(--text-2)",
+                        margin: "0 4px",
+                      }}
+                    >
+                      {match.homeScore}–{match.awayScore}
+                    </span>
+                    <span style={{ fontWeight: 600 }}>{awayTeam?.shortName ?? match.away.toUpperCase()}</span>
+                    {awayTeam && <FlagImg cc={awayTeam.countryCode} size={14} />}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── Center Column ───────────────────────────────────────────── */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Group Standings Grid */}
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12 }}>
+              Group Standings
+            </div>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(4, 1fr)",
+                gap: 12,
+              }}
+            >
+              {groups.map((group) => (
+                <MiniGroupCard key={group.id} group={group} />
+              ))}
+            </div>
+          </div>
+
+          {/* Must-Watch Today */}
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12 }}>
+              Must-Watch Upcoming
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+              {mustWatch.map(({ groupId, match }, i) => {
+                const homeTeam = WC_TEAMS[match.home];
+                const awayTeam = WC_TEAMS[match.away];
+                return (
+                  <motion.div
+                    key={i}
+                    whileHover={{ scale: 1.02 }}
+                    style={{
+                      background: "var(--panel)",
+                      border: "1px solid var(--hairline)",
+                      borderRadius: "var(--r-tile)",
+                      padding: "12px 14px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 700,
+                        color: "var(--gold)",
+                        fontFamily: "var(--font-spot-mono, monospace)",
+                        marginBottom: 8,
+                      }}
+                    >
+                      {match.time}
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                        {homeTeam && <FlagImg cc={homeTeam.countryCode} size={16} />}
+                        <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text)" }}>
+                          {homeTeam?.shortName ?? match.home.toUpperCase()}
+                        </span>
+                      </div>
+                      <span style={{ fontSize: 11, color: "var(--text-ghost)" }}>vs</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text)" }}>
+                          {awayTeam?.shortName ?? match.away.toUpperCase()}
+                        </span>
+                        {awayTeam && <FlagImg cc={awayTeam.countryCode} size={16} />}
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 10, color: "var(--text-ghost)", marginBottom: 4 }}>{match.venue}</div>
+                    <div style={{ fontSize: 9, color: "var(--text-muted)", letterSpacing: "0.06em" }}>
+                      GROUP {groupId} · {match.date}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Right Column ────────────────────────────────────────────── */}
+        <div style={{ width: 270, flexShrink: 0 }}>
+          {/* AI Contenders */}
+          <div
+            style={{
+              background: "var(--panel)",
+              border: "1px solid var(--hairline)",
+              borderRadius: "var(--r-card)",
+              padding: "14px 16px",
+              marginBottom: 16,
+            }}
+          >
+            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12 }}>
+              ⬡ AI Contenders
+            </div>
+            {contenders.map((c, i) => (
+              <div
+                key={c.team.id}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "6px 0",
+                  borderBottom: i < contenders.length - 1 ? "1px solid var(--hairline)" : "none",
+                }}
+              >
+                <span style={{ fontSize: 11, color: "var(--text-ghost)", width: 16, textAlign: "right" }}>{i + 1}</span>
+                <FlagImg cc={c.team.countryCode} size={16} />
+                <span style={{ fontSize: 12, color: "var(--text)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {c.team.name}
+                </span>
+                <span style={{ fontSize: 10, color: "var(--text-ghost)", fontFamily: "var(--font-spot-mono, monospace)" }}>
+                  {c.team.strength}
+                </span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: "var(--gold)", fontFamily: "var(--font-spot-mono, monospace)", minWidth: 38, textAlign: "right" }}>
+                  {c.trophyPct.toFixed(1)}%
+                </span>
+              </div>
+            ))}
+            <a
+              href="/worldcup/ai-sim"
+              style={{
+                display: "block",
+                marginTop: 12,
+                background: "rgba(124,92,250,0.12)",
+                border: "1px solid rgba(124,92,250,0.3)",
+                borderRadius: "var(--r-chip)",
+                padding: "9px 14px",
+                textAlign: "center",
+                fontSize: 12,
+                fontWeight: 600,
+                color: "var(--purple-2)",
+                cursor: "pointer",
+                textDecoration: "none",
+              }}
+            >
+              ⬡ Run AI Tournament Sim
+            </a>
+          </div>
+
+          {/* Golden Boot Race */}
+          <div
+            style={{
+              background: "var(--panel)",
+              border: "1px solid var(--hairline)",
+              borderRadius: "var(--r-card)",
+              padding: "14px 16px",
+            }}
+          >
+            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12 }}>
+              🥅 Golden Boot Race
+            </div>
+            {[
+              { name: "Kylian Mbappé", cc: "fr", team: "FRA", goals: 2, assists: 1 },
+              { name: "Vinicius Jr", cc: "br", team: "BRA", goals: 2, assists: 0 },
+              { name: "Pedri", cc: "es", team: "ESP", goals: 1, assists: 2 },
+              { name: "C. Pulisic", cc: "us", team: "USA", goals: 1, assists: 1 },
+              { name: "Harry Kane", cc: "gb", team: "ENG", goals: 1, assists: 0 },
+            ].map((p, i) => (
+              <div
+                key={p.name}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "7px 0",
+                  borderBottom: i < 4 ? "1px solid var(--hairline)" : "none",
+                }}
+              >
+                <FlagImg cc={p.cc} size={16} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {p.name}
+                  </div>
+                  <div style={{ fontSize: 10, color: "var(--text-ghost)" }}>{p.team}</div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <span
+                    style={{
+                      fontSize: 16,
+                      fontWeight: 700,
+                      color: "var(--gold)",
+                      fontFamily: "var(--font-spot-mono, monospace)",
+                    }}
+                  >
+                    {p.goals}G
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      color: "var(--text-ghost)",
+                      fontFamily: "var(--font-spot-mono, monospace)",
+                      marginLeft: 4,
+                    }}
+                  >
+                    {p.assists}A
+                  </span>
+                </div>
+              </div>
             ))}
           </div>
-        </section>
-      )}
-
-      {/* ── Host Stadiums ── */}
-      <section>
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Map size={14} style={{ color: "#34D399" }} />
-            <span className="font-spot-sans text-sm font-black" style={{ color: "var(--text)" }}>Host Stadiums</span>
-          </div>
-          <Link href="/worldcup/map" className="font-spot-sans text-[10px] font-bold flex items-center gap-1" style={{ color: "var(--text-muted)" }}>
-            View map <ChevronRight size={10} />
-          </Link>
         </div>
-        <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
-          {STADIUMS.map((s) => (
-            <StadiumCard key={s.name} s={s} />
-          ))}
-        </div>
-      </section>
-
-      {/* ── Group Standings Preview ── */}
-      <section>
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <LayoutGrid size={14} style={{ color: "#38BDF8" }} />
-            <span className="font-spot-sans text-sm font-black" style={{ color: "var(--text)" }}>Group Standings</span>
-          </div>
-          <Link href="/worldcup/groups" className="font-spot-sans text-[10px] font-bold flex items-center gap-1" style={{ color: "var(--text-muted)" }}>
-            Full standings <ChevronRight size={10} />
-          </Link>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-          {groups.map((g) => (
-            <GroupMiniCard key={g.id} group={g} />
-          ))}
-        </div>
-      </section>
-
-      {/* ── Navigation Tiles ── */}
-      <section>
-        <div className="flex items-center gap-2 mb-3">
-          <span className="font-spot-sans text-sm font-black" style={{ color: "var(--text)" }}>Explore</span>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {SECTIONS.map(({ href, icon: Icon, title, desc, accent }) => (
-            <Link key={href} href={href} className="group block">
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="spot-lift rounded-[var(--r-card)] p-4 h-full"
-                style={{ border: "1px solid var(--hairline)", background: "var(--panel)" }}
-              >
-                <div
-                  className="w-9 h-9 rounded-[var(--r-tile)] flex items-center justify-center mb-3"
-                  style={{ background: `${accent}18`, border: `1px solid ${accent}28` }}
-                >
-                  <Icon size={16} style={{ color: accent }} strokeWidth={2} />
-                </div>
-                <div className="font-spot-sans text-sm font-black mb-1" style={{ color: "var(--text)" }}>{title}</div>
-                <p className="font-spot-sans text-[10px] leading-relaxed mb-3" style={{ color: "var(--text-muted)" }}>{desc}</p>
-                <div className="flex items-center gap-1 font-spot-sans text-[10px] font-bold" style={{ color: accent }}>
-                  Open
-                  <ArrowRight size={10} strokeWidth={2.5} className="transition-transform group-hover:translate-x-0.5" />
-                </div>
-              </motion.div>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <p className="font-spot-sans text-center text-[10px]" style={{ color: "var(--text-faint)" }}>
-        Live data: ESPN · ELO model · Updated in real-time
-      </p>
-    </div>
+      </div>
+    </>
   );
 }
