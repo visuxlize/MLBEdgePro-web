@@ -16,10 +16,17 @@ import { useSubscription } from "@/lib/subscription";
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-function todayStr() { return new Date().toISOString().slice(0, 10); }
+function localDateStr(date = new Date()) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+function todayStr() { return localDateStr(); }
 function addDays(d: string, n: number) {
-  const dt = new Date(d + "T12:00:00"); dt.setDate(dt.getDate() + n);
-  return dt.toISOString().slice(0, 10);
+  const dt = new Date(`${d}T12:00:00`);
+  dt.setDate(dt.getDate() + n);
+  return localDateStr(dt);
 }
 function labelFor(d: string) {
   const today = todayStr();
@@ -261,25 +268,43 @@ function SpotlightCard({ game, fav, onClick }: { game: Game; fav: boolean; onCli
         minHeight: 188,
       }}
     >
-      {/* Left: ballpark photo — bleeds to card edge, fades right */}
-      <div className="relative shrink-0 self-stretch" style={{ width: "42%", minWidth: 130 }}>
-        {/* Masked layer: image + tints fade out right */}
-        <div className="absolute inset-0" style={{ maskImage: "linear-gradient(90deg, #000 55%, transparent 100%)", WebkitMaskImage: "linear-gradient(90deg, #000 55%, transparent 100%)" }}>
-          {stadium ? (
+      {/* Left: ballpark photo — fills full card height, fades right */}
+      <div
+        className="relative shrink-0 self-stretch"
+        style={{
+          width: "42%", minWidth: 130,
+          background: `linear-gradient(160deg, ${alpha(awayHex, "88")} 0%, ${alpha(homeHex, "55")} 100%)`,
+        }}
+      >
+        {/* Masked layer: image + tints fade right */}
+        <div
+          className="absolute inset-0"
+          style={{
+            maskImage: "linear-gradient(90deg, #000 55%, transparent 100%)",
+            WebkitMaskImage: "linear-gradient(90deg, #000 55%, transparent 100%)",
+          }}
+        >
+          {stadium && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={stadium} alt="" className="absolute inset-0 w-full h-full object-cover"
-              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-          ) : (
-            <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${alpha(awayHex, "55")}, var(--panel))` }} />
+            <img
+              src={stadium}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover"
+              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+            />
           )}
-          {/* light away-color tint */}
-          <div className="absolute inset-0" style={{ background: alpha(awayHex, "26") }} />
           {/* top/bottom dark gradients for legibility */}
           <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(6,7,13,.55), transparent 32%, transparent 64%, rgba(6,7,13,.6))" }} />
         </div>
 
+        {/* Star sits above the masked layer with a strong shadow */}
         {fav && (
-          <span className="absolute bottom-3 left-4" style={{ zIndex: 1 }}><Star size={13} style={{ color: "var(--orange)" }} fill="currentColor" /></span>
+          <span
+            className="absolute bottom-3 left-4"
+            style={{ zIndex: 2, filter: "drop-shadow(0 2px 8px rgba(0,0,0,1)) drop-shadow(0 0 4px rgba(0,0,0,0.8))" }}
+          >
+            <Star size={14} style={{ color: "var(--orange)" }} fill="currentColor" />
+          </span>
         )}
       </div>
 
@@ -349,6 +374,19 @@ export default function GamesPage() {
   useEffect(() => {
     const stored = localStorage.getItem("mlbedge_fav_team");
     if (stored) setFavTeamId(Number(stored));
+  }, []);
+
+  // Midnight grace-period: between 12am–6am local, stay on yesterday if its games are still running
+  useEffect(() => {
+    const now = new Date();
+    if (now.getHours() >= 6) return;
+    const yesterday = addDays(localDateStr(), -1);
+    fetchGames(yesterday).then((yGames) => {
+      const hasActive = yGames.some(
+        (g) => !["Final", "Game Over", "Postponed", "Cancelled"].includes(g.status.detailedState),
+      );
+      if (hasActive) setDate(yesterday);
+    }).catch(() => {});
   }, []);
 
   useEffect(() => {
