@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { WC_TEAMS, WC_GROUPS, eloWinProb } from "@/lib/worldcup/data";
-import type { GSMatch, WCGroup } from "@/lib/worldcup/types";
+import { WC_TEAMS, WC_GROUPS, INITIAL_BRACKET, eloWinProb } from "@/lib/worldcup/data";
+import type { GSMatch, WCGroup, BracketState, RoundKey } from "@/lib/worldcup/types";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -10,9 +10,18 @@ function flagUrlLg(cc: string) {
   return `https://flagcdn.com/48x36/${cc.split("-")[0]}.png`;
 }
 
+const ROUND_LABEL: Record<RoundKey, string> = {
+  r32: "Round of 32",
+  r16: "Round of 16",
+  qf: "Quarterfinal",
+  sf: "Semifinal",
+  final: "Final",
+  "3rd": "3rd Place",
+};
+
 interface EnrichedMatch {
   id: string;
-  groupId: string;
+  sourceLabel: string; // "Group A" or "Round of 32" etc.
   match: GSMatch;
   homeTeam: (typeof WC_TEAMS)[string];
   awayTeam: (typeof WC_TEAMS)[string];
@@ -23,10 +32,33 @@ interface EnrichedMatch {
   xGAway: string;
 }
 
+function enrich(id: string, sourceLabel: string, match: GSMatch): EnrichedMatch | null {
+  const homeTeam = WC_TEAMS[match.home];
+  const awayTeam = WC_TEAMS[match.away];
+  if (!homeTeam || !awayTeam) return null;
+
+  const eloHome = eloWinProb(homeTeam.strength, awayTeam.strength);
+  const rawHomeWin = eloHome * 0.85;
+  const draw = 0.18;
+  const rawAwayWin = 1 - rawHomeWin - draw;
+  const total = rawHomeWin + draw + Math.max(0, rawAwayWin);
+  const homeWinPct = Math.round((rawHomeWin / total) * 100);
+  const drawPct = Math.round((draw / total) * 100);
+  const awayWinPct = 100 - homeWinPct - drawPct;
+
+  const xGHome = (homeWinPct * 0.028 + 0.8).toFixed(1);
+  const xGAway = (awayWinPct * 0.028 + 0.8).toFixed(1);
+
+  return { id, sourceLabel, match, homeTeam, awayTeam, homeWinPct, drawPct, awayWinPct, xGHome, xGAway };
+}
+
+type FilterId = "live" | "upcoming" | "completed";
+
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function WCAnalysisPage() {
   const [groups, setGroups] = useState<WCGroup[]>(WC_GROUPS);
+  const [bracket, setBracket] = useState<BracketState>(INITIAL_BRACKET);
   const [isLive, setIsLive] = useState(false);
 
   useEffect(() => {
@@ -40,62 +72,78 @@ export default function WCAnalysisPage() {
         }
       })
       .catch(() => null);
+
+    // Once the group stage ends there are no more "upcoming" group matches —
+    // the real upcoming/live games are knockout-round fixtures from the bracket.
+    fetch("/api/worldcup/bracket")
+      .then((r) => r.json())
+      .then((data: BracketState) => {
+        if (!cancelled && data?.matches) setBracket(data);
+      })
+      .catch(() => null);
+
     return () => { cancelled = true; };
   }, []);
 
   const allMatches = useMemo<EnrichedMatch[]>(() => {
     const result: EnrichedMatch[] = [];
+
     groups.forEach((group) => {
-      group.matches.forEach((match, idx) => {
-        const homeTeam = WC_TEAMS[match.home];
-        const awayTeam = WC_TEAMS[match.away];
-        if (!homeTeam || !awayTeam) return;
-
-        const eloHome = eloWinProb(homeTeam.strength, awayTeam.strength);
-        const rawHomeWin = eloHome * 0.85;
-        const draw = 0.18;
-        const rawAwayWin = 1 - rawHomeWin - draw;
-        const total = rawHomeWin + draw + Math.max(0, rawAwayWin);
-        const homeWinPct = Math.round((rawHomeWin / total) * 100);
-        const drawPct = Math.round((draw / total) * 100);
-        const awayWinPct = 100 - homeWinPct - drawPct;
-
-        const xGHome = (homeWinPct * 0.028 + 0.8).toFixed(1);
-        const xGAway = (awayWinPct * 0.028 + 0.8).toFixed(1);
-
-        result.push({
-          id: `${group.id}-${idx}`,
-          groupId: group.id,
-          match,
-          homeTeam,
-          awayTeam,
-          homeWinPct,
-          drawPct,
-          awayWinPct,
-          xGHome,
-          xGAway,
-        });
+      group.matches.forEach((m, idx) => {
+        const enriched = enrich(`group-${group.id}-${idx}`, `Group ${group.id}`, m);
+        if (enriched) result.push(enriched);
       });
     });
+
+    Object.values(bracket.matches).forEach((bm) => {
+      if (!bm.topTeamId || !bm.bottomTeamId) return; // matchup not yet determined
+      const match: GSMatch = {
+        home: bm.topTeamId,
+        away: bm.bottomTeamId,
+        date: bm.date,
+        time: bm.time,
+        venue: [bm.venue, bm.city].filter(Boolean).join(", "),
+        homeScore: bm.topScore,
+        awayScore: bm.bottomScore,
+        goals: [],
+        status: bm.status === "tbd" ? "scheduled" : bm.status,
+      };
+      const enriched = enrich(`bracket-${bm.id}`, ROUND_LABEL[bm.round], match);
+      if (enriched) result.push(enriched);
+    });
+
     return result;
-  }, [groups]);
+  }, [groups, bracket]);
 
-  const initialId = useMemo(() => {
-    const completed = allMatches.find((m) => m.match.status === "completed");
-    return completed?.id ?? allMatches[0]?.id ?? null;
-  }, [allMatches]);
+  const liveMatches = allMatches.filter((m) => m.match.status === "live");
+  const upcomingMatches = allMatches.filter((m) => m.match.status === "scheduled");
+  const completedMatches = allMatches.filter((m) => m.match.status === "completed");
 
-  const [selectedMatchId, setSelectedMatchId] = useState<string | null>(initialId);
+  const filterCounts: Record<FilterId, EnrichedMatch[]> = {
+    live: liveMatches,
+    upcoming: upcomingMatches,
+    completed: completedMatches,
+  };
+
+  const defaultFilter: FilterId = liveMatches.length > 0 ? "live" : upcomingMatches.length > 0 ? "upcoming" : "completed";
+  const [activeFilter, setActiveFilter] = useState<FilterId>(defaultFilter);
+  const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
+
+  const filteredMatches = filterCounts[activeFilter];
+
+  // Keep the selection valid as data loads in — fall back to the first match
+  // in the active filter whenever the current selection isn't in it.
+  useEffect(() => {
+    if (filteredMatches.length === 0) return;
+    if (selectedMatchId && filteredMatches.some((m) => m.id === selectedMatchId)) return;
+    setSelectedMatchId(filteredMatches[0].id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeFilter, filteredMatches.map((m) => m.id).join(",")]);
 
   const selected = useMemo(
-    () => allMatches.find((m) => m.id === selectedMatchId) ?? allMatches[0],
-    [allMatches, selectedMatchId]
+    () => allMatches.find((m) => m.id === selectedMatchId) ?? filteredMatches[0] ?? allMatches[0],
+    [allMatches, selectedMatchId, filteredMatches]
   );
-
-  // Group matches by section for the selector strip
-  const liveMatches = allMatches.filter((m) => m.match.status === "live");
-  const completedMatches = allMatches.filter((m) => m.match.status === "completed");
-  const scheduledMatches = allMatches.filter((m) => m.match.status === "scheduled");
 
   if (!selected) return null;
 
@@ -203,8 +251,8 @@ export default function WCAnalysisPage() {
     <div style={{ minHeight: "100vh", color: "var(--text)", paddingBottom: 60 }}>
 
       {/* Selector Strip */}
-      <div style={{ borderBottom: "1px solid var(--hairline)", background: "var(--panel)", paddingBottom: 12, paddingTop: 16, paddingLeft: 20, paddingRight: 20 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+      <div style={{ borderBottom: "1px solid var(--hairline)", background: "var(--panel)", paddingBottom: 14, paddingTop: 16, paddingLeft: 20, paddingRight: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-2)", letterSpacing: "0.05em" }}>
             MATCH ANALYSIS
           </div>
@@ -218,51 +266,76 @@ export default function WCAnalysisPage() {
             {isLive ? "● LIVE" : "STATIC FALLBACK"}
           </span>
         </div>
-        <select
-          value={selectedMatchId ?? ""}
-          onChange={(e) => setSelectedMatchId(e.target.value)}
-          style={{
-            width: "100%",
-            maxWidth: 520,
-            padding: "9px 12px",
-            borderRadius: "var(--r-chip)",
-            border: "1px solid var(--hairline)",
-            background: "var(--bg)",
-            color: "var(--text)",
-            fontSize: 13,
-            fontWeight: 600,
-            fontFamily: "var(--font-spot-mono, monospace)",
-            cursor: "pointer",
-          }}
-        >
-          {liveMatches.length > 0 && (
-            <optgroup label="● LIVE">
-              {liveMatches.map((em) => (
-                <option key={em.id} value={em.id}>
-                  {em.homeTeam.shortName} vs {em.awayTeam.shortName} — Group {em.groupId}
-                </option>
-              ))}
-            </optgroup>
-          )}
-          {completedMatches.length > 0 && (
-            <optgroup label="COMPLETED">
-              {completedMatches.map((em) => (
-                <option key={em.id} value={em.id}>
-                  {em.homeTeam.shortName} {em.match.homeScore}–{em.match.awayScore} {em.awayTeam.shortName} — Group {em.groupId}
-                </option>
-              ))}
-            </optgroup>
-          )}
-          {scheduledMatches.length > 0 && (
-            <optgroup label="UPCOMING">
-              {scheduledMatches.map((em) => (
-                <option key={em.id} value={em.id}>
-                  {em.homeTeam.shortName} vs {em.awayTeam.shortName} — Group {em.groupId} · {em.match.date}
-                </option>
-              ))}
-            </optgroup>
-          )}
-        </select>
+
+        {/* Filter tabs — clear separation between live / upcoming / completed */}
+        <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+          {([
+            { id: "live" as FilterId, label: "Live", dot: "var(--red)" },
+            { id: "upcoming" as FilterId, label: "Upcoming", dot: "var(--gold)" },
+            { id: "completed" as FilterId, label: "Completed", dot: "var(--text-ghost)" },
+          ]).map((tab) => {
+            const count = filterCounts[tab.id].length;
+            const active = activeFilter === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveFilter(tab.id)}
+                disabled={count === 0}
+                style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  padding: "7px 14px",
+                  borderRadius: "var(--r-chip)",
+                  border: active ? "1px solid var(--gold-line)" : "1px solid var(--hairline)",
+                  background: active ? "var(--gold-tint)" : "transparent",
+                  color: count === 0 ? "var(--text-ghost)" : active ? "var(--gold)" : "var(--text-muted)",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: count === 0 ? "default" : "pointer",
+                  opacity: count === 0 ? 0.5 : 1,
+                }}
+              >
+                {tab.id === "live" && count > 0 && (
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: tab.dot, display: "inline-block" }} />
+                )}
+                {tab.label}
+                <span style={{ fontFamily: "var(--font-spot-mono, monospace)", fontSize: 11, opacity: 0.8 }}>{count}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Match picker — scoped to the active filter only */}
+        {filteredMatches.length > 0 ? (
+          <select
+            value={selectedMatchId ?? ""}
+            onChange={(e) => setSelectedMatchId(e.target.value)}
+            style={{
+              width: "100%",
+              maxWidth: 520,
+              padding: "9px 12px",
+              borderRadius: "var(--r-chip)",
+              border: "1px solid var(--hairline)",
+              background: "var(--bg)",
+              color: "var(--text)",
+              fontSize: 13,
+              fontWeight: 600,
+              fontFamily: "var(--font-spot-mono, monospace)",
+              cursor: "pointer",
+            }}
+          >
+            {filteredMatches.map((em) => (
+              <option key={em.id} value={em.id}>
+                {activeFilter === "completed"
+                  ? `${em.homeTeam.shortName} ${em.match.homeScore}–${em.match.awayScore} ${em.awayTeam.shortName} — ${em.sourceLabel}`
+                  : activeFilter === "upcoming"
+                  ? `${em.homeTeam.shortName} vs ${em.awayTeam.shortName} — ${em.sourceLabel} · ${em.match.date}`
+                  : `${em.homeTeam.shortName} vs ${em.awayTeam.shortName} — ${em.sourceLabel}`}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <p style={{ fontSize: 12, color: "var(--text-ghost)", margin: 0 }}>No matches in this category right now.</p>
+        )}
       </div>
 
       {/* Body */}
@@ -295,7 +368,7 @@ export default function WCAnalysisPage() {
                   </div>
                 )}
                 <div style={{ fontSize: 11, color: "var(--text-ghost)", textAlign: "center", marginTop: 4 }}>
-                  Group {selected.groupId} · {match.venue}
+                  {selected.sourceLabel} · {match.venue}
                 </div>
               </div>
               {/* Away */}
@@ -450,7 +523,9 @@ export default function WCAnalysisPage() {
           <div style={{ background: "var(--gold-tint)", border: "1px solid var(--gold-line)", borderRadius: "var(--r-card)", padding: 20 }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: "var(--gold)", marginBottom: 12, letterSpacing: "0.05em" }}>TOURNAMENT CONTEXT</div>
             <div style={{ fontSize: 13, color: "var(--text-2)", lineHeight: 1.7, marginBottom: 14 }}>
-              Group {selected.groupId} features {homeTeam.name} and {awayTeam.name} in what could be a decisive clash for knockout qualification. With the top two teams advancing, every point carries significant weight in the final standings.
+              {selected.sourceLabel.startsWith("Group")
+                ? `${selected.sourceLabel} features ${homeTeam.name} and ${awayTeam.name} in what could be a decisive clash for knockout qualification. With the top two teams advancing, every point carries significant weight in the final standings.`
+                : `${selected.sourceLabel} matchup between ${homeTeam.name} and ${awayTeam.name} — a single-elimination tie where ${eloDiff > 0 ? homeTeam.name : awayTeam.name} enters as the model favorite, but knockout-stage variance keeps the margin tight.`}
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", background: "rgba(245,158,11,0.08)", borderRadius: "var(--r-tile)", border: "1px solid var(--gold-line)" }}>
               <div style={{ fontSize: 18 }}>🏆</div>
