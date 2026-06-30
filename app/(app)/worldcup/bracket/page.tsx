@@ -310,12 +310,16 @@ const ROUND_LABELS = [
 export default function BracketPage() {
   const [bracketState, setBracketState] = useState<BracketState>(INITIAL_BRACKET);
   const [predicted, setPredicted] = useState(false);
+  const [knockoutLive, setKnockoutLive] = useState(false);
 
   useEffect(() => {
     fetch("/api/worldcup/bracket")
       .then((r) => r.json())
-      .then((data: BracketState) => {
-        if (data?.matches) setBracketState(data);
+      .then((data: BracketState & { knockoutLive?: boolean }) => {
+        if (data?.matches) {
+          setBracketState(data);
+          setKnockoutLive(!!data.knockoutLive);
+        }
       })
       .catch(() => {
         // fallback to INITIAL_BRACKET already set
@@ -375,6 +379,16 @@ export default function BracketPage() {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <span
+            style={{
+              fontSize: 9, fontWeight: 700, padding: "3px 8px", borderRadius: 6,
+              color: knockoutLive ? "var(--green)" : "var(--text-ghost)",
+              background: knockoutLive ? "rgba(52,211,153,.12)" : "rgba(255,255,255,.04)",
+            }}
+            title={knockoutLive ? "Round of 32 hydrated from real ESPN fixtures" : "Showing projected pairings until the knockout stage starts"}
+          >
+            {knockoutLive ? "● LIVE" : "PROJECTED"}
+          </span>
           {predicted && (
             <div
               style={{

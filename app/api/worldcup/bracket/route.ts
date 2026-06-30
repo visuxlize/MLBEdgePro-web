@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { rateLimit, getIp } from "@/lib/rate-limit";
-import { INITIAL_BRACKET, WC_GROUPS } from "@/lib/worldcup/data";
+import { INITIAL_BRACKET, WC_GROUPS, WC_TEAMS } from "@/lib/worldcup/data";
 import { fetchWCFixtures } from "@/lib/worldcup/api-football";
 import { isNextResponse, requirePlan } from "@/lib/require-plan";
 import type { BracketState, GSTeam, WCGroup } from "@/lib/worldcup/types";
@@ -155,6 +155,159 @@ function hydrateR32FromGroups(base: BracketState, groups: WCGroup[]): BracketSta
   return updated;
 }
 
+// ── R32 hydration from REAL ESPN knockout fixtures ─────────────────────────────
+//
+// R32_MAPPING above is an invented "1A vs 2B, 1C vs 2D, ..." formula — it is NOT
+// FIFA's actual official bracket draw (which doesn't follow a uniform pattern),
+// so once real knockout matches are reported it produces nonsense pairings
+// (e.g. two host nations drawn directly against each other). Once the knockout
+// stage has actually started, prefer ESPN's real fixtures over the formula.
+//
+// ESPN's scoreboard has no per-event "round" field, so R32 vs R16 must be
+// inferred: walking all cross-group fixtures in chronological order, a match is
+// R32 iff neither team has appeared in an earlier knockout fixture (each of the
+// 32 teams plays exactly one R32 match before any R16 rematch).
+
+const ESPN_SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard";
+
+interface RealFixture {
+  date: string;
+  venue: string;
+  city: string;
+  homeId: string;
+  awayId: string;
+  homeScore: number | null;
+  awayScore: number | null;
+  status: "scheduled" | "live" | "completed";
+  winner: "top" | "bottom" | null;
+}
+
+function fixtureStatus(name: string, state?: string): "scheduled" | "live" | "completed" {
+  if (name === "STATUS_FINAL" || name === "STATUS_FULL_TIME" || name === "STATUS_FINAL_PEN" || state === "post") return "completed";
+  if (name === "STATUS_SCHEDULED" || state === "pre") return "scheduled";
+  return "live";
+}
+
+async function fetchRealKnockoutFixtures(groups: WCGroup[]): Promise<RealFixture[]> {
+  const teamGroup = new Map<string, string>();
+  for (const g of groups) for (const t of g.teams) teamGroup.set(t.teamId, g.id);
+
+  const opts: RequestInit = { next: { revalidate: 1800 }, headers: { "User-Agent": "mlbedgepro/1.0" } };
+  const dates: string[] = [];
+  const now = new Date();
+  for (let i = -8; i <= 12; i++) {
+    const d = new Date(now);
+    d.setUTCDate(d.getUTCDate() + i);
+    dates.push(d.toISOString().slice(0, 10).replace(/-/g, ""));
+  }
+
+  const results = await Promise.allSettled(
+    dates.map((d) => fetch(`${ESPN_SCOREBOARD}?dates=${d}&limit=30`, opts).then((r) => r.ok ? r.json() : null))
+  );
+
+  const fixtures: RealFixture[] = [];
+  const seenEventIds = new Set<string>();
+
+  for (const result of results) {
+    if (result.status !== "fulfilled" || !result.value?.events) continue;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    for (const event of result.value.events as any[]) {
+      if (event.id && seenEventIds.has(event.id)) continue;
+      if (event.id) seenEventIds.add(event.id);
+
+      const comp = event.competitions?.[0];
+      if (!comp) continue;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const teams: any[] = comp.competitors ?? [];
+      const home = teams.find((t) => t.homeAway === "home");
+      const away = teams.find((t) => t.homeAway === "away");
+      if (!home || !away) continue;
+
+      const homeId = abbToId(home.team.abbreviation);
+      const awayId = abbToId(away.team.abbreviation);
+      if (!WC_TEAMS[homeId] || !WC_TEAMS[awayId]) continue;
+
+      // Knockout matches are cross-group; group-stage matches (same group) are
+      // already covered by the groups endpoint.
+      const hg = teamGroup.get(homeId), ag = teamGroup.get(awayId);
+      if (hg && ag && hg === ag) continue;
+
+      const statusName  = comp.status?.type?.name ?? "";
+      const statusState = comp.status?.type?.state as string | undefined;
+      const status       = fixtureStatus(statusName, statusState);
+      const homeScore    = home.score != null ? parseInt(home.score, 10) : null;
+      const awayScore    = away.score != null ? parseInt(away.score, 10) : null;
+      const venue         = comp.venue ?? {};
+
+      fixtures.push({
+        date: event.date ?? "",
+        venue: venue.fullName ?? "",
+        city: venue.address?.city ?? "",
+        homeId, awayId, homeScore, awayScore, status,
+        winner: status === "completed" ? (home.winner ? "top" : away.winner ? "bottom" : null) : null,
+      });
+    }
+  }
+
+  fixtures.sort((a, b) => a.date.localeCompare(b.date));
+  return fixtures;
+}
+
+/** Of all cross-group knockout fixtures, keep only each team's first (R32) appearance. */
+function filterToR32(fixtures: RealFixture[]): RealFixture[] {
+  const seenTeams = new Set<string>();
+  const r32: RealFixture[] = [];
+  for (const fx of fixtures) {
+    if (seenTeams.has(fx.homeId) || seenTeams.has(fx.awayId)) continue;
+    seenTeams.add(fx.homeId);
+    seenTeams.add(fx.awayId);
+    r32.push(fx);
+  }
+  return r32;
+}
+
+function hydrateR32FromRealFixtures(base: BracketState, allFixtures: RealFixture[]): BracketState | null {
+  const r32Fixtures = filterToR32(allFixtures);
+  if (r32Fixtures.length < 4) return null; // not enough real data to trust yet
+
+  const updated = { ...base, matches: { ...base.matches } };
+  const r32Ids = base.rounds.r32;
+
+  for (let i = 0; i < r32Ids.length && i < r32Fixtures.length; i++) {
+    const slot = r32Ids[i];
+    const fx = r32Fixtures[i];
+    const dt = new Date(fx.date);
+    updated.matches[slot] = {
+      ...updated.matches[slot],
+      topTeamId: fx.homeId,
+      bottomTeamId: fx.awayId,
+      topScore: fx.homeScore,
+      bottomScore: fx.awayScore,
+      status: fx.status,
+      winner: fx.winner,
+      date: dt.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      time: dt.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" }),
+      venue: fx.venue || updated.matches[slot].venue,
+      city: fx.city || updated.matches[slot].city,
+    };
+  }
+
+  // Propagate determined R32 winners into their R16 slot
+  for (const slot of r32Ids) {
+    const m = updated.matches[slot];
+    if (!m.winner || !m.nextMatchId) continue;
+    const winnerId = m.winner === "top" ? m.topTeamId : m.bottomTeamId;
+    const next = updated.matches[m.nextMatchId];
+    if (!next) continue;
+    updated.matches[m.nextMatchId] = {
+      ...next,
+      ...(m.nextSlot === "top" ? { topTeamId: winnerId } : { bottomTeamId: winnerId }),
+    };
+  }
+
+  return updated;
+}
+
 export async function GET(req: Request) {
   const planResult = await requirePlan("pro");
   if (isNextResponse(planResult)) return planResult;
@@ -169,9 +322,24 @@ export async function GET(req: Request) {
   }
 
   try {
-    // Always try to populate R32 from live group standings first
+    // Start with the computed pairing formula from live group standings —
+    // this is the only option before the knockout draw is known.
     const liveGroups = await fetchLiveGroupStandings();
     let bracket = hydrateR32FromGroups(INITIAL_BRACKET, liveGroups);
+    let knockoutLive = false;
+
+    // Once real knockout fixtures exist, they override the formula entirely —
+    // the formula is a guess, ESPN's actual fixtures are ground truth.
+    try {
+      const realFixtures = await fetchRealKnockoutFixtures(liveGroups);
+      const realBracket = hydrateR32FromRealFixtures(bracket, realFixtures);
+      if (realBracket) {
+        bracket = realBracket;
+        knockoutLive = true;
+      }
+    } catch {
+      // keep formula-based hydration
+    }
 
     // If API_FOOTBALL_KEY is set, also hydrate completed knockout matches
     if (process.env.API_FOOTBALL_KEY) {
@@ -179,12 +347,12 @@ export async function GET(req: Request) {
         const fixtures = await fetchWCFixtures();
         bracket = hydrateBracketFromFixtures(bracket, fixtures);
       } catch {
-        // keep group-stage hydration
+        // keep prior hydration
       }
     }
 
     return NextResponse.json(
-      { ...bracket, lastUpdated: new Date().toISOString() },
+      { ...bracket, lastUpdated: new Date().toISOString(), knockoutLive },
       { headers: { "Cache-Control": "no-store" } }
     );
   } catch {
