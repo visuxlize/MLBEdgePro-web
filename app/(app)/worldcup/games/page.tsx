@@ -515,33 +515,79 @@ function todayLabel() {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
+interface TodayMatchApi {
+  groupId: string;
+  homeId: string;
+  awayId: string;
+  date: string;
+  time: string;
+  venue: string;
+  homeScore: number | null;
+  awayScore: number | null;
+  status: GSMatch["status"];
+}
+
 export default function GamesPage() {
   const [activeTab, setActiveTab] = useState<TabId>("today");
   const [groups, setGroups] = useState<WCGroup[]>(WC_GROUPS);
   const [isLive, setIsLive] = useState(false);
+  const [liveToday, setLiveToday] = useState<FlatMatch[]>([]);
 
   useEffect(() => {
     let cancelled = false;
     fetch("/api/worldcup/groups")
       .then((r) => r.json())
-      .then((data: { groups?: WCGroup[] }) => {
+      .then((data: { groups?: WCGroup[]; live?: boolean }) => {
         if (!cancelled && Array.isArray(data?.groups) && data.groups.length > 0) {
           setGroups(data.groups);
-          setIsLive(true);
+          setIsLive(!!data.live);
         }
       })
       .catch(() => null);
+
+    // /today has no group-stage restriction, so it still catches real games
+    // happening during knockout rounds (cross-group matchups).
+    fetch("/api/worldcup/today")
+      .then((r) => r.json())
+      .then((data: { matches?: TodayMatchApi[] }) => {
+        if (cancelled || !Array.isArray(data?.matches)) return;
+        setLiveToday(
+          data.matches.map((tm) => ({
+            groupId: tm.groupId,
+            match: {
+              home: tm.homeId,
+              away: tm.awayId,
+              date: tm.date,
+              time: tm.time,
+              venue: tm.venue,
+              homeScore: tm.homeScore,
+              awayScore: tm.awayScore,
+              goals: [],
+              status: tm.status,
+            },
+          }))
+        );
+      })
+      .catch(() => null);
+
     return () => { cancelled = true; };
   }, []);
 
   const allMatches = flattenMatches(groups);
 
-  const liveMatches = allMatches.filter((fm) => fm.match.status === "live");
+  // Dedupe live-today matches against group-derived ones by team pair
+  const groupPairKeys = new Set(allMatches.map((fm) => `${fm.match.home}_${fm.match.away}`));
+  const extraLiveToday = liveToday.filter((fm) => !groupPairKeys.has(`${fm.match.home}_${fm.match.away}`));
+
+  const liveMatches = [...allMatches.filter((fm) => fm.match.status === "live"), ...extraLiveToday.filter((fm) => fm.match.status === "live")];
   const completedMatches = allMatches.filter((fm) => fm.match.status === "completed");
   const scheduledMatches = allMatches.filter((fm) => fm.match.status === "scheduled");
 
   const todayStr = todayLabel();
-  const todayMatches = scheduledMatches.filter((fm) => fm.match.date === todayStr);
+  const todayMatches = [
+    ...scheduledMatches.filter((fm) => fm.match.date === todayStr),
+    ...extraLiveToday.filter((fm) => fm.match.status !== "live"),
+  ];
   const upcomingMatches = scheduledMatches.filter((fm) => fm.match.date !== todayStr);
 
   const liveCount = liveMatches.length;

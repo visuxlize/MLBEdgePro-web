@@ -6,10 +6,6 @@ import type { GSMatch, WCGroup } from "@/lib/worldcup/types";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function flagUrl(cc: string) {
-  return `https://flagcdn.com/24x18/${cc.split("-")[0]}.png`;
-}
-
 function flagUrlLg(cc: string) {
   return `https://flagcdn.com/48x36/${cc.split("-")[0]}.png`;
 }
@@ -37,10 +33,10 @@ export default function WCAnalysisPage() {
     let cancelled = false;
     fetch("/api/worldcup/groups")
       .then((r) => r.json())
-      .then((data: { groups?: WCGroup[] }) => {
+      .then((data: { groups?: WCGroup[]; live?: boolean }) => {
         if (!cancelled && Array.isArray(data?.groups) && data.groups.length > 0) {
           setGroups(data.groups);
-          setIsLive(true);
+          setIsLive(!!data.live);
         }
       })
       .catch(() => null);
@@ -181,56 +177,6 @@ export default function WCAnalysisPage() {
     return "var(--text-muted)";
   };
 
-  const renderMatchChip = (em: EnrichedMatch) => {
-    const isActive = em.id === selectedMatchId;
-    const isLive = em.match.status === "live";
-    const isDone = em.match.status === "completed";
-    return (
-      <button
-        key={em.id}
-        onClick={() => setSelectedMatchId(em.id)}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          padding: "7px 12px",
-          borderRadius: "var(--r-chip)",
-          border: `1px solid ${isActive ? "var(--gold-line)" : "var(--hairline)"}`,
-          background: isActive ? "var(--gold-tint)" : "var(--panel)",
-          cursor: "pointer",
-          opacity: isDone && !isActive ? 0.6 : 1,
-          whiteSpace: "nowrap",
-          flexShrink: 0,
-          transition: "all 0.15s",
-        }}
-      >
-        {isLive && (
-          <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--red)", display: "inline-block", flexShrink: 0 }} />
-        )}
-        <img src={flagUrl(em.homeTeam.countryCode)} alt={em.homeTeam.shortName} style={{ width: 20, height: 14, objectFit: "cover" }} />
-        <span style={{ fontSize: 11, fontWeight: 600, color: isActive ? "var(--gold)" : "var(--text-2)", fontFamily: "var(--font-spot-mono, monospace)" }}>
-          {em.homeTeam.shortName}
-        </span>
-        <span style={{ fontSize: 10, color: "var(--text-muted)" }}>vs</span>
-        <span style={{ fontSize: 11, fontWeight: 600, color: isActive ? "var(--gold)" : "var(--text-2)", fontFamily: "var(--font-spot-mono, monospace)" }}>
-          {em.awayTeam.shortName}
-        </span>
-        <img src={flagUrl(em.awayTeam.countryCode)} alt={em.awayTeam.shortName} style={{ width: 20, height: 14, objectFit: "cover" }} />
-        {isDone && (
-          <span style={{ fontSize: 10, color: "var(--text-muted)", marginLeft: 2 }}>
-            {em.match.homeScore}–{em.match.awayScore}
-          </span>
-        )}
-      </button>
-    );
-  };
-
-  const SectionLabel = ({ label, color }: { label: string; color: string }) => (
-    <span style={{ fontSize: 10, fontWeight: 700, color, letterSpacing: "0.08em", padding: "0 4px", flexShrink: 0, alignSelf: "center" }}>
-      {label}
-    </span>
-  );
-
   const barCompare = (homeVal: number, awayVal: number, label: string) => {
     const maxVal = Math.max(homeVal, awayVal, 1);
     const homeW = Math.round((homeVal / 100) * 100);
@@ -272,28 +218,51 @@ export default function WCAnalysisPage() {
             {isLive ? "● LIVE" : "STATIC FALLBACK"}
           </span>
         </div>
-        <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, alignItems: "center" }}>
+        <select
+          value={selectedMatchId ?? ""}
+          onChange={(e) => setSelectedMatchId(e.target.value)}
+          style={{
+            width: "100%",
+            maxWidth: 520,
+            padding: "9px 12px",
+            borderRadius: "var(--r-chip)",
+            border: "1px solid var(--hairline)",
+            background: "var(--bg)",
+            color: "var(--text)",
+            fontSize: 13,
+            fontWeight: 600,
+            fontFamily: "var(--font-spot-mono, monospace)",
+            cursor: "pointer",
+          }}
+        >
           {liveMatches.length > 0 && (
-            <>
-              <SectionLabel label="LIVE" color="var(--red)" />
-              {liveMatches.map(renderMatchChip)}
-              <div style={{ width: 1, height: 28, background: "var(--hairline)", flexShrink: 0 }} />
-            </>
+            <optgroup label="● LIVE">
+              {liveMatches.map((em) => (
+                <option key={em.id} value={em.id}>
+                  {em.homeTeam.shortName} vs {em.awayTeam.shortName} — Group {em.groupId}
+                </option>
+              ))}
+            </optgroup>
           )}
           {completedMatches.length > 0 && (
-            <>
-              <SectionLabel label="COMPLETED" color="var(--text-muted)" />
-              {completedMatches.map(renderMatchChip)}
-              <div style={{ width: 1, height: 28, background: "var(--hairline)", flexShrink: 0 }} />
-            </>
+            <optgroup label="COMPLETED">
+              {completedMatches.map((em) => (
+                <option key={em.id} value={em.id}>
+                  {em.homeTeam.shortName} {em.match.homeScore}–{em.match.awayScore} {em.awayTeam.shortName} — Group {em.groupId}
+                </option>
+              ))}
+            </optgroup>
           )}
           {scheduledMatches.length > 0 && (
-            <>
-              <SectionLabel label="UPCOMING" color="var(--gold)" />
-              {scheduledMatches.map(renderMatchChip)}
-            </>
+            <optgroup label="UPCOMING">
+              {scheduledMatches.map((em) => (
+                <option key={em.id} value={em.id}>
+                  {em.homeTeam.shortName} vs {em.awayTeam.shortName} — Group {em.groupId} · {em.match.date}
+                </option>
+              ))}
+            </optgroup>
           )}
-        </div>
+        </select>
       </div>
 
       {/* Body */}

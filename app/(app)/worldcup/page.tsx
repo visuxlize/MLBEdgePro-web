@@ -268,26 +268,67 @@ function getTopThree() {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
+interface TodayMatchApi {
+  groupId: string;
+  home: string;
+  away: string;
+  homeId: string;
+  awayId: string;
+  date: string;
+  time: string;
+  venue: string;
+  homeScore: number | null;
+  awayScore: number | null;
+  status: GSMatch["status"];
+}
+
 export default function WCHubPage() {
   const [groups, setGroups] = useState<WCGroup[]>(WC_GROUPS);
   const [isLive, setIsLive] = useState(false);
+  const [liveToday, setLiveToday] = useState<Array<{ groupId: string; match: GSMatch }> | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     fetch("/api/worldcup/groups")
       .then((r) => r.json())
-      .then((data: { groups?: WCGroup[] }) => {
+      .then((data: { groups?: WCGroup[]; live?: boolean }) => {
         if (!cancelled && Array.isArray(data?.groups) && data.groups.length > 0) {
           setGroups(data.groups);
-          setIsLive(true);
+          setIsLive(!!data.live);
         }
       })
       .catch(() => null);
+
+    // /today has no group-stage restriction, so it still shows real games
+    // happening during knockout rounds (when teams from different groups meet).
+    fetch("/api/worldcup/today")
+      .then((r) => r.json())
+      .then((data: { matches?: TodayMatchApi[] }) => {
+        if (cancelled || !Array.isArray(data?.matches)) return;
+        setLiveToday(
+          data.matches.map((tm) => ({
+            groupId: tm.groupId,
+            match: {
+              home: tm.homeId,
+              away: tm.awayId,
+              date: tm.date,
+              time: tm.time,
+              venue: tm.venue,
+              homeScore: tm.homeScore,
+              awayScore: tm.awayScore,
+              goals: [],
+              status: tm.status,
+            },
+          }))
+        );
+      })
+      .catch(() => null);
+
     return () => { cancelled = true; };
   }, []);
 
   const stats = computeStats(groups);
-  const todayMatches = getTodayMatches(groups);
+  const todayMatches = liveToday !== null && liveToday.length > 0 ? liveToday.slice(0, 4) : getTodayMatches(groups);
   const recentResults = getRecentResults(groups);
   const mustWatch = getMustWatchMatches(groups);
   const contenders = getContenders();

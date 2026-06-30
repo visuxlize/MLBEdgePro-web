@@ -252,10 +252,10 @@ export default function WCGroupsPage() {
     let cancelled = false;
     fetch("/api/worldcup/groups")
       .then((r) => r.json())
-      .then((data: { groups?: WCGroup[]; lastUpdated?: string }) => {
+      .then((data: { groups?: WCGroup[]; lastUpdated?: string; live?: boolean }) => {
         if (!cancelled && Array.isArray(data?.groups) && data.groups.length > 0) {
           setGroups(data.groups);
-          setIsLive(true);
+          setIsLive(!!data.live);
           if (data.lastUpdated) setLastUpdated(data.lastUpdated);
         }
       })
