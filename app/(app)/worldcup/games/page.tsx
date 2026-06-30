@@ -116,16 +116,13 @@ function matchProbs(homeId: string, awayId: string) {
 
 // ── Live Match Hero Card ──────────────────────────────────────────────────────
 
-const FAKE_EVENTS = [
-  { icon: "⚽", min: 67, text: "Goal — Gavi" },
-  { icon: "🟨", min: 54, text: "Yellow Card — Tchouameni" },
-  { icon: "⚽", min: 23, text: "Goal — Kane" },
-];
-
 function LiveMatchCard({ match, groupId }: { match: GSMatch; groupId: string }) {
   const homeTeam = WC_TEAMS[match.home];
   const awayTeam = WC_TEAMS[match.away];
   const { awayWin, draw, homeWin } = matchProbs(match.home, match.away);
+  // xG estimate derived from win probability — not a real provider feed
+  const xGAway = Math.round((0.8 + awayWin * 2.2) * 10) / 10;
+  const xGHome = Math.round((0.8 + homeWin * 2.2) * 10) / 10;
 
   return (
     <div
@@ -183,7 +180,7 @@ function LiveMatchCard({ match, groupId }: { match: GSMatch; groupId: string }) 
               letterSpacing: "0.06em",
             }}
           >
-            67&apos;
+            LIVE
           </span>
         </div>
       </div>
@@ -279,40 +276,23 @@ function LiveMatchCard({ match, groupId }: { match: GSMatch; groupId: string }) 
             marginTop: 8,
           }}
         >
-          <span>xG: <span style={{ color: "var(--text-2)" }}>1.2</span></span>
-          <span style={{ fontSize: 10, letterSpacing: "0.04em" }}>EXPECTED GOALS</span>
-          <span>xG: <span style={{ color: "var(--text-2)" }}>0.8</span></span>
+          <span>xG: <span style={{ color: "var(--text-2)" }}>{xGAway.toFixed(1)}</span></span>
+          <span style={{ fontSize: 10, letterSpacing: "0.04em" }}>EXPECTED GOALS (MODEL EST.)</span>
+          <span>xG: <span style={{ color: "var(--text-2)" }}>{xGHome.toFixed(1)}</span></span>
         </div>
       </div>
 
-      {/* Last play feed */}
+      {/* Live commentary — not wired to a play-by-play provider */}
       <div
         style={{
           borderTop: "1px solid var(--hairline)",
           paddingTop: 12,
-          display: "flex",
-          flexDirection: "column",
-          gap: 6,
+          fontSize: 12,
+          color: "var(--text-ghost)",
+          textAlign: "center",
         }}
       >
-        {FAKE_EVENTS.map((ev, i) => (
-          <div
-            key={i}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              fontSize: 12,
-              color: i === 0 ? "var(--text-2)" : "var(--text-ghost)",
-            }}
-          >
-            <span>{ev.icon}</span>
-            <span style={{ fontFamily: "var(--font-spot-mono, monospace)", fontSize: 11, color: "var(--gold)", minWidth: 28 }}>
-              {ev.min}&apos;
-            </span>
-            <span>{ev.text}</span>
-          </div>
-        ))}
+        Live play-by-play not available — score updates from ESPN every few minutes.
       </div>
     </div>
   );
@@ -525,23 +505,42 @@ interface FlatMatch {
   groupId: string;
 }
 
-function flattenMatches(): FlatMatch[] {
-  return WC_GROUPS.flatMap((g) => g.matches.map((m) => ({ match: m, groupId: g.id })));
+function flattenMatches(groups: WCGroup[]): FlatMatch[] {
+  return groups.flatMap((g) => g.matches.map((m) => ({ match: m, groupId: g.id })));
+}
+
+function todayLabel() {
+  return new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function GamesPage() {
   const [activeTab, setActiveTab] = useState<TabId>("today");
+  const [groups, setGroups] = useState<WCGroup[]>(WC_GROUPS);
+  const [isLive, setIsLive] = useState(false);
 
-  const allMatches = flattenMatches();
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/worldcup/groups")
+      .then((r) => r.json())
+      .then((data: { groups?: WCGroup[] }) => {
+        if (!cancelled && Array.isArray(data?.groups) && data.groups.length > 0) {
+          setGroups(data.groups);
+          setIsLive(true);
+        }
+      })
+      .catch(() => null);
+    return () => { cancelled = true; };
+  }, []);
+
+  const allMatches = flattenMatches(groups);
 
   const liveMatches = allMatches.filter((fm) => fm.match.status === "live");
   const completedMatches = allMatches.filter((fm) => fm.match.status === "completed");
   const scheduledMatches = allMatches.filter((fm) => fm.match.status === "scheduled");
 
-  // Today = Jun 28 (current date) or first available scheduled dates for demo
-  const todayStr = "Jun 28";
+  const todayStr = todayLabel();
   const todayMatches = scheduledMatches.filter((fm) => fm.match.date === todayStr);
   const upcomingMatches = scheduledMatches.filter((fm) => fm.match.date !== todayStr);
 
@@ -636,21 +635,32 @@ export default function GamesPage() {
   return (
     <div style={{ padding: "24px 32px" }}>
       {/* Header */}
-      <div style={{ marginBottom: 24 }}>
-        <h1
+      <div style={{ marginBottom: 24, display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+        <div>
+          <h1
+            style={{
+              fontSize: 24,
+              fontWeight: 700,
+              color: "var(--text)",
+              margin: 0,
+              letterSpacing: "-0.02em",
+            }}
+          >
+            Games
+          </h1>
+          <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 4, marginBottom: 0 }}>
+            FIFA World Cup 2026 · Group Stage
+          </p>
+        </div>
+        <span
           style={{
-            fontSize: 24,
-            fontWeight: 700,
-            color: "var(--text)",
-            margin: 0,
-            letterSpacing: "-0.02em",
+            fontSize: 9, fontWeight: 700, padding: "3px 8px", borderRadius: 6,
+            color: isLive ? "var(--green)" : "var(--text-ghost)",
+            background: isLive ? "rgba(52,211,153,.12)" : "rgba(255,255,255,.04)",
           }}
         >
-          Games
-        </h1>
-        <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 4, marginBottom: 0 }}>
-          FIFA World Cup 2026 · Group Stage
-        </p>
+          {isLive ? "● LIVE" : "STATIC FALLBACK"}
+        </span>
       </div>
 
       {/* Tabs */}

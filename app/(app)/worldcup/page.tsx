@@ -25,6 +25,10 @@ function FlagImg({ cc, size = 20 }: { cc: string; size?: number }) {
 
 // ── Derived stat helpers ──────────────────────────────────────────────────────
 
+function todayLabel() {
+  return new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
 function computeStats(groups: WCGroup[]) {
   let goals = 0;
   let played = 0;
@@ -40,9 +44,9 @@ function computeStats(groups: WCGroup[]) {
     }
   }
 
-  const today = new Date("2026-06-28");
+  const today = new Date();
   const finalDate = new Date("2026-07-19");
-  const daysToFinal = Math.ceil((finalDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  const daysToFinal = Math.max(0, Math.ceil((finalDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
 
   return { goals, played, cleanSheets, daysToFinal, avgGoals: played > 0 ? goals / played : 0 };
 }
@@ -55,10 +59,11 @@ function sortTeams(teams: GSTeam[]): GSTeam[] {
 }
 
 function getTodayMatches(groups: WCGroup[]): Array<{ groupId: string; match: GSMatch }> {
+  const today = todayLabel();
   const results: Array<{ groupId: string; match: GSMatch }> = [];
   for (const g of groups) {
     for (const m of g.matches) {
-      if (m.date === "Jun 28" || m.status === "live") {
+      if (m.date === today || m.status === "live") {
         results.push({ groupId: g.id, match: m });
       }
     }
@@ -265,18 +270,20 @@ function getTopThree() {
 
 export default function WCHubPage() {
   const [groups, setGroups] = useState<WCGroup[]>(WC_GROUPS);
+  const [isLive, setIsLive] = useState(false);
 
   useEffect(() => {
-    fetch("/api/worldcup/today")
-      .then((r) => r.json())
-      .catch(() => null);
-
+    let cancelled = false;
     fetch("/api/worldcup/groups")
       .then((r) => r.json())
-      .then((data: WCGroup[]) => {
-        if (Array.isArray(data) && data.length > 0) setGroups(data);
+      .then((data: { groups?: WCGroup[] }) => {
+        if (!cancelled && Array.isArray(data?.groups) && data.groups.length > 0) {
+          setGroups(data.groups);
+          setIsLive(true);
+        }
       })
       .catch(() => null);
+    return () => { cancelled = true; };
   }, []);
 
   const stats = computeStats(groups);
@@ -564,6 +571,15 @@ export default function WCHubPage() {
               />
               <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
                 Today&apos;s Matches
+              </span>
+              <span
+                style={{
+                  marginLeft: "auto", fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 6,
+                  color: isLive ? "var(--green)" : "var(--text-ghost)",
+                  background: isLive ? "rgba(52,211,153,.12)" : "rgba(255,255,255,.04)",
+                }}
+              >
+                {isLive ? "● LIVE" : "STATIC"}
               </span>
             </div>
             {todayMatches.length === 0 ? (

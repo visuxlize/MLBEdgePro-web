@@ -245,14 +245,22 @@ const ALL_GROUP_IDS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L
 export default function WCGroupsPage() {
   const [groups, setGroups] = useState<WCGroup[]>(WC_GROUPS);
   const [activeFilter, setActiveFilter] = useState<string>("ALL");
+  const [isLive, setIsLive] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     fetch("/api/worldcup/groups")
       .then((r) => r.json())
-      .then((data: WCGroup[]) => {
-        if (Array.isArray(data) && data.length > 0) setGroups(data);
+      .then((data: { groups?: WCGroup[]; lastUpdated?: string }) => {
+        if (!cancelled && Array.isArray(data?.groups) && data.groups.length > 0) {
+          setGroups(data.groups);
+          setIsLive(true);
+          if (data.lastUpdated) setLastUpdated(data.lastUpdated);
+        }
       })
       .catch(() => null);
+    return () => { cancelled = true; };
   }, []);
 
   const filteredGroups =
@@ -263,13 +271,25 @@ export default function WCGroupsPage() {
   return (
     <div style={{ maxWidth: 1400, margin: "0 auto", padding: "24px 28px" }}>
       {/* Header */}
-      <div style={{ marginBottom: 20 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800, color: "var(--text)", margin: "0 0 4px" }}>
-          Group Standings
-        </h1>
-        <p style={{ fontSize: 13, color: "var(--text-ghost)", margin: 0 }}>
-          Jun 12 – Jun 26, 2026
-        </p>
+      <div style={{ marginBottom: 20, display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+        <div>
+          <h1 style={{ fontSize: 24, fontWeight: 800, color: "var(--text)", margin: "0 0 4px" }}>
+            Group Standings
+          </h1>
+          <p style={{ fontSize: 13, color: "var(--text-ghost)", margin: 0 }}>
+            FIFA World Cup 2026 · Group Stage
+          </p>
+        </div>
+        <span
+          style={{
+            fontSize: 9, fontWeight: 700, padding: "3px 8px", borderRadius: 6,
+            color: isLive ? "var(--green)" : "var(--text-ghost)",
+            background: isLive ? "rgba(52,211,153,.12)" : "rgba(255,255,255,.04)",
+          }}
+          title={lastUpdated ? `Last updated ${new Date(lastUpdated).toLocaleTimeString()}` : undefined}
+        >
+          {isLive ? "● LIVE" : "STATIC FALLBACK"}
+        </span>
       </div>
 
       {/* Filter chips */}

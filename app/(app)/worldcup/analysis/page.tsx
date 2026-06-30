@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { WC_TEAMS, WC_GROUPS, eloWinProb } from "@/lib/worldcup/data";
-import type { GSMatch } from "@/lib/worldcup/types";
+import type { GSMatch, WCGroup } from "@/lib/worldcup/types";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -30,9 +30,26 @@ interface EnrichedMatch {
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function WCAnalysisPage() {
+  const [groups, setGroups] = useState<WCGroup[]>(WC_GROUPS);
+  const [isLive, setIsLive] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/worldcup/groups")
+      .then((r) => r.json())
+      .then((data: { groups?: WCGroup[] }) => {
+        if (!cancelled && Array.isArray(data?.groups) && data.groups.length > 0) {
+          setGroups(data.groups);
+          setIsLive(true);
+        }
+      })
+      .catch(() => null);
+    return () => { cancelled = true; };
+  }, []);
+
   const allMatches = useMemo<EnrichedMatch[]>(() => {
     const result: EnrichedMatch[] = [];
-    WC_GROUPS.forEach((group) => {
+    groups.forEach((group) => {
       group.matches.forEach((match, idx) => {
         const homeTeam = WC_TEAMS[match.home];
         const awayTeam = WC_TEAMS[match.away];
@@ -65,7 +82,7 @@ export default function WCAnalysisPage() {
       });
     });
     return result;
-  }, []);
+  }, [groups]);
 
   const initialId = useMemo(() => {
     const completed = allMatches.find((m) => m.match.status === "completed");
@@ -241,8 +258,19 @@ export default function WCAnalysisPage() {
 
       {/* Selector Strip */}
       <div style={{ borderBottom: "1px solid var(--hairline)", background: "var(--panel)", paddingBottom: 12, paddingTop: 16, paddingLeft: 20, paddingRight: 20 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-2)", marginBottom: 10, letterSpacing: "0.05em" }}>
-          MATCH ANALYSIS
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-2)", letterSpacing: "0.05em" }}>
+            MATCH ANALYSIS
+          </div>
+          <span
+            style={{
+              fontSize: 9, fontWeight: 700, padding: "3px 8px", borderRadius: 6,
+              color: isLive ? "var(--green)" : "var(--text-ghost)",
+              background: isLive ? "rgba(52,211,153,.12)" : "rgba(255,255,255,.04)",
+            }}
+          >
+            {isLive ? "● LIVE" : "STATIC FALLBACK"}
+          </span>
         </div>
         <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, alignItems: "center" }}>
           {liveMatches.length > 0 && (
@@ -369,7 +397,7 @@ export default function WCAnalysisPage() {
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                 <thead>
                   <tr>
-                    {["LABEL", "PICK", "ODDS", "PROB", "CONF", "NOTE"].map((h) => (
+                    {["LABEL", "PICK", "MODEL ODDS", "PROB", "CONF", "NOTE"].map((h) => (
                       <th key={h} style={{ textAlign: "left", padding: "4px 8px", fontSize: 10, color: "var(--text-muted)", fontWeight: 600, letterSpacing: "0.06em", borderBottom: "1px solid var(--hairline)" }}>{h}</th>
                     ))}
                   </tr>
@@ -390,6 +418,9 @@ export default function WCAnalysisPage() {
                 </tbody>
               </table>
             </div>
+            <p style={{ fontSize: 10, color: "var(--text-ghost)", marginTop: 10, marginBottom: 0 }}>
+              Odds are model-derived from ELO, not live sportsbook lines.
+            </p>
           </div>
         </div>
 
