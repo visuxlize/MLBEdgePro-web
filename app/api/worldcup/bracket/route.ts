@@ -183,7 +183,11 @@ interface RealFixture {
 }
 
 function fixtureStatus(name: string, state?: string): "scheduled" | "live" | "completed" {
-  if (name === "STATUS_FINAL" || name === "STATUS_FULL_TIME" || name === "STATUS_FINAL_PEN" || state === "post") return "completed";
+  if (
+    name === "STATUS_FINAL" || name === "STATUS_FULL_TIME" ||
+    name === "STATUS_FINAL_PEN" || name === "STATUS_FINAL_AET" ||
+    state === "post"
+  ) return "completed";
   if (name === "STATUS_SCHEDULED" || state === "pre") return "scheduled";
   return "live";
 }
@@ -253,56 +257,112 @@ async function fetchRealKnockoutFixtures(groups: WCGroup[]): Promise<RealFixture
   return fixtures;
 }
 
-/** Of all cross-group knockout fixtures, keep only each team's first (R32) appearance. */
-function filterToR32(fixtures: RealFixture[]): RealFixture[] {
-  const seenTeams = new Set<string>();
-  const r32: RealFixture[] = [];
-  for (const fx of fixtures) {
-    if (seenTeams.has(fx.homeId) || seenTeams.has(fx.awayId)) continue;
-    seenTeams.add(fx.homeId);
-    seenTeams.add(fx.awayId);
-    r32.push(fx);
-  }
-  return r32;
-}
+// Classify all knockout fixtures into rounds by each team's appearance count.
+// Fixtures must be sorted chronologically.
+// Round detection:
+//   1st knockout appearance  → R32
+//   2nd appearance           → R16
+//   3rd appearance           → QF
+//   4th appearance           → SF
+//   5th appearance (earlier) → 3rd place  (loser of SF; 3rd place played before Final)
+//   5th appearance (later)   → Final      (winner of SF)
+function buildBracketFromRealFixtures(
+  base: BracketState,
+  allFixtures: RealFixture[],  // sorted chronologically
+): BracketState | null {
+  if (allFixtures.length < 4) return null;
 
-function hydrateR32FromRealFixtures(base: BracketState, allFixtures: RealFixture[]): BracketState | null {
-  const r32Fixtures = filterToR32(allFixtures);
-  if (r32Fixtures.length < 4) return null; // not enough real data to trust yet
+  const teamCount = new Map<string, number>();
+  const byRound: Record<string, RealFixture[]> = {
+    r32: [], r16: [], qf: [], sf: [], final: [], "3rd": [],
+  };
+
+  for (const fx of allFixtures) {
+    const hN = (teamCount.get(fx.homeId) ?? 0) + 1;
+    const aN = (teamCount.get(fx.awayId) ?? 0) + 1;
+    const n   = Math.max(hN, aN);
+    teamCount.set(fx.homeId, n);
+    teamCount.set(fx.awayId, n);
+
+    if      (n === 1) byRound.r32.push(fx);
+    else if (n === 2) byRound.r16.push(fx);
+    else if (n === 3) byRound.qf.push(fx);
+    else if (n === 4) byRound.sf.push(fx);
+    else {
+      // 5th appearance: 3rd-place match runs the day before the Final — push
+      // in chronological order so the earlier fixture goes to "3rd".
+      if (byRound["3rd"].length === 0) byRound["3rd"].push(fx);
+      else                             byRound.final.push(fx);
+    }
+  }
+
+  if (byRound.r32.length < 4) return null; // not enough real data yet
 
   const updated = { ...base, matches: { ...base.matches } };
-  const r32Ids = base.rounds.r32;
 
-  for (let i = 0; i < r32Ids.length && i < r32Fixtures.length; i++) {
-    const slot = r32Ids[i];
-    const fx = r32Fixtures[i];
+  // Apply one fixture's data to a slot, preserving structural fields (id, round, side, position, nextMatchId).
+  const applyFx = (slotId: string, fx: RealFixture) => {
+    const m = updated.matches[slotId];
+    if (!m) return;
     const dt = new Date(fx.date);
-    updated.matches[slot] = {
-      ...updated.matches[slot],
-      topTeamId: fx.homeId,
+    updated.matches[slotId] = {
+      ...m,
+      topTeamId:    fx.homeId,
       bottomTeamId: fx.awayId,
-      topScore: fx.homeScore,
-      bottomScore: fx.awayScore,
-      status: fx.status,
-      winner: fx.winner,
+      topScore:     fx.homeScore,
+      bottomScore:  fx.awayScore,
+      status:       fx.status,
+      winner:       fx.winner,
       date: dt.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
       time: dt.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" }),
-      venue: fx.venue || updated.matches[slot].venue,
-      city: fx.city || updated.matches[slot].city,
+      venue: fx.venue || m.venue,
+      city:  fx.city  || m.city,
     };
+  };
+
+  // Fill each round's slots in chronological order.
+  for (const rk of (["r32", "r16", "qf", "sf", "final", "3rd"] as const)) {
+    const slots = base.rounds[rk] ?? [];
+    const fxs   = byRound[rk]    ?? [];
+    for (let i = 0; i < slots.length && i < fxs.length; i++) {
+      applyFx(slots[i], fxs[i]);
+    }
   }
 
-  // Propagate determined R32 winners into their R16 slot
-  for (const slot of r32Ids) {
-    const m = updated.matches[slot];
-    if (!m.winner || !m.nextMatchId) continue;
-    const winnerId = m.winner === "top" ? m.topTeamId : m.bottomTeamId;
-    const next = updated.matches[m.nextMatchId];
-    if (!next) continue;
-    updated.matches[m.nextMatchId] = {
-      ...next,
-      ...(m.nextSlot === "top" ? { topTeamId: winnerId } : { bottomTeamId: winnerId }),
-    };
+  // Wire nextMatchId connections based on actual winner advancement.
+  // For each round, look at the NEXT round's fixtures to find which slot a winner plays in.
+  const NEXT_ROUND: Partial<Record<string, string>> = {
+    r32: "r16", r16: "qf", qf: "sf", sf: "final",
+  };
+
+  for (const rk of (["r32", "r16", "qf", "sf"] as const)) {
+    const nextRk   = NEXT_ROUND[rk]!;
+    const nextFxs  = byRound[nextRk] ?? [];
+    const nextSlots = base.rounds[nextRk as keyof typeof base.rounds] ?? [];
+
+    // Build teamId → { slotId, position } for the next round's known fixtures.
+    const teamToNext = new Map<string, { slotId: string; pos: "top" | "bottom" }>();
+    for (let i = 0; i < nextSlots.length && i < nextFxs.length; i++) {
+      teamToNext.set(nextFxs[i].homeId, { slotId: nextSlots[i], pos: "top" });
+      teamToNext.set(nextFxs[i].awayId, { slotId: nextSlots[i], pos: "bottom" });
+    }
+
+    // For each current-round match with a known winner, point its nextMatchId at the
+    // correct next-round slot.
+    const currFxs   = byRound[rk];
+    const currSlots = base.rounds[rk] ?? [];
+    for (let i = 0; i < currSlots.length && i < currFxs.length; i++) {
+      const fx     = currFxs[i];
+      const winner = fx.winner === "top" ? fx.homeId : fx.winner === "bottom" ? fx.awayId : null;
+      if (!winner) continue;
+      const next = teamToNext.get(winner);
+      if (!next) continue;
+      updated.matches[currSlots[i]] = {
+        ...updated.matches[currSlots[i]],
+        nextMatchId: next.slotId,
+        nextSlot:    next.pos,
+      };
+    }
   }
 
   return updated;
@@ -322,23 +382,25 @@ export async function GET(req: Request) {
   }
 
   try {
-    // Start with the computed pairing formula from live group standings —
-    // this is the only option before the knockout draw is known.
     const liveGroups = await fetchLiveGroupStandings();
-    let bracket = hydrateR32FromGroups(INITIAL_BRACKET, liveGroups);
+    let bracket: BracketState = INITIAL_BRACKET;
     let knockoutLive = false;
 
-    // Once real knockout fixtures exist, they override the formula entirely —
-    // the formula is a guess, ESPN's actual fixtures are ground truth.
+    // Try to build the bracket entirely from real ESPN knockout fixtures.
+    // This covers all rounds (R32 → Final) and wires actual winner advancement.
+    // Fall back to the formula-based estimate only when no real fixtures exist yet.
     try {
       const realFixtures = await fetchRealKnockoutFixtures(liveGroups);
-      const realBracket = hydrateR32FromRealFixtures(bracket, realFixtures);
+      const realBracket  = buildBracketFromRealFixtures(INITIAL_BRACKET, realFixtures);
       if (realBracket) {
-        bracket = realBracket;
+        bracket     = realBracket;
         knockoutLive = true;
+      } else {
+        // Still in group stage — use the formula guess so the bracket isn't blank.
+        bracket = hydrateR32FromGroups(INITIAL_BRACKET, liveGroups);
       }
     } catch {
-      // keep formula-based hydration
+      bracket = hydrateR32FromGroups(INITIAL_BRACKET, liveGroups);
     }
 
     // If API_FOOTBALL_KEY is set, also hydrate completed knockout matches

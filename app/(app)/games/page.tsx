@@ -260,56 +260,42 @@ function SpotlightCard({ game, fav, onClick }: { game: Game; fav: boolean; onCli
       onClick={onClick}
       whileHover={{ y: -3 }}
       transition={{ type: "spring", stiffness: 300, damping: 24 }}
-      className="text-left rounded-[var(--r-card)] overflow-hidden flex"
+      className="text-left rounded-[var(--r-card)] overflow-hidden relative"
       style={{
-        background: `linear-gradient(120deg, ${alpha(awayHex, "26")}, var(--panel) 52%, ${alpha(homeHex, "2e")})`,
+        background: `linear-gradient(135deg, ${alpha(awayHex, "99")} 0%, rgba(6,7,13,0.9) 50%, ${alpha(homeHex, "99")} 100%)`,
         border: fav ? "1px solid var(--orange-line)" : "1px solid var(--hairline)",
         boxShadow: "var(--shadow-card)",
         minHeight: 188,
       }}
     >
-      {/* Left: ballpark photo — fills full card height, fades right */}
-      <div
-        className="relative shrink-0 self-stretch"
-        style={{
-          width: "42%", minWidth: 130,
-          background: `linear-gradient(160deg, ${alpha(awayHex, "88")} 0%, ${alpha(homeHex, "55")} 100%)`,
-        }}
-      >
-        {/* Masked layer: image + tints fade right */}
-        <div
-          className="absolute inset-0"
-          style={{
-            maskImage: "linear-gradient(90deg, #000 55%, transparent 100%)",
-            WebkitMaskImage: "linear-gradient(90deg, #000 55%, transparent 100%)",
-          }}
+      {/* Full-bleed stadium background */}
+      {stadium && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={stadium}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ mixBlendMode: "luminosity", opacity: 0.45 }}
+          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+        />
+      )}
+      {/* Team colour tint scrim */}
+      <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${alpha(awayHex, "55")} 0%, transparent 50%, ${alpha(homeHex, "55")} 100%)` }} />
+      {/* Dark vignette for text legibility */}
+      <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(6,7,13,.45) 0%, rgba(6,7,13,.1) 40%, rgba(6,7,13,.1) 60%, rgba(6,7,13,.65) 100%)" }} />
+
+      {/* Fav star */}
+      {fav && (
+        <span
+          className="absolute bottom-3 left-4 z-20"
+          style={{ filter: "drop-shadow(0 2px 8px rgba(0,0,0,1)) drop-shadow(0 0 4px rgba(0,0,0,0.8))" }}
         >
-          {stadium && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={stadium}
-              alt=""
-              className="absolute inset-0 w-full h-full object-cover"
-              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-            />
-          )}
-          {/* top/bottom dark gradients for legibility */}
-          <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(6,7,13,.55), transparent 32%, transparent 64%, rgba(6,7,13,.6))" }} />
-        </div>
+          <Star size={14} style={{ color: "var(--orange)" }} fill="currentColor" />
+        </span>
+      )}
 
-        {/* Star sits above the masked layer with a strong shadow */}
-        {fav && (
-          <span
-            className="absolute bottom-3 left-4"
-            style={{ zIndex: 2, filter: "drop-shadow(0 2px 8px rgba(0,0,0,1)) drop-shadow(0 0 4px rgba(0,0,0,0.8))" }}
-          >
-            <Star size={14} style={{ color: "var(--orange)" }} fill="currentColor" />
-          </span>
-        )}
-      </div>
-
-      {/* Right column */}
-      <div className="flex-1 min-w-0 p-4 flex flex-col gap-3">
+      {/* Content */}
+      <div className="relative z-10 w-full p-4 flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex flex-col gap-0.5">
             <span className="font-spot-sans text-[11px] font-bold inline-flex items-center gap-1.5"

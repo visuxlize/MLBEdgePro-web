@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { WC_TEAMS, WC_GROUPS, eloWinProb } from "@/lib/worldcup/data";
-import type { GSMatch, WCGroup } from "@/lib/worldcup/types";
+import { WC_TEAMS, WC_GROUPS, INITIAL_BRACKET, eloWinProb } from "@/lib/worldcup/data";
+import type { GSMatch, WCGroup, BracketState, RoundKey } from "@/lib/worldcup/types";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -428,7 +428,7 @@ function FinalCard({ match, groupId }: { match: GSMatch; groupId: string }) {
     >
       {/* Status */}
       <div style={{ fontSize: 10, fontWeight: 700, color: "var(--text-ghost)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-        FT · GROUP {groupId}
+        FT · {/^[A-L]$/.test(groupId) ? `GROUP ${groupId}` : groupId}
       </div>
 
       {/* Away team row */}
@@ -502,11 +502,42 @@ type TabId = "live" | "today" | "upcoming" | "final";
 
 interface FlatMatch {
   match: GSMatch;
-  groupId: string;
+  groupId: string; // group letter A-L, or round label like "Round of 32"
 }
 
 function flattenMatches(groups: WCGroup[]): FlatMatch[] {
   return groups.flatMap((g) => g.matches.map((m) => ({ match: m, groupId: g.id })));
+}
+
+const ROUND_LABEL: Record<RoundKey, string> = {
+  r32: "Round of 32", r16: "Round of 16",
+  qf: "Quarterfinal", sf: "Semifinal",
+  final: "Final", "3rd": "3rd Place",
+};
+
+function flattenBracketMatches(bracket: BracketState): FlatMatch[] {
+  const result: FlatMatch[] = [];
+  for (const rk of (["r32", "r16", "qf", "sf", "final", "3rd"] as RoundKey[])) {
+    for (const slotId of bracket.rounds[rk] ?? []) {
+      const bm = bracket.matches[slotId];
+      if (!bm || !bm.topTeamId || !bm.bottomTeamId) continue;
+      result.push({
+        groupId: ROUND_LABEL[rk],
+        match: {
+          home: bm.topTeamId,
+          away: bm.bottomTeamId,
+          date: bm.date,
+          time: bm.time,
+          venue: [bm.venue, bm.city].filter(Boolean).join(", "),
+          homeScore: bm.topScore,
+          awayScore: bm.bottomScore,
+          goals: [],
+          status: bm.status === "tbd" ? "scheduled" : bm.status,
+        },
+      });
+    }
+  }
+  return result;
 }
 
 function todayLabel() {
@@ -530,6 +561,7 @@ interface TodayMatchApi {
 export default function GamesPage() {
   const [activeTab, setActiveTab] = useState<TabId>("today");
   const [groups, setGroups] = useState<WCGroup[]>(WC_GROUPS);
+  const [bracket, setBracket] = useState<BracketState>(INITIAL_BRACKET);
   const [isLive, setIsLive] = useState(false);
   const [liveToday, setLiveToday] = useState<FlatMatch[]>([]);
 
@@ -542,6 +574,13 @@ export default function GamesPage() {
           setGroups(data.groups);
           setIsLive(!!data.live);
         }
+      })
+      .catch(() => null);
+
+    fetch("/api/worldcup/bracket")
+      .then((r) => r.json())
+      .then((data: BracketState) => {
+        if (!cancelled && data?.matches) setBracket(data);
       })
       .catch(() => null);
 
@@ -573,7 +612,15 @@ export default function GamesPage() {
     return () => { cancelled = true; };
   }, []);
 
-  const allMatches = flattenMatches(groups);
+  const groupMatches   = flattenMatches(groups);
+  const knockoutMatches = flattenBracketMatches(bracket);
+
+  // Dedupe: bracket matches supersede any group-derived match with the same team pair
+  const knockoutPairKeys = new Set(knockoutMatches.map((fm) => `${fm.match.home}_${fm.match.away}`));
+  const allMatches = [
+    ...groupMatches.filter((fm) => !knockoutPairKeys.has(`${fm.match.home}_${fm.match.away}`)),
+    ...knockoutMatches,
+  ];
 
   // Dedupe live-today matches against group-derived ones by team pair
   const groupPairKeys = new Set(allMatches.map((fm) => `${fm.match.home}_${fm.match.away}`));
@@ -625,26 +672,31 @@ export default function GamesPage() {
       );
     }
     const grouped = groupedMatches(flatList);
-    return Object.entries(grouped).map(([groupId, items]) => (
-      <div key={groupId} style={{ marginBottom: 8 }}>
-        <div
-          style={{
-            padding: "8px 16px",
-            fontSize: 11,
-            fontWeight: 700,
-            color: "var(--text-ghost)",
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            borderBottom: "1px solid var(--hairline)",
-          }}
-        >
-          Group {groupId}
+    return Object.entries(grouped).map(([groupId, items]) => {
+      const isGroupLetter = /^[A-L]$/.test(groupId);
+      const header = isGroupLetter ? `Group ${groupId}` : groupId;
+      return (
+        <div key={groupId} style={{ marginBottom: 8 }}>
+          <div
+            style={{
+              padding: "8px 16px",
+              fontSize: 11,
+              fontWeight: 700,
+              color: isGroupLetter ? "var(--text-ghost)" : "var(--gold-2)",
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              borderBottom: "1px solid var(--hairline)",
+              background: isGroupLetter ? "transparent" : "var(--gold-tint)",
+            }}
+          >
+            {header}
+          </div>
+          {items.map((fm, i) => (
+            <MatchRow key={i} match={fm.match} />
+          ))}
         </div>
-        {items.map((fm, i) => (
-          <MatchRow key={i} match={fm.match} />
-        ))}
-      </div>
-    ));
+      );
+    });
   }
 
   function renderFinalGrid(flatList: FlatMatch[]) {

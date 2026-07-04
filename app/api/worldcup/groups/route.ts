@@ -88,7 +88,7 @@ async function fetchLiveGroups(): Promise<LiveGroupsResult> {
   //    pair lookup almost never matched and silently kept stale fake scores.
   //    Building the match objects straight from the live event is robust to
   //    any difference in our placeholder schedule.) ────────────────────────────
-  const dates = recentDates(21);
+  const dates = recentDates(24); // covers back to Jun 11 (first match day) from Jul 4
   const scoreboardResults = await Promise.allSettled(
     dates.map((d) => fetch(`${ESPN_SCOREBOARD}?dates=${d}&limit=30`, opts).then((r) => r.ok ? r.json() : null))
   );
