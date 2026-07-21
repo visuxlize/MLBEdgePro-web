@@ -23,7 +23,6 @@ const FAN_FEATURES = [
   "Head-to-head history (last 5 meetings)",
   "Full HR & hit prop rankings — all batters",
   "Priority data refresh",
-  "⚽ World Cup 2026 — Groups, bracket & AI picks",
 ];
 
 const PRO_FEATURES = [
@@ -35,8 +34,6 @@ const PRO_FEATURES = [
   "Barrel Rate & Exit Velocity Analysis",
   "Post-game AI accuracy report",
   "Batter power & pitcher vulnerability index",
-  "⚽ Live WC group standings & team deep dives",
-  "⚽ ELO win probabilities for every match",
 ];
 
 const fadeUp = {
@@ -60,13 +57,11 @@ const COMPARISON: [string, boolean, boolean, boolean][] = [
   ["Full HR & hit prop rankings",  false, true,  true ],
   ["Edge Report (all games)",      false, true,  true ],
   ["Prop Builder & slips",         false, true,  true ],
-  ["⚽ WC Groups & AI picks",      false, true,  true ],
   ["Full team lineups",            false, false, true ],
   ["HR Deep Dive",                 false, false, true ],
   ["Wall Clearance Analysis",      false, false, true ],
   ["Pitch → Spray Connection",     false, false, true ],
   ["Post-game AI accuracy report", false, false, true ],
-  ["⚽ WC Bracket & ELO Model",    false, false, true ],
 ];
 
 function CheckIcon({ yes, color }: { yes: boolean; color?: string }) {
@@ -78,27 +73,6 @@ export function LandingPricing() {
   return (
     <section id="pricing" className="py-20 sm:py-28">
       <Container>
-        {/* World Cup urgency banner */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="mb-8 rounded-2xl border border-[#FBBF24]/30 bg-gradient-to-r from-[#FBBF24]/[0.08] via-[#FBBF24]/[0.04] to-transparent p-4 flex flex-col sm:flex-row items-center justify-between gap-3 max-w-5xl mx-auto"
-        >
-          <div className="flex items-center gap-3">
-            <span className="text-xl">⚽</span>
-            <div>
-              <p className="text-sm font-black text-[#FBBF24]">FIFA World Cup 2026 is LIVE — Limited Time Pro Access</p>
-              <p className="text-xs text-white/40 mt-0.5">Live group standings, ELO bracket simulation & AI picks — Pro only. While the tournament runs.</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="w-2 h-2 rounded-full bg-[#FBBF24] animate-pulse" />
-            <span className="text-[10px] font-black text-[#FBBF24] tracking-widest uppercase">Live Now</span>
-          </div>
-        </motion.div>
-
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}

@@ -610,7 +610,7 @@ export default function DownloadPage() {
                   <span className="text-white/30 text-sm">/mo after trial</span>
                 </div>
                 <ul className="space-y-2.5">
-                  {["HR Deep Dive + spray charts", "Wall Clearance & Carry Analysis", "Confident daily picks", "⚽ World Cup groups, bracket & AI picks", "⚽ ELO win probabilities"].map((item) => (
+                  {["HR Deep Dive + spray charts", "Wall Clearance & Carry Analysis", "Confident daily picks"].map((item) => (
                     <li key={item} className="flex items-center gap-2.5">
                       <Check size={13} strokeWidth={2.5} style={{ color: "#818cf8", flexShrink: 0 }} />
                       <span className="text-sm text-white/70">{item}</span>

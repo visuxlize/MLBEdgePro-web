@@ -19,12 +19,11 @@ const securityHeaders = [
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://clerk.mlbedgepro.dev https://*.clerk.accounts.dev https://js.stripe.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' data: https://fonts.gstatic.com",
-      // Expanded img-src: MLB assets, ESPN stadiums, WC flags, Google/Clerk avatars
+      // Expanded img-src: MLB assets, ESPN stadiums, Google/Clerk avatars
       "img-src 'self' data: blob:" +
         " https://www.mlbstatic.com" +
         " https://img.mlbstatic.com" +
         " https://a.espncdn.com" +
-        " https://flagcdn.com" +
         " https://lh3.googleusercontent.com" +
         " https://img.clerk.com" +
         " https://*.clerk.com" +

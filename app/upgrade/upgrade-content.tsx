@@ -34,9 +34,6 @@ const PRO_FEATURES = [
   "Barrel Rate & Exit Velocity Analysis",
   "Confident daily picks",
   "Batter power & pitcher vulnerability",
-  "⚽ World Cup 2026 — Group stage, brackets & AI picks",
-  "⚽ Live group standings & team deep dives",
-  "⚽ ELO win probabilities for every match",
 ];
 
 const COMPARISON: [string, boolean, boolean, boolean][] = [
@@ -54,9 +51,6 @@ const COMPARISON: [string, boolean, boolean, boolean][] = [
   ["Wall Clearance Analysis",          false, false, true ],
   ["Carry Conditions",                 false, false, true ],
   ["Pitch → Spray Connection",         false, false, true ],
-  ["⚽ WC Groups & Standings",         false, false, true ],
-  ["⚽ WC Bracket & Predictions",      false, false, true ],
-  ["⚽ Team Deep Dives & ELO Model",   false, false, true ],
 ];
 
 function CheckIcon({ yes, color }: { yes: boolean; color?: string }) {
@@ -118,25 +112,6 @@ function UpgradeInner({ highlightTier }: { highlightTier: "fan" | "pro" | null }
           </div>
         )}
 
-        {/* World Cup urgency banner */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="mb-8 rounded-2xl border border-[#FBBF24]/30 bg-gradient-to-r from-[#FBBF24]/[0.10] to-[#f59e0b]/[0.06] px-5 py-4 flex items-center gap-4 relative overflow-hidden"
-        >
-          <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-[#FBBF24]/[0.08] blur-3xl pointer-events-none" />
-          <div className="text-3xl shrink-0">⚽</div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-black text-[#FBBF24] mb-0.5">FIFA World Cup 2026 is LIVE — Limited Time Access</p>
-            <p className="text-xs text-white/50">Pro members get full group stage tracking, bracket predictions, team deep dives & ELO win probability for every match. Only available while the tournament runs.</p>
-          </div>
-          <div className="shrink-0 hidden sm:flex items-center gap-1.5 rounded-full border border-[#FBBF24]/40 bg-[#FBBF24]/15 px-3 py-1.5">
-            <span className="w-2 h-2 rounded-full bg-[#FBBF24] animate-pulse" />
-            <span className="text-[10px] font-black text-[#FBBF24] tracking-widest uppercase">Live Now</span>
-          </div>
-        </motion.div>
-
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -152,7 +127,7 @@ function UpgradeInner({ highlightTier }: { highlightTier: "fan" | "pro" | null }
             Unlock every edge
           </h1>
           <p className="text-white/45 text-base max-w-md mx-auto leading-relaxed">
-            Every prop. Every edge. Every advantage — plus World Cup 2026 analysis while it&apos;s live.
+            Every prop. Every edge. Every advantage.
           </p>
         </motion.div>
 
@@ -278,15 +253,6 @@ function UpgradeInner({ highlightTier }: { highlightTier: "fan" | "pro" | null }
 
             <div className="inline-flex items-center gap-1.5 rounded-full border border-[#818cf8]/30 bg-[#818cf8]/10 px-3 py-1 mb-3">
               <span className="text-[10px] font-black text-[#818cf8] tracking-wide uppercase">3-Day Free Trial</span>
-            </div>
-
-            <div className="flex items-center gap-2 mb-4 rounded-xl border border-[#FBBF24]/30 bg-[#FBBF24]/[0.08] px-3 py-2">
-              <span className="text-base">⚽</span>
-              <div>
-                <p className="text-[10px] font-black text-[#FBBF24] tracking-wide uppercase leading-none mb-0.5">Limited Time — World Cup 2026 Live</p>
-                <p className="text-[10px] text-white/40">Full tournament access while it runs. Grab it now.</p>
-              </div>
-              <span className="ml-auto w-2 h-2 rounded-full bg-[#FBBF24] animate-pulse shrink-0" />
             </div>
 
             <div className="flex items-baseline gap-1 mb-1">

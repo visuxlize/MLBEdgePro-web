@@ -2,9 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { Bot, X, Send, Loader2, ExternalLink, Trophy, Sparkles, TrendingUp, Plus } from "lucide-react";
+import { Bot, X, Send, Loader2, ExternalLink, Sparkles, TrendingUp, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useSubscription } from "@/lib/subscription";
 
 interface ChatMessage {
   id: string;
@@ -138,7 +137,6 @@ export function FloatingChat() {
   const bottomRef  = useRef<HTMLDivElement>(null);
   const inputRef   = useRef<HTMLInputElement>(null);
   const abortRef   = useRef<AbortController | null>(null);
-  const { isSuperPro, isLoaded } = useSubscription();
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -252,21 +250,6 @@ export function FloatingChat() {
                 </button>
               </div>
             </div>
-
-            {/* World Cup banner */}
-            {isLoaded && isSuperPro && (
-              <button
-                onClick={() => send("Give me today's top FIFA World Cup betting edges and analysis.")}
-                className="mx-3 mt-2.5 shrink-0 flex items-center gap-2.5 rounded-xl border border-[#FBBF24]/25 px-3 py-2 text-left transition-colors hover:border-[#FBBF24]/40"
-                style={{ background: "linear-gradient(135deg, rgba(251,191,36,0.07), rgba(251,191,36,0.03))" }}
-              >
-                <Trophy size={13} className="text-[#FBBF24] shrink-0" strokeWidth={2} />
-                <div className="min-w-0">
-                  <p className="text-[10px] font-black text-[#FBBF24] leading-tight">World Cup Edge — Limited Access</p>
-                  <p className="text-[9px] text-white/35 mt-0.5">Ask for today's World Cup betting edges</p>
-                </div>
-              </button>
-            )}
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3 min-h-0">

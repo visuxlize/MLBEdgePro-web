@@ -5,14 +5,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ChevronLeft, ChevronRight, CircleDot, ArrowRight, Lock, Trophy, Star, MapPin,
+  ChevronLeft, ChevronRight, CircleDot, ArrowRight, Star, MapPin,
 } from "lucide-react";
 import { getScore, getStadiumImageUrl, type Game } from "@/lib/mlb/api";
 import {
   LogoBadge, WinProbBar, AIPredictionButton, LivePill, GradePill,
   SectionLabel, teamHex, teamCode, alpha,
 } from "@/components/web-tool/spotlight";
-import { useSubscription } from "@/lib/subscription";
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -350,7 +349,6 @@ function SpotlightCard({ game, fav, onClick }: { game: Game; fav: boolean; onCli
 
 export default function GamesPage() {
   const router = useRouter();
-  const { isLoaded: subscriptionLoaded, isSuperPro } = useSubscription();
   const [date, setDate] = useState(todayStr());
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
@@ -404,11 +402,6 @@ export default function GamesPage() {
   const gridUpcoming = upcoming.filter((g) => g.gamePk !== hero?.gamePk);
   const isFav = (g: Game) => !!favTeamId && (g.teams.away.team.id === favTeamId || g.teams.home.team.id === favTeamId);
 
-  const worldCupHref = isSuperPro ? "/worldcup" : "/upgrade?tier=pro";
-  const worldCupSubtext = subscriptionLoaded && isSuperPro
-    ? "PRO access unlocked — open the event hub."
-    : "Included with Pro — FIFA World Cup analysis hub.";
-
   return (
     <div className="spotlight min-h-screen">
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-6">
@@ -423,29 +416,6 @@ export default function GamesPage() {
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* World Cup banner */}
-        <Link href={worldCupHref} className="block mb-6">
-          <div className="spot-lift rounded-[var(--r-card)] px-4 sm:px-5 py-3.5"
-            style={{ border: "1px solid rgba(251,191,36,.25)", background: "linear-gradient(90deg, rgba(251,191,36,.12), rgba(245,158,11,.06) 40%, var(--panel))" }}>
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
-                  style={{ border: "1px solid rgba(251,191,36,.35)", background: "rgba(251,191,36,.12)" }}>
-                  <Trophy size={14} style={{ color: "#fbbf24" }} />
-                </div>
-                <div>
-                  <p className="spot-label" style={{ color: "#fbbf24" }}>Limited Time — FIFA World Cup 2026 Analysis</p>
-                  <p className="font-spot-sans text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>{worldCupSubtext}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5 shrink-0" style={{ color: "#fbbf24" }}>
-                {!isSuperPro && <Lock size={12} />}
-                <ArrowRight size={14} />
-              </div>
-            </div>
-          </div>
-        </Link>
 
         {/* Header */}
         <div className="flex items-baseline justify-between mb-5">
