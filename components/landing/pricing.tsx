@@ -34,6 +34,7 @@ const PRO_FEATURES = [
   "Barrel Rate & Exit Velocity Analysis",
   "Post-game AI accuracy report",
   "Batter power & pitcher vulnerability index",
+  "NEW: NFL Edge Pro early access — This Week dashboard, live drive tracker & prop builder",
 ];
 
 const fadeUp = {
@@ -62,6 +63,7 @@ const COMPARISON: [string, boolean, boolean, boolean][] = [
   ["Wall Clearance Analysis",      false, false, true ],
   ["Pitch → Spray Connection",     false, false, true ],
   ["Post-game AI accuracy report", false, false, true ],
+  ["NFL Edge Pro (early access)",  false, false, true ],
 ];
 
 function CheckIcon({ yes, color }: { yes: boolean; color?: string }) {

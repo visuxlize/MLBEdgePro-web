@@ -26,7 +26,8 @@ export function LandingFooter() {
               </span>
             </div>
             <p className="text-sm text-white/35 leading-relaxed max-w-xs">
-              Data-driven MLB analysis for serious bettors. Free to start, lethal when Pro.
+              Data-driven MLB &amp; NFL analysis for serious bettors. Free to start, lethal when Pro.
+              More sports every season.
             </p>
             <div className="flex items-center gap-3 mt-5">
               <a href="https://github.com/visuxlize" target="_blank" rel="noopener noreferrer" className="text-white/25 hover:text-white transition-colors">
@@ -100,7 +101,7 @@ export function LandingFooter() {
             &copy; {new Date().getFullYear()} MLB Edge Pro. All rights reserved.
           </p>
           <p className="text-[10px] text-white/12">
-            Not affiliated with Major League Baseball or any team.
+            Not affiliated with Major League Baseball, the National Football League, or any team.
           </p>
         </div>
       </Container>

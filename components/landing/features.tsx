@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
-import { CircleDot, Flame, Zap, TrendingUp, Cloud, BarChart3, Lock, Target, Activity } from "lucide-react";
+import { CircleDot, Flame, Zap, TrendingUp, Cloud, BarChart3, Lock, Target, Activity, Radio, ClipboardList, Sparkles, ArrowRight } from "lucide-react";
 import { Container } from "./container";
 
 const features = [
@@ -60,6 +61,29 @@ const features = [
     description: "Confident model picks with edge scores and reasoning. The plays our model grades highest each day.",
     tier: "superPro",
     size: "lg",
+  },
+];
+
+const nflFeatures = [
+  {
+    icon: CircleDot,
+    title: "This Week Dashboard",
+    description: "Every HOF, preseason, and Week 1 matchup graded — week pills, stat strip, and an editorial top-edge hero, refreshed automatically.",
+  },
+  {
+    icon: Radio,
+    title: "Live Drive Tracker",
+    description: "Possession, down & distance, and win probability that moves with the ball — not just a score, the whole drive.",
+  },
+  {
+    icon: ClipboardList,
+    title: "Prop Builder & Parlay Slip",
+    description: "QB, RB, WR, and TE projections vs. the book's line, with one tap to build a slip and see live edge & payout.",
+  },
+  {
+    icon: Sparkles,
+    title: "Edge AI Breakdowns",
+    description: "Ask the model why it likes a side. Full game narratives, head-to-head splits, and the factors driving every grade.",
   },
 ];
 
@@ -201,6 +225,69 @@ export function LandingFeatures() {
             <FeatureCard key={f.title} feature={f} index={i + 6} />
           ))}
         </div>
+
+        {/* NFL Edge Pro — new sport, early access */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="relative mt-16 rounded-3xl border border-[#818cf8]/25 overflow-hidden p-7 sm:p-10"
+          style={{ background: "linear-gradient(135deg, rgba(255,120,40,0.08), rgba(129,140,248,0.08))" }}
+        >
+          <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-[#818cf8]/10 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-[#FF7828]/10 blur-3xl pointer-events-none" />
+
+          <div className="relative flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-9">
+            <div>
+              <span className="inline-flex items-center gap-2 rounded-full border border-[#818cf8]/30 bg-[#818cf8]/10 px-3.5 py-1.5 text-xs font-black text-[#818cf8] tracking-widest uppercase">
+                <Zap size={11} strokeWidth={2.5} />
+                New Sport &middot; Pro Early Access
+              </span>
+              <h3 className="mt-4 text-2xl sm:text-3xl font-black tracking-tight text-white">
+                Now expanding: <span className="gradient-orange-text">NFL Edge Pro</span>
+              </h3>
+              <p className="mt-3 text-sm sm:text-base text-white/50 leading-relaxed max-w-xl">
+                After the success of our World Cup analysis this summer, we&rsquo;re taking the same model
+                beyond MLB. NFL Edge Pro is live in early access for Pro members now, covering the Hall of
+                Fame Game and full preseason ahead of a Week 1 kickoff.
+              </p>
+            </div>
+            <Link href="/trial?tier=pro" className="shrink-0">
+              <span className="inline-flex items-center gap-2 rounded-full bg-[#818cf8] hover:bg-[#9CA5FF] transition-colors text-white font-bold text-sm px-5 py-2.5 group">
+                Try Pro Free &mdash; 3 Days
+                <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" strokeWidth={2.5} />
+              </span>
+            </Link>
+          </div>
+
+          <div className="relative grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {nflFeatures.map((f, i) => {
+              const Icon = f.icon;
+              return (
+                <motion.div
+                  key={f.title}
+                  custom={i}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true, margin: "-40px" }}
+                  variants={fadeUp}
+                  className="flex flex-col rounded-2xl border border-white/[0.08] bg-[#0D1117]/60 p-5"
+                >
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-4 bg-[#818cf8]/15">
+                    <Icon size={18} strokeWidth={1.7} style={{ color: "#818cf8" }} />
+                  </div>
+                  <h4 className="text-base font-bold text-white mb-1.5">{f.title}</h4>
+                  <p className="text-sm text-white/45 leading-relaxed">{f.description}</p>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          <p className="relative mt-7 text-xs text-white/30 leading-relaxed">
+            More sports are joining the model every season &mdash; NFL is first, with the next one already in the works.
+          </p>
+        </motion.div>
       </Container>
     </section>
   );
