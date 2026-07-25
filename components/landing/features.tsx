@@ -87,6 +87,29 @@ const nflFeatures = [
   },
 ];
 
+const wnbaFeatures = [
+  {
+    icon: CircleDot,
+    title: "Today's Slate & Live Win Prob",
+    description: "Every WNBA game graded daily — live scores, a top-edge editorial hero, and win probability that updates as the game moves.",
+  },
+  {
+    icon: Sparkles,
+    title: "Edge AI Breakdown",
+    description: "Pace, rebounding margin, and bench-scoring depth — the model explains why it likes a side in plain English.",
+  },
+  {
+    icon: ClipboardList,
+    title: "Prop Builder & Parlay Slip",
+    description: "Points, rebounds, assists, and 3-pointers made vs. the book's line, with one tap to build a slip and see live edge & payout.",
+  },
+  {
+    icon: Target,
+    title: "Player Impact Deep Dive",
+    description: "Usage rate, true shooting, plus-minus, and shot-zone splits — know exactly why a star is moving the number.",
+  },
+];
+
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
   visible: (i: number) => ({
@@ -285,7 +308,69 @@ export function LandingFeatures() {
           </div>
 
           <p className="relative mt-7 text-xs text-white/30 leading-relaxed">
-            More sports are joining the model every season &mdash; NFL is first, with the next one already in the works.
+            More sports are joining the model every season &mdash; NFL was first. Next up: WNBA, live now below.
+          </p>
+        </motion.div>
+
+        {/* WNBA Edge Pro — new sport, in-season now */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="relative mt-6 rounded-3xl border border-[#2dd4bf]/25 overflow-hidden p-7 sm:p-10"
+          style={{ background: "linear-gradient(135deg, rgba(45,212,191,0.08), rgba(255,120,40,0.06))" }}
+        >
+          <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-[#2dd4bf]/10 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-[#FF7828]/10 blur-3xl pointer-events-none" />
+
+          <div className="relative flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-9">
+            <div>
+              <span className="inline-flex items-center gap-2 rounded-full border border-[#2dd4bf]/30 bg-[#2dd4bf]/10 px-3.5 py-1.5 text-xs font-black text-[#2dd4bf] tracking-widest uppercase">
+                <Zap size={11} strokeWidth={2.5} />
+                New Sport &middot; Live Now
+              </span>
+              <h3 className="mt-4 text-2xl sm:text-3xl font-black tracking-tight text-white">
+                Now live: <span style={{ background: "linear-gradient(135deg,#2dd4bf,#5eead4)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" }}>WNBA Edge Pro</span>
+              </h3>
+              <p className="mt-3 text-sm sm:text-base text-white/50 leading-relaxed max-w-xl">
+                The WNBA season is in full swing, and the model is already on it — full daily slate for
+                everyone, with Fan and Pro unlocking the same edge-report depth you get for MLB.
+              </p>
+            </div>
+            <Link href="/trial?tier=fan" className="shrink-0">
+              <span className="inline-flex items-center gap-2 rounded-full text-[#06070d] font-bold text-sm px-5 py-2.5 group" style={{ background: "linear-gradient(135deg,#2dd4bf,#5eead4)" }}>
+                Try Fan Free &mdash; 14 Days
+                <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" strokeWidth={2.5} />
+              </span>
+            </Link>
+          </div>
+
+          <div className="relative grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {wnbaFeatures.map((f, i) => {
+              const Icon = f.icon;
+              return (
+                <motion.div
+                  key={f.title}
+                  custom={i}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true, margin: "-40px" }}
+                  variants={fadeUp}
+                  className="flex flex-col rounded-2xl border border-white/[0.08] bg-[#0D1117]/60 p-5"
+                >
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-4 bg-[#2dd4bf]/15">
+                    <Icon size={18} strokeWidth={1.7} style={{ color: "#2dd4bf" }} />
+                  </div>
+                  <h4 className="text-base font-bold text-white mb-1.5">{f.title}</h4>
+                  <p className="text-sm text-white/45 leading-relaxed">{f.description}</p>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          <p className="relative mt-7 text-xs text-white/30 leading-relaxed">
+            After the success of our World Cup analysis, we&rsquo;re adding a new sport every season &mdash; NFL and WNBA are live now, with more on the way.
           </p>
         </motion.div>
       </Container>

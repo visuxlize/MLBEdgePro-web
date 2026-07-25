@@ -7,6 +7,8 @@ import { useSubscription } from "@/lib/subscription";
 import { getScore, type Game } from "@/lib/mlb/api";
 import type { NflGame } from "@/lib/nfl/types";
 import { nflTeamHex, nflLogoUrl } from "@/lib/nfl/teams";
+import type { WnbaGame } from "@/lib/wnba/types";
+import { wnbaTeamHex } from "@/lib/wnba/teams";
 import {
   SectionLabel, LogoBadge, GradePill, AIPredictionButton,
   teamHex, teamCode, modelEdge,
@@ -35,7 +37,7 @@ interface MarketChip {
   homeHex: string;
   awayPct: number;
   homePct: number;
-  tag: "MLB" | "NFL";
+  tag: "MLB" | "NFL" | "WNBA";
   status: string;
   href: string;
 }
@@ -45,9 +47,10 @@ interface Props {
   todayDate: string;
   mlbGames: Game[];
   nflGames: NflGame[];
+  wnbaGames: WnbaGame[];
 }
 
-export function HomeClient({ userName, todayDate, mlbGames, nflGames }: Props) {
+export function HomeClient({ userName, todayDate, mlbGames, nflGames, wnbaGames }: Props) {
   const router = useRouter();
   const { isSuperPro } = useSubscription();
   const syncedAgo = useSyncedAgo();
@@ -56,6 +59,13 @@ export function HomeClient({ userName, todayDate, mlbGames, nflGames }: Props) {
 
   const mlbLive = mlbGames.filter((g) => g.status.detailedState === "In Progress");
   const nflLive = nflGames.filter((g) => g.status === "live");
+  const wnbaLive = wnbaGames.filter((g) => g.status === "live");
+
+  const wnbaTopPick = useMemo(() => {
+    if (!wnbaGames.length) return null;
+    const best = [...wnbaGames].sort((a, b) => b.edge - a.edge)[0];
+    return best.homeWinProb >= 50 ? best.home : best.away;
+  }, [wnbaGames]);
 
   const mlbTopPick = useMemo(() => {
     if (!mlbGames.length) return null;
@@ -69,7 +79,7 @@ export function HomeClient({ userName, todayDate, mlbGames, nflGames }: Props) {
   }, [mlbGames]);
 
   const marketChips: MarketChip[] = useMemo(() => {
-    const mlbChips: MarketChip[] = mlbGames.slice(0, 8).map((g) => {
+    const mlbChips: MarketChip[] = mlbGames.slice(0, 5).map((g) => {
       const m = modelEdge(g);
       const isLive = g.status.detailedState === "In Progress";
       return {
@@ -85,7 +95,7 @@ export function HomeClient({ userName, todayDate, mlbGames, nflGames }: Props) {
         href: `/game/${g.gamePk}`,
       };
     });
-    const nflChips: MarketChip[] = nflGames.slice(0, 8).map((g) => ({
+    const nflChips: MarketChip[] = nflGames.slice(0, 5).map((g) => ({
       key: `nfl-${g.id}`,
       away: g.away,
       home: g.home,
@@ -97,8 +107,20 @@ export function HomeClient({ userName, todayDate, mlbGames, nflGames }: Props) {
       status: g.status === "live" ? "LIVE" : g.timeLabel,
       href: `/nfl/game/${g.id}`,
     }));
-    return [...mlbChips, ...nflChips].slice(0, 12);
-  }, [mlbGames, nflGames]);
+    const wnbaChips: MarketChip[] = wnbaGames.slice(0, 5).map((g) => ({
+      key: `wnba-${g.id}`,
+      away: g.away,
+      home: g.home,
+      awayHex: wnbaTeamHex(g.away),
+      homeHex: wnbaTeamHex(g.home),
+      awayPct: 100 - g.homeWinProb,
+      homePct: g.homeWinProb,
+      tag: "WNBA",
+      status: g.status === "live" ? "LIVE" : g.timeLabel,
+      href: `/wnba/game/${g.id}`,
+    }));
+    return [...mlbChips, ...nflChips, ...wnbaChips].slice(0, 15);
+  }, [mlbGames, nflGames, wnbaGames]);
 
   return (
     <div className="spotlight min-h-screen">
@@ -144,7 +166,7 @@ export function HomeClient({ userName, todayDate, mlbGames, nflGames }: Props) {
                 </span>
               )}
             </div>
-            <p className="mt-3 font-spot-sans font-black text-2xl" style={{ color: "var(--text)" }}>{mlbGames.length} games today</p>
+            <p className="mt-3 font-spot-sans font-black text-2xl" style={{ color: "var(--text)" }}>{mlbGames.length} {mlbGames.length === 1 ? "game" : "games"} today</p>
             <p className="mt-1 font-spot-sans text-xs font-medium" style={{ color: "var(--text-muted)" }}>
               {mlbGames.length ? `All analyzed · ${mlbTopPick} is tonight's strongest edge` : "No games scheduled today"}
             </p>
@@ -168,6 +190,29 @@ export function HomeClient({ userName, todayDate, mlbGames, nflGames }: Props) {
             <p className="mt-1 font-spot-sans text-xs font-medium" style={{ color: "var(--text-muted)" }}>HOF Game + Preseason Week 1 already graded</p>
             <p className="mt-3.5 font-spot-sans font-extrabold text-xs" style={{ color: "var(--purple-2)" }}>See the NFL slate &rarr;</p>
           </button>
+
+          <button
+            onClick={() => router.push("/wnba")}
+            className="relative overflow-hidden text-left rounded-[20px] p-5"
+            style={{ background: "linear-gradient(135deg, rgba(45,212,191,.14), #0b0d15 62%)", border: "1px solid rgba(45,212,191,.32)" }}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="inline-flex items-center gap-1.5 font-spot-sans font-extrabold text-[11px] uppercase tracking-[.12em]" style={{ color: "#5eead4" }}>
+                🏀 WNBA &middot; In Season
+              </span>
+              {wnbaLive.length > 0 && (
+                <span className="inline-flex items-center gap-1.5 font-spot-mono font-extrabold text-[10px]" style={{ color: "var(--red-soft)" }}>
+                  <span className="spot-live-dot inline-block rounded-full" style={{ width: 6, height: 6, background: "var(--red)" }} />
+                  {wnbaLive.length} LIVE
+                </span>
+              )}
+            </div>
+            <p className="mt-3 font-spot-sans font-black text-2xl" style={{ color: "var(--text)" }}>{wnbaGames.length} {wnbaGames.length === 1 ? "game" : "games"} today</p>
+            <p className="mt-1 font-spot-sans text-xs font-medium" style={{ color: "var(--text-muted)" }}>
+              {wnbaGames.length ? `All analyzed · ${wnbaTopPick} is today's strongest edge` : "No games scheduled today"}
+            </p>
+            <p className="mt-3.5 font-spot-sans font-extrabold text-xs" style={{ color: "#2dd4bf" }}>Open WNBA dashboard &rarr;</p>
+          </button>
         </div>
 
         {/* AI Live Market ticker */}
@@ -189,7 +234,7 @@ export function HomeClient({ userName, todayDate, mlbGames, nflGames }: Props) {
                     style={{ width: 212, background: "var(--panel-2)", border: "1px solid var(--hairline)" }}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-spot-sans font-extrabold text-[9px] tracking-[.12em]" style={{ color: m.tag === "MLB" ? "var(--orange-soft)" : "var(--purple-soft)" }}>{m.tag}</span>
+                      <span className="font-spot-sans font-extrabold text-[9px] tracking-[.12em]" style={{ color: m.tag === "MLB" ? "var(--orange-soft)" : m.tag === "NFL" ? "var(--purple-soft)" : "#5eead4" }}>{m.tag}</span>
                       <span className="font-spot-mono font-bold text-[9px]" style={{ color: "var(--text-muted)" }}>{m.status}</span>
                     </div>
                     <div className="flex items-center justify-between font-spot-sans font-extrabold text-xs">

@@ -23,6 +23,7 @@ const FAN_FEATURES = [
   "Head-to-head history (last 5 meetings)",
   "Full HR & hit prop rankings — all batters",
   "Priority data refresh",
+  "NEW: WNBA Edge Report & Prop Builder",
 ];
 
 const PRO_FEATURES = [
@@ -35,6 +36,7 @@ const PRO_FEATURES = [
   "Post-game AI accuracy report",
   "Batter power & pitcher vulnerability index",
   "NEW: NFL Edge Pro early access — This Week dashboard, live drive tracker & prop builder",
+  "NEW: WNBA Player Impact Deep Dive & Daily Picks",
 ];
 
 const fadeUp = {
@@ -64,6 +66,8 @@ const COMPARISON: [string, boolean, boolean, boolean][] = [
   ["Pitch → Spray Connection",     false, false, true ],
   ["Post-game AI accuracy report", false, false, true ],
   ["NFL Edge Pro (early access)",  false, false, true ],
+  ["WNBA Edge Report & Props",     false, true,  true ],
+  ["WNBA Player Impact Deep Dive", false, false, true ],
 ];
 
 function CheckIcon({ yes, color }: { yes: boolean; color?: string }) {

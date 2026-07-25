@@ -46,26 +46,41 @@ function FootballIcon({ size = 12 }: { size?: number }) {
   );
 }
 
-function SportPill({ sport }: { sport: "mlb" | "nfl" }) {
+function BasketballIcon({ size = 12 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.7">
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 3.5v17M3.5 12h17M5.2 5.2c2.4 2.2 3.8 4.4 3.8 6.8s-1.4 4.6-3.8 6.8M18.8 5.2c-2.4 2.2-3.8 4.4-3.8 6.8s1.4 4.6 3.8 6.8" />
+    </svg>
+  );
+}
+
+type Sport = "mlb" | "nfl" | "wnba";
+
+function SportPill({ sport }: { sport: Sport }) {
   const router = useRouter();
+  const tabs: { key: Sport; href: string; label: string; icon: (p: { size?: number }) => React.JSX.Element; gradient: string; textCls: string }[] = [
+    { key: "mlb",  href: "/games", label: "MLB",  icon: BaseballIcon,   gradient: "from-[#f97316] to-[#fb923c]", textCls: "text-white" },
+    { key: "nfl",  href: "/nfl",   label: "NFL",  icon: FootballIcon,   gradient: "from-[#f97316] to-[#fb923c]", textCls: "text-white" },
+    { key: "wnba", href: "/wnba",  label: "WNBA", icon: BasketballIcon, gradient: "from-[#2dd4bf] to-[#5eead4]", textCls: "text-[#06070d]" },
+  ];
   return (
     <div className="flex items-center p-[3px] rounded-full border border-white/[0.08] bg-white/[0.03]">
-      <button
-        onClick={() => router.push("/games")}
-        className={`inline-flex items-center gap-1.5 rounded-full px-3 py-[5px] text-[11px] font-black tracking-wide transition-colors ${
-          sport === "mlb" ? "bg-gradient-to-br from-[#f97316] to-[#fb923c] text-white" : "text-white/40 hover:text-white/70"
-        }`}
-      >
-        <BaseballIcon /> MLB
-      </button>
-      <button
-        onClick={() => router.push("/nfl")}
-        className={`inline-flex items-center gap-1.5 rounded-full px-3 py-[5px] text-[11px] font-black tracking-wide transition-colors ${
-          sport === "nfl" ? "bg-gradient-to-br from-[#f97316] to-[#fb923c] text-white" : "text-white/40 hover:text-white/70"
-        }`}
-      >
-        <FootballIcon /> NFL
-      </button>
+      {tabs.map((t) => {
+        const Icon = t.icon;
+        const active = sport === t.key;
+        return (
+          <button
+            key={t.key}
+            onClick={() => router.push(t.href)}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-[5px] text-[11px] font-black tracking-wide transition-colors ${
+              active ? `bg-gradient-to-br ${t.gradient} ${t.textCls}` : "text-white/40 hover:text-white/70"
+            }`}
+          >
+            <Icon /> {t.label}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -79,6 +94,12 @@ function nflNav(isSuperPro: boolean) {
   ];
 }
 
+const WNBA_NAV = [
+  { href: "/wnba",        icon: CircleDot, label: "Today",  requiredTier: null as null },
+  { href: "/wnba/props",  icon: Target,    label: "Props",  requiredTier: "fan" as const },
+  { href: "/wnba/impact", icon: BarChart3, label: "Impact", requiredTier: "pro" as const },
+];
+
 export function AppSidebar() {
   const pathname     = usePathname();
   const { isPro, isSuperPro } = useSubscription();
@@ -86,8 +107,12 @@ export function AppSidebar() {
   const { signOut }  = useClerk();
   const [open, setOpen] = useState(false);
 
-  const sport: "mlb" | "nfl" = pathname.startsWith("/nfl") ? "nfl" : "mlb";
-  const navItems = [HOME_ITEM, ...(sport === "nfl" ? nflNav(isSuperPro) : MLB_NAV)];
+  const sport: Sport = pathname.startsWith("/wnba") ? "wnba" : pathname.startsWith("/nfl") ? "nfl" : "mlb";
+  const sportLabel = sport === "wnba" ? "WNBA" : sport === "nfl" ? "NFL" : "MLB";
+  const navItems = [
+    HOME_ITEM,
+    ...(sport === "wnba" ? WNBA_NAV : sport === "nfl" ? nflNav(isSuperPro) : MLB_NAV),
+  ];
 
   function isLocked(requiredTier: "fan" | "pro" | null): boolean {
     if (!requiredTier) return false;
@@ -108,7 +133,7 @@ export function AppSidebar() {
           <Link href="/home" className="flex items-center gap-2 hover:opacity-80 transition-opacity shrink-0">
             <DiamondLogo />
             <span className="text-[15px] font-bold text-white font-display tracking-wide hidden md:inline">
-              {sport === "nfl" ? "NFL" : "MLB"} Edge<span className="text-[#FF7828]"> Pro</span>
+              {sportLabel} Edge<span className="text-[#FF7828]"> Pro</span>
             </span>
           </Link>
           <div className="hidden sm:flex">
@@ -140,7 +165,7 @@ export function AppSidebar() {
               </Link>
             );
           })}
-          {sport === "nfl" && (
+          {(sport === "nfl" || sport === "wnba") && (
             <span className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-white/25 cursor-default">
               <Bot size={14} strokeWidth={1.7} />
               <span>Edge AI</span>
@@ -231,7 +256,7 @@ export function AppSidebar() {
               <div className="flex items-center justify-between px-5 h-14 border-b border-white/[0.06] shrink-0">
                 <Link href="/home" onClick={() => setOpen(false)} className="flex items-center gap-2">
                   <DiamondLogo />
-                  <span className="text-[15px] font-bold text-white font-display tracking-wide">{sport === "nfl" ? "NFL" : "MLB"} Edge<span className="text-[#FF7828]"> Pro</span></span>
+                  <span className="text-[15px] font-bold text-white font-display tracking-wide">{sportLabel} Edge<span className="text-[#FF7828]"> Pro</span></span>
                 </Link>
                 <button onClick={() => setOpen(false)} className="w-9 h-9 rounded-xl flex items-center justify-center text-white/40 hover:text-white hover:bg-white/[0.06] transition-colors">
                   <X size={20} strokeWidth={1.8} />
@@ -298,7 +323,7 @@ export function AppSidebar() {
                     </Link>
                   );
                 })}
-                {sport === "nfl" && (
+                {(sport === "nfl" || sport === "wnba") && (
                   <span className="flex items-center gap-3 px-4 py-3 rounded-2xl font-medium text-white/25 cursor-default">
                     <Bot size={18} strokeWidth={1.7} />
                     <span className="flex-1">Edge AI</span>
