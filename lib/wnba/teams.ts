@@ -37,3 +37,7 @@ export function wnbaTeamName(abbr: string): string {
 export function wnbaLogoUrl(abbr: string): string {
   return `https://a.espncdn.com/i/teamlogos/wnba/500-dark/${abbr.toLowerCase()}.png`;
 }
+
+export function wnbaHeadshotUrl(espnId: string): string {
+  return `https://a.espncdn.com/i/headshots/wnba/players/full/${espnId}.png`;
+}

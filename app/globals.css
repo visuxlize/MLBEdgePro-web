@@ -3,8 +3,8 @@
 
 /* ── Typography ─────────────────────────────────────────────────── */
 :root {
-  --font-sans:    'Satoshi', system-ui, -apple-system, sans-serif;
-  --font-display: 'Integral CF', 'Satoshi', system-ui, sans-serif;
+  --font-sans:    'Hanken Grotesk', system-ui, -apple-system, sans-serif;
+  --font-display: 'Bricolage Grotesque', 'Hanken Grotesk', system-ui, sans-serif;
 }
 
 body {
@@ -79,8 +79,8 @@ img, video { max-width: 100%; height: auto; }
   --color-surface:      #111622;
   --color-surface-2:    #191C22;
 
-  --font-sans: 'Satoshi', system-ui, -apple-system, sans-serif;
-  --font-display: 'Integral CF', 'Satoshi', system-ui, sans-serif;
+  --font-sans: 'Hanken Grotesk', system-ui, -apple-system, sans-serif;
+  --font-display: 'Bricolage Grotesque', 'Hanken Grotesk', system-ui, sans-serif;
 }
 
 /* Single theme — always dark, matching the mobile app exactly */
@@ -303,7 +303,7 @@ html {
   --glow-edge:     0 6px 30px rgba(52,211,153,.40);
 
   /* ---- Type ---- */
-  --font-spot-sans: 'Archivo', system-ui, sans-serif;
+  --font-spot-sans: 'Hanken Grotesk', system-ui, sans-serif;
   --font-spot-mono: 'JetBrains Mono', ui-monospace, monospace;
 
   font-family: var(--font-spot-sans);
@@ -316,11 +316,11 @@ html {
 .spotlight .font-mono,
 .spotlight .tabular-nums { font-family: var(--font-spot-mono); font-feature-settings: 'tnum' 1; }
 .font-spot-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; font-feature-settings: 'tnum' 1; }
-.font-spot-sans { font-family: 'Archivo', system-ui, sans-serif; }
+.font-spot-sans { font-family: 'Hanken Grotesk', system-ui, sans-serif; }
 
 /* Section labels */
-.spot-label    { font: 700 11px/1 'Archivo', sans-serif; text-transform: uppercase; letter-spacing: .14em; }
-.spot-label-sm { font: 800 10px/1 'Archivo', sans-serif; text-transform: uppercase; letter-spacing: .12em; }
+.spot-label    { font: 700 11px/1 'Hanken Grotesk', sans-serif; text-transform: uppercase; letter-spacing: .14em; }
+.spot-label-sm { font: 800 10px/1 'Hanken Grotesk', sans-serif; text-transform: uppercase; letter-spacing: .12em; }
 
 /* Surfaces */
 .spot-panel { background: var(--panel);   border: 1px solid var(--hairline); border-radius: var(--r-panel); }
@@ -357,6 +357,12 @@ html {
 @keyframes scan { 0% { transform: translateX(-120%); } 100% { transform: translateX(320%); } }
 /* Win-probability timeline SVG draw-in */
 @keyframes draw { to { stroke-dashoffset: 0; } }
+/* WNBA — stat/edge-factor bars growing in from zero (scaleX so any target width works) */
+@keyframes bar-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+/* WNBA — width-based grow-in for bars that contain their own text (scaleX would distort it) */
+@keyframes bar-grow-w { from { width: 0; } to { width: var(--bar-target-width, 100%); } }
+/* WNBA — pulsing glow ring for live game tiles */
+@keyframes live-glow { 0%,100% { box-shadow: 0 0 0 rgba(239,68,68,0); } 50% { box-shadow: 0 0 22px rgba(239,68,68,.32); } }
 .spot-live-dot { animation: spot-pulse 1.3s ease-in-out infinite; }
 
 /* Card hover lift */

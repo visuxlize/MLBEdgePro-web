@@ -1,12 +1,56 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { wnbaTeamHex, wnbaLogoUrl } from "@/lib/wnba/teams";
-import { LogoPlate, gradeColor, alpha } from "@/components/web-tool/spotlight";
+import { wnbaTeamHex, wnbaLogoUrl, wnbaHeadshotUrl } from "@/lib/wnba/teams";
+import { LogoPlate, HeadshotPlate, gradeColor, alpha } from "@/components/web-tool/spotlight";
 import { PaywallGate } from "@/components/web-tool/paywall-gate";
 import type { WnbaEdgeFactor, WnbaGame, WnbaH2HStat, WnbaPlayerProp } from "@/lib/wnba/types";
+
+/** Eased count-up from 0 to target — used so the edge score reads as freshly computed, not static. */
+function useCountUp(target: number, durationMs = 1100) {
+  const [value, setValue] = useState(0);
+  useEffect(() => {
+    let raf: number;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / durationMs);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setValue(Math.round(eased * target));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, durationMs]);
+  return value;
+}
+
+/** Edge score as an animated SVG ring — sweeps in on mount instead of appearing as a static conic-gradient. */
+function AnimatedEdgeRing({ value, grade, color, size = 96 }: { value: number; grade: string; color: string; size?: number }) {
+  const strokeWidth = 7;
+  const r = (size - strokeWidth) / 2;
+  const c = 2 * Math.PI * r;
+  const shown = useCountUp(value);
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,.08)" strokeWidth={strokeWidth} />
+        <motion.circle
+          cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round"
+          strokeDasharray={c}
+          initial={{ strokeDashoffset: c }}
+          animate={{ strokeDashoffset: c * (1 - value / 100) }}
+          transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center leading-none">
+        <span className="font-spot-mono font-extrabold text-[27px]">{shown}</span>
+        <span className="mt-1 font-spot-sans font-black text-[13px]" style={{ color }}>{grade}</span>
+      </div>
+    </div>
+  );
+}
 
 interface Props {
   game: WnbaGame;
@@ -61,25 +105,19 @@ export function WnbaGameDeepDive({ game, h2h, factors, narrativeText, narrativeT
             <div className="flex items-center justify-between gap-5 flex-wrap">
               <div className="flex items-center gap-5">
                 <div className="flex flex-col items-center gap-2">
-                  <LogoPlate hex={awayHex} src={wnbaLogoUrl(game.away)} code={game.away} size={64} radius={19} />
+                  <LogoPlate hex={awayHex} src={wnbaLogoUrl(game.away)} code={game.away} size={64} radius={19} variant="clean" />
                   <span className="font-spot-sans font-black text-lg" style={{ color: "var(--text)" }}>{game.away}</span>
                 </div>
                 <span className="font-spot-mono font-extrabold text-2xl" style={{ color: "var(--text-ghost)" }}>
                   {game.status !== "pre" ? `${game.awayScore ?? 0} – ${game.homeScore ?? 0}` : "@"}
                 </span>
                 <div className="flex flex-col items-center gap-2">
-                  <LogoPlate hex={homeHex} src={wnbaLogoUrl(game.home)} code={game.home} size={64} radius={19} />
+                  <LogoPlate hex={homeHex} src={wnbaLogoUrl(game.home)} code={game.home} size={64} radius={19} variant="clean" />
                   <span className="font-spot-sans font-black text-lg" style={{ color: "var(--text)" }}>{game.home}</span>
                 </div>
               </div>
               <div className="flex items-center gap-5">
-                <div className="relative" style={{ width: 96, height: 96, borderRadius: "50%", background: `conic-gradient(${gc} ${game.edge}%, rgba(255,255,255,.08) 0)`, display: "grid", placeItems: "center" }}>
-                  <div className="absolute rounded-full" style={{ inset: 7, background: "var(--panel)" }} />
-                  <div className="relative flex flex-col items-center leading-none">
-                    <span className="font-spot-mono font-extrabold text-[27px]">{game.edge}</span>
-                    <span className="mt-1 font-spot-sans font-black text-[13px]" style={{ color: gc }}>{game.grade}</span>
-                  </div>
-                </div>
+                <AnimatedEdgeRing value={game.edge} grade={game.grade} color={gc} />
                 <div className="flex-1" style={{ minWidth: 230 }}>
                   <div className="flex justify-between mb-1">
                     <span className="font-spot-mono font-bold text-[11px]" style={{ color: "var(--text-3)" }}>{game.away} {100 - game.homeWinProb}%</span>
@@ -111,13 +149,14 @@ export function WnbaGameDeepDive({ game, h2h, factors, narrativeText, narrativeT
           ]}
         >
           <div className="grid gap-3.5 mb-3.5" style={{ gridTemplateColumns: "1fr 1fr" }}>
-            <div className="rounded-[18px] p-5" style={{ background: "linear-gradient(160deg, rgba(45,212,191,.10), var(--panel) 62%)", border: "1px solid rgba(45,212,191,.24)" }}>
-              <div className="flex items-center gap-2 mb-3">
+            <div className="relative overflow-hidden rounded-[18px] p-5" style={{ background: "linear-gradient(160deg, rgba(45,212,191,.10), var(--panel) 62%)", border: "1px solid rgba(45,212,191,.24)" }}>
+              <div className="absolute top-0 bottom-0 left-0 w-1/4 pointer-events-none" style={{ background: "linear-gradient(90deg, transparent, rgba(45,212,191,.12), transparent)", animation: "scan 5.5s linear infinite" }} />
+              <div className="relative flex items-center gap-2 mb-3">
                 <span className="w-[26px] h-[26px] rounded-lg flex items-center justify-center" style={{ color: "#2dd4bf", background: "rgba(45,212,191,.14)", border: "1px solid rgba(45,212,191,.3)" }}>◆</span>
                 <span className="font-spot-sans font-extrabold text-xs tracking-[.06em]" style={{ color: "#5eead4" }}>Edge AI Breakdown</span>
               </div>
-              <p className="font-spot-sans font-medium text-[13px] leading-relaxed" style={{ color: "var(--text-2)" }}>{narrativeText}</p>
-              <div className="flex flex-wrap gap-1.5 mt-3.5">
+              <p className="relative font-spot-sans font-medium text-[13px] leading-relaxed" style={{ color: "var(--text-2)" }}>{narrativeText}</p>
+              <div className="relative flex flex-wrap gap-1.5 mt-3.5">
                 {narrativeTags.map((t) => (
                   <span key={t} className="rounded-full px-2.5 py-1 font-spot-sans font-bold text-[10px]" style={{ color: "#5eead4", background: "rgba(45,212,191,.10)", border: "1px solid rgba(45,212,191,.26)" }}>{t}</span>
                 ))}
@@ -146,7 +185,7 @@ export function WnbaGameDeepDive({ game, h2h, factors, narrativeText, narrativeT
             <div className="rounded-[18px] p-5" style={{ background: "var(--panel)", border: "1px solid var(--hairline)" }}>
               <p className="spot-label mb-4" style={{ color: "var(--text-faint)" }}>Head to Head</p>
               <div className="flex flex-col gap-3.5">
-                {h2h.map((h) => (
+                {h2h.map((h, i) => (
                   <div key={h.label}>
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-spot-mono font-extrabold text-xs" style={{ color: "var(--text-2)" }}>{h.awayVal}</span>
@@ -155,10 +194,10 @@ export function WnbaGameDeepDive({ game, h2h, factors, narrativeText, narrativeT
                     </div>
                     <div className="flex items-center gap-1 h-2">
                       <div className="flex-1 flex justify-end h-full rounded overflow-hidden" style={{ background: "rgba(255,255,255,.05)" }}>
-                        <div className="h-full rounded" style={{ width: `${h.awayPct}%`, background: awayHex }} />
+                        <div className="h-full rounded" style={{ width: `${h.awayPct}%`, background: awayHex, transformOrigin: "right", animation: `bar-grow .8s cubic-bezier(.22,1,.36,1) ${i * 0.08}s both` }} />
                       </div>
                       <div className="flex-1 h-full rounded overflow-hidden" style={{ background: "rgba(255,255,255,.05)" }}>
-                        <div className="h-full rounded" style={{ width: `${h.homePct}%`, background: homeHex }} />
+                        <div className="h-full rounded" style={{ width: `${h.homePct}%`, background: homeHex, transformOrigin: "left", animation: `bar-grow .8s cubic-bezier(.22,1,.36,1) ${i * 0.08}s both` }} />
                       </div>
                     </div>
                   </div>
@@ -168,14 +207,14 @@ export function WnbaGameDeepDive({ game, h2h, factors, narrativeText, narrativeT
             <div className="rounded-[18px] p-5" style={{ background: "var(--panel)", border: "1px solid var(--hairline)" }}>
               <p className="spot-label mb-4" style={{ color: "var(--text-faint)" }}>Edge Factors</p>
               <div className="flex flex-col gap-3">
-                {factors.map((f) => (
+                {factors.map((f, i) => (
                   <div key={f.label}>
                     <div className="flex justify-between mb-1">
                       <span className="font-spot-sans text-xs" style={{ color: "var(--text-2)" }}>{f.label}</span>
                       <span className="font-spot-mono font-extrabold text-[11px]" style={{ color: f.color }}>{f.value}</span>
                     </div>
                     <div className="h-1.5 rounded overflow-hidden" style={{ background: "rgba(255,255,255,.08)" }}>
-                      <div className="h-full rounded" style={{ width: `${f.pct}%`, background: f.color }} />
+                      <div className="h-full rounded" style={{ width: `${f.pct}%`, background: f.color, transformOrigin: "left", animation: `bar-grow .8s cubic-bezier(.22,1,.36,1) ${i * 0.08}s both` }} />
                     </div>
                   </div>
                 ))}
@@ -195,7 +234,7 @@ export function WnbaGameDeepDive({ game, h2h, factors, narrativeText, narrativeT
                   const pgc = gradeColor(p.grade);
                   return (
                     <div key={p.id} className="flex items-center gap-2.5 rounded-[13px] px-3.5 py-2.5" style={{ background: "var(--panel-2)", border: "1px solid var(--hairline)" }}>
-                      <LogoPlate hex={wnbaTeamHex(p.team)} src={wnbaLogoUrl(p.team)} code={p.team} size={32} radius={9} />
+                      <HeadshotPlate hex={wnbaTeamHex(p.team)} src={wnbaHeadshotUrl(p.espnId)} name={p.player} size={36} />
                       <div className="flex-1 min-w-0">
                         <p className="font-spot-sans font-extrabold text-[13px]" style={{ color: "var(--text)" }}>{p.player}</p>
                         <p className="font-spot-sans text-[10px]" style={{ color: "var(--text-muted)" }}>{p.market} &middot; {p.over ? "OVER" : "UNDER"} &middot; model {p.model}</p>

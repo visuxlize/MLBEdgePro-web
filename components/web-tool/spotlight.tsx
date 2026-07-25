@@ -1,8 +1,27 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { playerHeadshotUrl, teamLogoDarkUrl, type Game } from "@/lib/mlb/api";
+
+/**
+ * Tracks whether an <img> failed to load, including images that already
+ * finished failing (e.g. a 404) before React hydrated and attached the
+ * onError listener — a plain onError handler misses that race entirely,
+ * since the browser's error event has already fired and gone by the time
+ * the listener exists. Checking `complete && naturalWidth === 0` on mount
+ * catches that case; onError still covers failures after mount.
+ */
+function useImgFallback() {
+  const [failed, setFailed] = useState(false);
+  const ref = useRef<HTMLImageElement>(null);
+  useEffect(() => {
+    if (ref.current && ref.current.complete && ref.current.naturalWidth === 0) {
+      setFailed(true);
+    }
+  }, []);
+  return { failed, ref, onError: () => setFailed(true) };
+}
 
 // Re-export all server-safe utilities so existing imports from this module still work.
 export {
@@ -25,20 +44,28 @@ export function SectionLabel({
   );
 }
 
-/* ── Logo plate — sport-agnostic team-color plate, auto-loads a logo, falls back to code ── */
+/* ── Logo plate — sport-agnostic team plate, auto-loads a logo, falls back to code ──
+   variant "solid" (default): saturated team-color background — MLB/NFL convention.
+   variant "clean": neutral dark plate + a thin team-color ring, logo fills more of
+   the frame. Reaches for this on multi-color logos that clash against a solid
+   same-family color fill (e.g. a teal-on-navy team badge over a solid teal square). */
 
 export function LogoPlate({
-  hex, src, code, name, size = 38, radius,
-}: { hex: string; src: string; code: string; name?: string; size?: number; radius?: number }) {
-  const [imgFailed, setImgFailed] = useState(false);
+  hex, src, code, name, size = 38, radius, variant = "solid",
+}: { hex: string; src: string; code: string; name?: string; size?: number; radius?: number; variant?: "solid" | "clean" }) {
+  const { failed: imgFailed, ref, onError } = useImgFallback();
   const r = radius ?? Math.round(size * 0.3);
-  const ink = contrastText(hex);
-  const pad = Math.round(size * 0.15);
+  const clean = variant === "clean";
+  const ink = clean ? hex : contrastText(hex);
+  const pad = Math.round(size * (clean ? 0.09 : 0.15));
 
   return (
     <div
       className="shrink-0 flex items-center justify-center relative overflow-hidden"
-      style={{
+      style={clean ? {
+        width: size, height: size, borderRadius: r, background: "#12141c",
+        boxShadow: `inset 0 0 0 1.5px ${alpha(hex, "55")}, 0 2px 6px rgba(0,0,0,.35)`,
+      } : {
         width: size, height: size, borderRadius: r, background: hex,
         boxShadow: "inset 0 0 0 1.5px rgba(255,255,255,.55), 0 3px 8px rgba(0,0,0,.4)",
       }}
@@ -47,15 +74,16 @@ export function LogoPlate({
       {!imgFailed ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
+          ref={ref}
           src={src}
           alt={name ?? code}
           style={{
             width: size - pad * 2,
             height: size - pad * 2,
             objectFit: "contain",
-            filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.55))",
+            filter: clean ? "drop-shadow(0 1px 2px rgba(0,0,0,.4))" : "drop-shadow(0 1px 3px rgba(0,0,0,0.55))",
           }}
-          onError={() => setImgFailed(true)}
+          onError={onError}
         />
       ) : (
         <span className="font-spot-sans font-black" style={{ fontSize: size * 0.34, letterSpacing: "-0.5px", color: ink }}>
@@ -84,31 +112,51 @@ export function LogoBadge({
   );
 }
 
-/* ── Blended player headshot — portrait crop, full face, team-color bottom fade ─ */
+/* ── Headshot plate — sport-agnostic portrait crop, full face, team-color bottom fade ── */
+
+export function HeadshotPlate({
+  hex, src, name, size = 64,
+}: { hex: string; src: string; name: string; size?: number }) {
+  // Portrait: 1.3× taller than wide so the full head + shoulders shows without clipping
+  const w = size;
+  const h = Math.round(size * 1.35);
+  const r = Math.round(size * 0.15);
+  const { failed: imgFailed, ref, onError } = useImgFallback();
+  const ink = contrastText(hex);
+  return (
+    <div className="relative shrink-0 overflow-hidden flex items-center justify-center" style={{ width: w, height: h, borderRadius: r, background: hex }}>
+      {!imgFailed && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          ref={ref}
+          src={src}
+          alt={name}
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ objectPosition: "50% 5%" }}
+          onError={onError}
+        />
+      )}
+      {imgFailed && (
+        <span className="relative font-spot-sans font-black" style={{ fontSize: size * 0.34, color: ink }}>
+          {name.split(" ").map((p) => p[0]).slice(0, 2).join("")}
+        </span>
+      )}
+      {/* Subtle team-color gradient fades the lower third into the card */}
+      {!imgFailed && (
+        <div className="absolute inset-0 pointer-events-none"
+          style={{ background: `linear-gradient(to bottom, transparent 55%, ${alpha(hex, "55")} 82%, rgba(6,7,13,.92) 100%)` }} />
+      )}
+    </div>
+  );
+}
+
+/* ── Blended player headshot — MLB wrapper over HeadshotPlate ─────────────────── */
 
 export function BlendedHeadshot({
   id, name, size = 64, teamId,
 }: { id: number; name: string; size?: number; teamId?: number }) {
   const hex = teamId !== undefined ? teamHex(teamId) : "#7c5cfa";
-  // Portrait: 1.3× taller than wide so the full head + shoulders shows without clipping
-  const w = size;
-  const h = Math.round(size * 1.35);
-  const r = Math.round(size * 0.15);
-  return (
-    <div className="relative shrink-0 overflow-hidden" style={{ width: w, height: h, borderRadius: r }}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={playerHeadshotUrl(id)}
-        alt={name}
-        className="absolute inset-0 w-full h-full object-cover"
-        style={{ objectPosition: "50% 5%" }}
-        onError={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = "0"; }}
-      />
-      {/* Subtle team-color gradient fades the lower third into the card */}
-      <div className="absolute inset-0 pointer-events-none"
-        style={{ background: `linear-gradient(to bottom, transparent 55%, ${alpha(hex, "55")} 82%, rgba(6,7,13,.92) 100%)` }} />
-    </div>
-  );
+  return <HeadshotPlate hex={hex} src={playerHeadshotUrl(id)} name={name} size={size} />;
 }
 
 /* ── Conic edge / grade ring ────────────────────────────────────────────────── */

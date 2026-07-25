@@ -67,20 +67,21 @@ function DateStrip({ date, onChange }: { date: string; onChange: (d: string) => 
 function LiveTile({ game, onClick }: { game: WnbaGame; onClick: () => void }) {
   const awayHex = wnbaTeamHex(game.away), homeHex = wnbaTeamHex(game.home);
   return (
-    <button onClick={onClick} className="spot-lift text-left rounded-[var(--r-card)] p-4 shrink-0 w-[240px]"
-      style={{ background: `linear-gradient(120deg, ${alpha(awayHex, "26")}, var(--panel) 52%, ${alpha(homeHex, "2e")})`, border: "1px solid var(--hairline)" }}>
-      <div className="flex items-center justify-between mb-3">
+    <button onClick={onClick} className="spot-lift relative overflow-hidden text-left rounded-[var(--r-card)] p-4 shrink-0 w-[240px]"
+      style={{ background: `linear-gradient(120deg, ${alpha(awayHex, "26")}, var(--panel) 52%, ${alpha(homeHex, "2e")})`, border: "1px solid rgba(239,68,68,.3)", animation: "live-glow 2.4s ease-in-out infinite" }}>
+      <div className="absolute top-0 bottom-0 left-0 w-1/3 pointer-events-none" style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,.06), transparent)", animation: "scan 4s linear infinite" }} />
+      <div className="relative flex items-center justify-between mb-3">
         <LivePill label={game.statusDetail} />
         <ArrowRight size={14} style={{ color: "var(--text-ghost)" }} />
       </div>
       {[{ abbr: game.away, sc: game.awayScore }, { abbr: game.home, sc: game.homeScore }].map(({ abbr, sc }, i) => (
-        <div key={i} className="flex items-center gap-2.5 py-1">
-          <LogoPlate hex={wnbaTeamHex(abbr)} src={wnbaLogoUrl(abbr)} code={abbr} size={26} />
+        <div key={i} className="relative flex items-center gap-2.5 py-1">
+          <LogoPlate hex={wnbaTeamHex(abbr)} src={wnbaLogoUrl(abbr)} code={abbr} size={26} variant="clean" />
           <span className="flex-1 font-spot-sans font-bold text-sm" style={{ color: "var(--text)" }}>{abbr}</span>
           <span className="font-spot-mono text-xl font-extrabold" style={{ color: "var(--text)" }}>{sc ?? 0}</span>
         </div>
       ))}
-      <div className="mt-3 pt-2.5 flex items-center justify-between" style={{ borderTop: "1px solid var(--hairline-2)" }}>
+      <div className="relative mt-3 pt-2.5 flex items-center justify-between" style={{ borderTop: "1px solid var(--hairline-2)" }}>
         <span className="spot-label-sm" style={{ color: "var(--text-faint)" }}>Model Lean</span>
         <span className="inline-flex items-center gap-1 font-spot-sans text-[11px] font-black" style={{ color: "var(--purple-2)" }}>
           ◆ {game.homeWinProb >= 50 ? game.home : game.away} ML
@@ -110,12 +111,12 @@ function EditorialHero({ game, onClick }: { game: WnbaGame; onClick: () => void 
         <div className="flex items-end justify-between gap-4 mt-6 flex-wrap">
           <div className="flex items-center gap-4 sm:gap-6">
             <div className="flex flex-col items-center gap-2">
-              <LogoPlate hex={awayHex} src={wnbaLogoUrl(game.away)} code={game.away} size={60} />
+              <LogoPlate hex={awayHex} src={wnbaLogoUrl(game.away)} code={game.away} size={60} variant="clean" />
               <span className="font-spot-sans font-black text-lg" style={{ color: "var(--text)" }}>{game.away}</span>
             </div>
             <span className="font-spot-sans font-black text-2xl pb-6" style={{ color: "var(--text-ghost)" }}>@</span>
             <div className="flex flex-col items-center gap-2">
-              <LogoPlate hex={homeHex} src={wnbaLogoUrl(game.home)} code={game.home} size={60} />
+              <LogoPlate hex={homeHex} src={wnbaLogoUrl(game.home)} code={game.home} size={60} variant="clean" />
               <span className="font-spot-sans font-black text-lg" style={{ color: "var(--text)" }}>{game.home}</span>
             </div>
           </div>
@@ -157,7 +158,7 @@ function GameCard({ game, onClick }: { game: WnbaGame; onClick: () => void }) {
         </div>
         {[{ abbr: game.away, sc: game.awayScore }, { abbr: game.home, sc: game.homeScore }].map(({ abbr, sc }, i) => (
           <div key={i} className="flex items-center gap-2.5">
-            <LogoPlate hex={wnbaTeamHex(abbr)} src={wnbaLogoUrl(abbr)} code={abbr} size={30} />
+            <LogoPlate hex={wnbaTeamHex(abbr)} src={wnbaLogoUrl(abbr)} code={abbr} size={30} variant="clean" />
             <span className="flex-1 font-spot-sans font-black text-sm" style={{ color: "var(--text)" }}>{abbr}</span>
             {(isLive || isFinal) && sc !== undefined && <span className="font-spot-mono text-xl font-extrabold" style={{ color: "var(--text)" }}>{sc}</span>}
           </div>

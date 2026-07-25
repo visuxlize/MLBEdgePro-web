@@ -1,10 +1,10 @@
 import { PaywallGate } from "@/components/web-tool/paywall-gate";
-import { LogoPlate, SectionLabel } from "@/components/web-tool/spotlight";
+import { LogoPlate, HeadshotPlate, SectionLabel } from "@/components/web-tool/spotlight";
 import { gradeColor } from "@/lib/mlb/spotlight-utils";
 import { getImpactStats } from "@/lib/wnba/impact";
 import { getSchedule } from "@/lib/wnba/espn";
 import { getPlayerProps } from "@/lib/wnba/sportsblaze";
-import { wnbaTeamHex, wnbaLogoUrl } from "@/lib/wnba/teams";
+import { wnbaTeamHex, wnbaLogoUrl, wnbaHeadshotUrl } from "@/lib/wnba/teams";
 
 const ZONE_COLOR: Record<string, string> = {
   Paint: "#34d399",
@@ -28,7 +28,7 @@ async function DailyPicks() {
         const fav = g.homeWinProb >= 50 ? g.home : g.away;
         return (
           <div key={g.id} className="flex items-center gap-3 rounded-[14px] px-4 py-3" style={{ background: "var(--panel-2)", border: "1px solid var(--hairline)" }}>
-            <LogoPlate hex={wnbaTeamHex(fav)} src={wnbaLogoUrl(fav)} code={fav} size={34} radius={10} />
+            <LogoPlate hex={wnbaTeamHex(fav)} src={wnbaLogoUrl(fav)} code={fav} size={34} radius={10} variant="clean" />
             <div className="flex-1 min-w-0">
               <p className="font-spot-sans font-extrabold text-sm" style={{ color: "var(--text)" }}>{fav} Moneyline</p>
               <p className="font-spot-sans text-[10px]" style={{ color: "var(--text-muted)" }}>{g.away} @ {g.home}</p>
@@ -41,7 +41,7 @@ async function DailyPicks() {
         const gc = gradeColor(p.grade);
         return (
           <div key={p.id} className="flex items-center gap-3 rounded-[14px] px-4 py-3" style={{ background: "var(--panel-2)", border: "1px solid var(--hairline)" }}>
-            <LogoPlate hex={wnbaTeamHex(p.team)} src={wnbaLogoUrl(p.team)} code={p.team} size={34} radius={10} />
+            <HeadshotPlate hex={wnbaTeamHex(p.team)} src={wnbaHeadshotUrl(p.espnId)} name={p.player} size={34} />
             <div className="flex-1 min-w-0">
               <p className="font-spot-sans font-extrabold text-sm" style={{ color: "var(--text)" }}>{p.player} &middot; {p.market} {p.over ? "OVER" : "UNDER"}</p>
               <p className="font-spot-sans text-[10px]" style={{ color: "var(--text-muted)" }}>Line {p.line} &middot; model {p.model}</p>
@@ -63,7 +63,12 @@ async function ImpactGrid() {
         return (
           <div key={s.player} className="rounded-[18px] overflow-hidden" style={{ background: "var(--panel)", border: "1px solid var(--hairline)", boxShadow: "var(--shadow-card)" }}>
             <div className="flex items-center gap-3 px-4 py-3.5" style={{ background: `linear-gradient(120deg, ${wnbaTeamHex(s.team)}22, transparent 70%)` }}>
-              <LogoPlate hex={wnbaTeamHex(s.team)} src={wnbaLogoUrl(s.team)} code={s.team} size={42} radius={12} />
+              <div className="relative shrink-0">
+                <HeadshotPlate hex={wnbaTeamHex(s.team)} src={wnbaHeadshotUrl(s.espnId)} name={s.player} size={48} />
+                <div className="absolute -bottom-1.5 -right-1.5">
+                  <LogoPlate hex={wnbaTeamHex(s.team)} src={wnbaLogoUrl(s.team)} code={s.team} size={20} radius={6} variant="clean" />
+                </div>
+              </div>
               <div className="flex-1 min-w-0">
                 <p className="font-spot-sans font-black text-base" style={{ color: "var(--text)" }}>{s.player}</p>
                 <p className="mt-0.5 font-spot-sans font-semibold text-[10px]" style={{ color: "var(--text-3)" }}>{s.pos} &middot; {s.team}</p>
@@ -88,8 +93,8 @@ async function ImpactGrid() {
               <div>
                 <p className="font-spot-sans font-bold text-[10px] uppercase tracking-[.08em] mb-1.5" style={{ color: "var(--text-faint)" }}>Shot Zone Split</p>
                 <div className="flex h-2.5 rounded overflow-hidden" style={{ background: "rgba(255,255,255,.08)" }}>
-                  {s.zones.map((z) => (
-                    <div key={z.zone} style={{ width: `${z.pct}%`, background: ZONE_COLOR[z.zone] ?? "#818cf8" }} />
+                  {s.zones.map((z, zi) => (
+                    <div key={z.zone} style={{ width: `${z.pct}%`, background: ZONE_COLOR[z.zone] ?? "#818cf8", transformOrigin: "left", animation: `bar-grow .7s cubic-bezier(.22,1,.36,1) ${zi * 0.1}s both` }} />
                   ))}
                 </div>
                 <div className="flex justify-between mt-1.5">

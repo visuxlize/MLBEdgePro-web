@@ -45,6 +45,7 @@ export type WnbaPropMarket = "Points" | "Rebounds" | "Assists" | "3-Pointers Mad
 
 export interface WnbaPlayerProp {
   id: string;
+  espnId: string;
   player: string;
   pos: WnbaPropPosition;
   team: string;
@@ -59,6 +60,7 @@ export interface WnbaPlayerProp {
 }
 
 export interface WnbaImpactStat {
+  espnId: string;
   player: string;
   pos: WnbaPropPosition;
   team: string;
