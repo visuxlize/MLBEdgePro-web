@@ -25,19 +25,15 @@ export function SectionLabel({
   );
 }
 
-/* ── Team logo badge — team-color plate, auto-loads MLB logo, falls back to abbr ── */
+/* ── Logo plate — sport-agnostic team-color plate, auto-loads a logo, falls back to code ── */
 
-export function LogoBadge({
-  teamId, name, size = 38, radius,
-}: { teamId: number; name: string; size?: number; radius?: number }) {
+export function LogoPlate({
+  hex, src, code, name, size = 38, radius,
+}: { hex: string; src: string; code: string; name?: string; size?: number; radius?: number }) {
   const [imgFailed, setImgFailed] = useState(false);
-  const hex = teamHex(teamId);
-  const code = teamCode(teamId, name);
   const r = radius ?? Math.round(size * 0.3);
   const ink = contrastText(hex);
   const pad = Math.round(size * 0.15);
-  // Use the cap-on-dark variant — always white/light, visible on any team-color plate
-  const logoSrc = teamLogoDarkUrl(teamId);
 
   return (
     <div
@@ -46,13 +42,13 @@ export function LogoBadge({
         width: size, height: size, borderRadius: r, background: hex,
         boxShadow: "inset 0 0 0 1.5px rgba(255,255,255,.55), 0 3px 8px rgba(0,0,0,.4)",
       }}
-      title={name}
+      title={name ?? code}
     >
       {!imgFailed ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={logoSrc}
-          alt={name}
+          src={src}
+          alt={name ?? code}
           style={{
             width: size - pad * 2,
             height: size - pad * 2,
@@ -67,6 +63,24 @@ export function LogoBadge({
         </span>
       )}
     </div>
+  );
+}
+
+/* ── Team logo badge — MLB team-color plate, auto-loads MLB logo, falls back to abbr ── */
+
+export function LogoBadge({
+  teamId, name, size = 38, radius,
+}: { teamId: number; name: string; size?: number; radius?: number }) {
+  return (
+    <LogoPlate
+      hex={teamHex(teamId)}
+      // Use the cap-on-dark variant — always white/light, visible on any team-color plate
+      src={teamLogoDarkUrl(teamId)}
+      code={teamCode(teamId, name)}
+      name={name}
+      size={size}
+      radius={radius}
+    />
   );
 }
 

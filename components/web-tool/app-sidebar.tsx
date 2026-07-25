@@ -2,16 +2,16 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useUser, useClerk } from "@clerk/nextjs";
 import {
   CircleDot, BarChart3, TrendingUp, Target,
-  Settings, Lock, Menu, X, Zap, LogOut, ChevronRight, Bot,
+  Settings, Lock, Menu, X, Zap, LogOut, ChevronRight, Bot, Home as HomeIcon,
 } from "lucide-react";
 import { useSubscription } from "@/lib/subscription";
 import { motion, AnimatePresence } from "framer-motion";
 
-const NAV = [
+const MLB_NAV = [
   { href: "/games",        icon: CircleDot,  label: "Today's Games", requiredTier: null           },
   { href: "/scores",       icon: BarChart3,  label: "Live Scores",   requiredTier: null           },
   { href: "/analysis",     icon: TrendingUp, label: "Analysis",      requiredTier: "fan" as const },
@@ -28,12 +28,66 @@ function DiamondLogo() {
   );
 }
 
+function BaseballIcon({ size = 12 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.7">
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M6 6c2 2.5 2 9.5 0 12M18 6c-2 2.5-2 9.5 0 12" />
+    </svg>
+  );
+}
+
+function FootballIcon({ size = 12 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.7">
+      <ellipse cx="12" cy="12" rx="9.2" ry="5.6" transform="rotate(-45 12 12)" />
+      <path d="M9.2 14.8l5.6-5.6M10.5 11.7l1.2 1.2M12.3 9.9l1.2 1.2" />
+    </svg>
+  );
+}
+
+function SportPill({ sport }: { sport: "mlb" | "nfl" }) {
+  const router = useRouter();
+  return (
+    <div className="flex items-center p-[3px] rounded-full border border-white/[0.08] bg-white/[0.03]">
+      <button
+        onClick={() => router.push("/games")}
+        className={`inline-flex items-center gap-1.5 rounded-full px-3 py-[5px] text-[11px] font-black tracking-wide transition-colors ${
+          sport === "mlb" ? "bg-gradient-to-br from-[#f97316] to-[#fb923c] text-white" : "text-white/40 hover:text-white/70"
+        }`}
+      >
+        <BaseballIcon /> MLB
+      </button>
+      <button
+        onClick={() => router.push("/nfl")}
+        className={`inline-flex items-center gap-1.5 rounded-full px-3 py-[5px] text-[11px] font-black tracking-wide transition-colors ${
+          sport === "nfl" ? "bg-gradient-to-br from-[#f97316] to-[#fb923c] text-white" : "text-white/40 hover:text-white/70"
+        }`}
+      >
+        <FootballIcon /> NFL
+      </button>
+    </div>
+  );
+}
+
+const HOME_ITEM = { href: "/home", icon: HomeIcon, label: "Home", requiredTier: null as null };
+
+function nflNav(isSuperPro: boolean) {
+  return [
+    { href: "/nfl", icon: CircleDot, label: "This Week", requiredTier: null as null },
+    ...(isSuperPro ? [{ href: "/nfl/props", icon: Target, label: "Props", requiredTier: null as null }] : []),
+  ];
+}
+
 export function AppSidebar() {
   const pathname     = usePathname();
   const { isPro, isSuperPro } = useSubscription();
   const { user }     = useUser();
   const { signOut }  = useClerk();
   const [open, setOpen] = useState(false);
+
+  const sport: "mlb" | "nfl" = pathname.startsWith("/nfl") ? "nfl" : "mlb";
+  const navItems = [HOME_ITEM, ...(sport === "nfl" ? nflNav(isSuperPro) : MLB_NAV)];
 
   function isLocked(requiredTier: "fan" | "pro" | null): boolean {
     if (!requiredTier) return false;
@@ -49,17 +103,22 @@ export function AppSidebar() {
       {/* ── Top bar ──────────────────────────────────────────────────────── */}
       <header className="h-14 flex items-center justify-between px-4 sm:px-5 border-b border-white/[0.06] bg-[#0A0E14]/95 backdrop-blur-xl sticky top-0 z-40">
 
-        {/* Logo → /games */}
-        <Link href="/games" className="flex items-center gap-2 hover:opacity-80 transition-opacity shrink-0">
-          <DiamondLogo />
-          <span className="text-[15px] font-bold text-white font-display tracking-wide">
-            MLB Edge<span className="text-[#FF7828]"> Pro</span>
-          </span>
-        </Link>
+        {/* Logo → /home + sport pill */}
+        <div className="flex items-center gap-3 min-w-0 shrink-0">
+          <Link href="/home" className="flex items-center gap-2 hover:opacity-80 transition-opacity shrink-0">
+            <DiamondLogo />
+            <span className="text-[15px] font-bold text-white font-display tracking-wide hidden md:inline">
+              {sport === "nfl" ? "NFL" : "MLB"} Edge<span className="text-[#FF7828]"> Pro</span>
+            </span>
+          </Link>
+          <div className="hidden sm:flex">
+            <SportPill sport={sport} />
+          </div>
+        </div>
 
         {/* Desktop center nav */}
         <nav className="hidden lg:flex items-center gap-0.5">
-          {NAV.map(({ href, icon: Icon, label, requiredTier }) => {
+          {navItems.map(({ href, icon: Icon, label, requiredTier }) => {
             const active      = pathname.startsWith(href);
             const locked      = isLocked(requiredTier);
             const isProFeature = requiredTier === "pro";
@@ -81,6 +140,13 @@ export function AppSidebar() {
               </Link>
             );
           })}
+          {sport === "nfl" && (
+            <span className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-white/25 cursor-default">
+              <Bot size={14} strokeWidth={1.7} />
+              <span>Edge AI</span>
+              <Lock size={9} className="text-white/15" strokeWidth={2} />
+            </span>
+          )}
         </nav>
 
         {/* Right side */}
@@ -163,13 +229,18 @@ export function AppSidebar() {
             >
               {/* Drawer header */}
               <div className="flex items-center justify-between px-5 h-14 border-b border-white/[0.06] shrink-0">
-                <Link href="/games" onClick={() => setOpen(false)} className="flex items-center gap-2">
+                <Link href="/home" onClick={() => setOpen(false)} className="flex items-center gap-2">
                   <DiamondLogo />
-                  <span className="text-[15px] font-bold text-white font-display tracking-wide">MLB Edge<span className="text-[#FF7828]"> Pro</span></span>
+                  <span className="text-[15px] font-bold text-white font-display tracking-wide">{sport === "nfl" ? "NFL" : "MLB"} Edge<span className="text-[#FF7828]"> Pro</span></span>
                 </Link>
                 <button onClick={() => setOpen(false)} className="w-9 h-9 rounded-xl flex items-center justify-center text-white/40 hover:text-white hover:bg-white/[0.06] transition-colors">
                   <X size={20} strokeWidth={1.8} />
                 </button>
+              </div>
+
+              {/* Sport pill */}
+              <div className="px-5 pt-4">
+                <SportPill sport={sport} />
               </div>
 
               {/* User info */}
@@ -203,7 +274,7 @@ export function AppSidebar() {
 
               {/* Nav links */}
               <nav className="flex-1 px-3 py-4 space-y-1">
-                {NAV.map(({ href, icon: Icon, label, requiredTier }) => {
+                {navItems.map(({ href, icon: Icon, label, requiredTier }) => {
                   const active      = pathname.startsWith(href);
                   const locked      = isLocked(requiredTier);
                   const isProFeature = requiredTier === "pro";
@@ -227,6 +298,13 @@ export function AppSidebar() {
                     </Link>
                   );
                 })}
+                {sport === "nfl" && (
+                  <span className="flex items-center gap-3 px-4 py-3 rounded-2xl font-medium text-white/25 cursor-default">
+                    <Bot size={18} strokeWidth={1.7} />
+                    <span className="flex-1">Edge AI</span>
+                    <Lock size={12} className="text-white/15" strokeWidth={2} />
+                  </span>
+                )}
               </nav>
 
               {/* Upgrade + Settings + Logout */}

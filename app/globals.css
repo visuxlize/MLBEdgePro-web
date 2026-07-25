@@ -342,6 +342,21 @@ html {
 
 /* Animated live dot */
 @keyframes spot-pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+
+/* NFL — live ball marker ping */
+@keyframes spot-ping { 0% { transform: scale(.6); opacity: .9; } 100% { transform: scale(2.6); opacity: 0; } }
+/* NFL — drive direction nudge arrow */
+@keyframes drive-nudge { 0%,100% { transform: translateX(0); } 50% { transform: translateX(4px); } }
+/* Fade-up entrance for sections */
+@keyframes fade-up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+/* Teaser hero breathing glow */
+@keyframes glow-breathe { 0%,100% { opacity: .5; transform: scale(1); } 50% { opacity: .9; transform: scale(1.06); } }
+/* AI Live Market ticker — seamless marquee (render list twice, scroll -50%) */
+@keyframes ticker-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+/* AI Live Market card sheen sweep */
+@keyframes scan { 0% { transform: translateX(-120%); } 100% { transform: translateX(320%); } }
+/* Win-probability timeline SVG draw-in */
+@keyframes draw { to { stroke-dashoffset: 0; } }
 .spot-live-dot { animation: spot-pulse 1.3s ease-in-out infinite; }
 
 /* Card hover lift */

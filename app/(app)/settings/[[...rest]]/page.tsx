@@ -109,6 +109,139 @@ function TeamPicker() {
   );
 }
 
+// ── Preferences (NFL + MLB alerts) ───────────────────────────────────────────
+
+interface Preferences {
+  notif: boolean;
+  autoRefresh: boolean;
+  redZone: boolean;
+  injuryAlerts: boolean;
+}
+
+const DEFAULT_PREFS: Preferences = { notif: true, autoRefresh: true, redZone: true, injuryAlerts: false };
+
+function usePreferences() {
+  const [prefs, setPrefs] = useState<Preferences>(() => {
+    if (typeof window === "undefined") return DEFAULT_PREFS;
+    try {
+      const raw = localStorage.getItem("mlbedge_preferences");
+      return raw ? { ...DEFAULT_PREFS, ...JSON.parse(raw) } : DEFAULT_PREFS;
+    } catch {
+      return DEFAULT_PREFS;
+    }
+  });
+
+  const toggle = (key: keyof Preferences) => {
+    setPrefs((p) => {
+      const next = { ...p, [key]: !p[key] };
+      localStorage.setItem("mlbedge_preferences", JSON.stringify(next));
+      return next;
+    });
+  };
+
+  return { prefs, toggle };
+}
+
+function Switch({ on, onClick }: { on: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-[46px] h-[26px] shrink-0 rounded-full relative transition-colors ${on ? "bg-[#FF7828]" : "bg-white/10"}`}
+    >
+      <span
+        className="absolute top-[3px] w-5 h-5 rounded-full bg-white shadow transition-all"
+        style={{ left: on ? 23 : 3 }}
+      />
+    </button>
+  );
+}
+
+const TOGGLE_DEFS: { key: keyof Preferences; label: string; desc: string }[] = [
+  { key: "notif",        label: "Kickoff & game alerts",     desc: "Push me when a tracked game starts or an edge shifts." },
+  { key: "autoRefresh",  label: "Auto-refresh live data",     desc: "Pull fresh odds, injuries & scores every 5–10 minutes." },
+  { key: "redZone",      label: "Red-zone & big-play pings",  desc: "Only the moments that move win probability." },
+  { key: "injuryAlerts", label: "Injury / inactive alerts",   desc: "Notify me the second a starter is downgraded." },
+];
+
+function PreferencesCard() {
+  const { prefs, toggle } = usePreferences();
+  return (
+    <div className="rounded-xl border border-white/[0.07] bg-[#111622] overflow-hidden">
+      {TOGGLE_DEFS.map((t, i) => (
+        <div key={t.key} className={`flex items-center gap-4 p-4 ${i > 0 ? "border-t border-white/[0.05]" : ""}`}>
+          <div className="flex-1 min-w-0">
+            <p className="text-white font-bold text-sm">{t.label}</p>
+            <p className="text-white/35 text-xs mt-0.5 leading-relaxed">{t.desc}</p>
+          </div>
+          <Switch on={prefs[t.key]} onClick={() => toggle(t.key)} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Odds format ───────────────────────────────────────────────────────────────
+
+const ODDS_FORMATS = ["American", "Decimal", "Fractional"] as const;
+
+function useOddsFormat() {
+  const [format, setFormatState] = useState<string>(() => {
+    if (typeof window === "undefined") return "American";
+    return localStorage.getItem("mlbedge_odds_format") ?? "American";
+  });
+  const setFormat = (f: string) => {
+    setFormatState(f);
+    localStorage.setItem("mlbedge_odds_format", f);
+  };
+  return { format, setFormat };
+}
+
+function OddsFormatCard() {
+  const { format, setFormat } = useOddsFormat();
+  return (
+    <div className="flex gap-2">
+      {ODDS_FORMATS.map((f) => (
+        <button
+          key={f}
+          onClick={() => setFormat(f)}
+          className={`flex-1 rounded-xl py-2.5 text-sm font-bold transition-colors ${
+            f === format
+              ? "bg-[#7c5cfa] text-white"
+              : "border border-white/[0.08] bg-white/[0.03] text-white/50 hover:text-white/80"
+          }`}
+        >
+          {f}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ── Responsible gaming ────────────────────────────────────────────────────────
+
+function ResponsibleGamingCard() {
+  return (
+    <div className="rounded-xl border border-[#34d399]/20 bg-[#34d399]/[0.06] p-5">
+      <div className="flex items-center gap-2 mb-2.5">
+        <Check size={16} className="text-[#34d399]" strokeWidth={2.5} />
+        <p className="text-[#a7f3d0] font-bold text-sm">Responsible Gaming</p>
+      </div>
+      <p className="text-white/40 text-xs leading-relaxed mb-3.5">
+        Set a weekly reminder and session limits. We&rsquo;ll nudge you &mdash; this is analysis, not a guarantee.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <Link href="/responsible-gambling" className="rounded-lg px-3.5 py-2 text-xs font-bold text-white/60 bg-white/[0.04] border border-white/[0.08] hover:text-white transition-colors">
+          Set limits
+        </Link>
+        <Link href="/responsible-gambling" className="rounded-lg px-3.5 py-2 text-xs font-bold text-white/60 bg-white/[0.04] border border-white/[0.08] hover:text-white transition-colors">
+          Take a break
+        </Link>
+        <span className="rounded-lg px-3.5 py-2 text-xs font-bold text-white/35 border border-white/[0.06]">Helpline: 1-800-522-4700</span>
+      </div>
+    </div>
+  );
+}
+
 // ── Subscription card ─────────────────────────────────────────────────────────
 
 function SubscriptionCard() {
@@ -225,6 +358,20 @@ export default function SettingsPage() {
             <div className="rounded-xl border border-white/[0.07] bg-[#111622] p-4 sm:p-5">
               <TeamPicker />
             </div>
+          </section>
+
+          <section>
+            <h2 className="text-xs font-bold text-white/30 tracking-widest uppercase mb-4">Preferences</h2>
+            <PreferencesCard />
+          </section>
+
+          <section>
+            <h2 className="text-xs font-bold text-white/30 tracking-widest uppercase mb-4">Odds Format</h2>
+            <OddsFormatCard />
+          </section>
+
+          <section>
+            <ResponsibleGamingCard />
           </section>
 
           {/* Desktop only — Home + Sign Out below Favorite Team */}

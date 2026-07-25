@@ -34,7 +34,7 @@ export default async function TrialPage({ searchParams }: Props) {
 
   // Already subscribed — send to app
   if (hasFan || hasPro || meta.isPro) {
-    redirect("/games");
+    redirect("/home");
   }
 
   // Trial already used — show pay/free options

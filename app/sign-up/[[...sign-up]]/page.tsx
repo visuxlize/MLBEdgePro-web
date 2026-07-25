@@ -48,7 +48,7 @@ export default function SignUpPage() {
         <ClerkLoaded>
           <SignUp
             appearance={CLERK_APPEARANCE}
-            forceRedirectUrl="/games"
+            forceRedirectUrl="/home"
             signInUrl="/sign-in"
           />
         </ClerkLoaded>
