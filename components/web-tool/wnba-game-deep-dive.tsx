@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { wnbaTeamHex, wnbaLogoUrl, wnbaHeadshotUrl } from "@/lib/wnba/teams";
-import { LogoPlate, HeadshotPlate, gradeColor, alpha } from "@/components/web-tool/spotlight";
+import { LogoPlate, WnbaHeadshot, gradeColor, alpha } from "@/components/web-tool/spotlight";
 import { PaywallGate } from "@/components/web-tool/paywall-gate";
 import type { WnbaEdgeFactor, WnbaGame, WnbaH2HStat, WnbaPlayerProp } from "@/lib/wnba/types";
 
@@ -105,14 +105,14 @@ export function WnbaGameDeepDive({ game, h2h, factors, narrativeText, narrativeT
             <div className="flex items-center justify-between gap-5 flex-wrap">
               <div className="flex items-center gap-5">
                 <div className="flex flex-col items-center gap-2">
-                  <LogoPlate hex={awayHex} src={wnbaLogoUrl(game.away)} code={game.away} size={64} radius={19} variant="clean" />
+                  <LogoPlate hex={awayHex} src={wnbaLogoUrl(game.away)} code={game.away} size={76} radius={22} variant="clean" />
                   <span className="font-spot-sans font-black text-lg" style={{ color: "var(--text)" }}>{game.away}</span>
                 </div>
                 <span className="font-spot-mono font-extrabold text-2xl" style={{ color: "var(--text-ghost)" }}>
                   {game.status !== "pre" ? `${game.awayScore ?? 0} – ${game.homeScore ?? 0}` : "@"}
                 </span>
                 <div className="flex flex-col items-center gap-2">
-                  <LogoPlate hex={homeHex} src={wnbaLogoUrl(game.home)} code={game.home} size={64} radius={19} variant="clean" />
+                  <LogoPlate hex={homeHex} src={wnbaLogoUrl(game.home)} code={game.home} size={76} radius={22} variant="clean" />
                   <span className="font-spot-sans font-black text-lg" style={{ color: "var(--text)" }}>{game.home}</span>
                 </div>
               </div>
@@ -151,11 +151,18 @@ export function WnbaGameDeepDive({ game, h2h, factors, narrativeText, narrativeT
           <div className="grid gap-3.5 mb-3.5" style={{ gridTemplateColumns: "1fr 1fr" }}>
             <div className="relative overflow-hidden rounded-[18px] p-5" style={{ background: "linear-gradient(160deg, rgba(45,212,191,.10), var(--panel) 62%)", border: "1px solid rgba(45,212,191,.24)" }}>
               <div className="absolute top-0 bottom-0 left-0 w-1/4 pointer-events-none" style={{ background: "linear-gradient(90deg, transparent, rgba(45,212,191,.12), transparent)", animation: "scan 5.5s linear infinite" }} />
-              <div className="relative flex items-center gap-2 mb-3">
-                <span className="w-[26px] h-[26px] rounded-lg flex items-center justify-center" style={{ color: "#2dd4bf", background: "rgba(45,212,191,.14)", border: "1px solid rgba(45,212,191,.3)" }}>◆</span>
-                <span className="font-spot-sans font-extrabold text-xs tracking-[.06em]" style={{ color: "#5eead4" }}>Edge AI Breakdown</span>
+              <div className="relative flex items-center justify-between gap-2 mb-3.5">
+                <div className="flex items-center gap-2">
+                  <span className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ color: "#2dd4bf", background: "rgba(45,212,191,.14)", border: "1px solid rgba(45,212,191,.3)" }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2l2.2 6.8L21 11l-6.8 2.2L12 20l-2.2-6.8L3 11l6.8-2.2L12 2z" fill="currentColor" /></svg>
+                  </span>
+                  <span className="font-spot-sans font-extrabold text-xs tracking-[.06em]" style={{ color: "#5eead4" }}>Edge AI Breakdown</span>
+                </div>
+                <span className="rounded-full px-2.5 py-1 font-spot-mono font-extrabold text-[11px]" style={{ color: "#5eead4", background: "rgba(45,212,191,.12)", border: "1px solid rgba(45,212,191,.28)" }}>{game.edge} edge</span>
               </div>
-              <p className="relative font-spot-sans font-medium text-[13px] leading-relaxed" style={{ color: "var(--text-2)" }}>{narrativeText}</p>
+              <div className="relative rounded-xl pl-3.5 pr-3.5 py-3" style={{ borderLeft: "2.5px solid rgba(45,212,191,.5)", background: "rgba(255,255,255,.025)" }}>
+                <p className="font-spot-sans font-medium text-[13px] leading-relaxed" style={{ color: "var(--text-2)" }}>{narrativeText}</p>
+              </div>
               <div className="relative flex flex-wrap gap-1.5 mt-3.5">
                 {narrativeTags.map((t) => (
                   <span key={t} className="rounded-full px-2.5 py-1 font-spot-sans font-bold text-[10px]" style={{ color: "#5eead4", background: "rgba(45,212,191,.10)", border: "1px solid rgba(45,212,191,.26)" }}>{t}</span>
@@ -183,7 +190,11 @@ export function WnbaGameDeepDive({ game, h2h, factors, narrativeText, narrativeT
 
           <div className="grid gap-3.5 mb-3.5" style={{ gridTemplateColumns: "1fr 1fr" }}>
             <div className="rounded-[18px] p-5" style={{ background: "var(--panel)", border: "1px solid var(--hairline)" }}>
-              <p className="spot-label mb-4" style={{ color: "var(--text-faint)" }}>Head to Head</p>
+              <div className="flex items-center justify-between mb-4">
+                <LogoPlate hex={awayHex} src={wnbaLogoUrl(game.away)} code={game.away} size={22} radius={6} variant="clean" />
+                <p className="spot-label" style={{ color: "var(--text-faint)" }}>Head to Head</p>
+                <LogoPlate hex={homeHex} src={wnbaLogoUrl(game.home)} code={game.home} size={22} radius={6} variant="clean" />
+              </div>
               <div className="flex flex-col gap-3.5">
                 {h2h.map((h, i) => (
                   <div key={h.label}>
@@ -233,8 +244,8 @@ export function WnbaGameDeepDive({ game, h2h, factors, narrativeText, narrativeT
                   const inSlip = slip.includes(p.id);
                   const pgc = gradeColor(p.grade);
                   return (
-                    <div key={p.id} className="flex items-center gap-2.5 rounded-[13px] px-3.5 py-2.5" style={{ background: "var(--panel-2)", border: "1px solid var(--hairline)" }}>
-                      <HeadshotPlate hex={wnbaTeamHex(p.team)} src={wnbaHeadshotUrl(p.espnId)} name={p.player} size={36} />
+                    <div key={p.id} className="flex items-center gap-3 rounded-[13px] px-3.5 py-3" style={{ background: "var(--panel-2)", border: "1px solid var(--hairline)" }}>
+                      <WnbaHeadshot hex={wnbaTeamHex(p.team)} src={wnbaHeadshotUrl(p.espnId)} name={p.player} size={48} />
                       <div className="flex-1 min-w-0">
                         <p className="font-spot-sans font-extrabold text-[13px]" style={{ color: "var(--text)" }}>{p.player}</p>
                         <p className="font-spot-sans text-[10px]" style={{ color: "var(--text-muted)" }}>{p.market} &middot; {p.over ? "OVER" : "UNDER"} &middot; model {p.model}</p>

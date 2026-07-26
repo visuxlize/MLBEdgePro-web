@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { wnbaTeamHex, wnbaLogoUrl, wnbaHeadshotUrl } from "@/lib/wnba/teams";
-import { LogoPlate, HeadshotPlate, gradeColor } from "@/components/web-tool/spotlight";
+import { LogoPlate, WnbaHeadshot, gradeColor, alpha } from "@/components/web-tool/spotlight";
 import type { WnbaPlayerProp, WnbaPropPosition } from "@/lib/wnba/types";
 
 const POSITIONS: (WnbaPropPosition | "All")[] = ["All", "PG", "SG", "SF", "PF", "C"];
@@ -69,18 +69,19 @@ export function WnbaPropsTool({ props }: { props: WnbaPlayerProp[] }) {
               const inSlip = slip.includes(p.id);
               return (
                 <div key={p.id} className="rounded-[18px] overflow-hidden" style={{ background: "var(--panel)", border: "1px solid var(--hairline)", boxShadow: "var(--shadow-card)" }}>
-                  <div className="flex items-center gap-3 px-4 py-3.5" style={{ background: `linear-gradient(120deg, ${wnbaTeamHex(p.team)}22, transparent 70%)` }}>
+                  <div className="relative flex items-center gap-3.5 px-4 pt-4 pb-3.5 overflow-hidden" style={{ background: `linear-gradient(135deg, ${alpha(wnbaTeamHex(p.team), "22")}, transparent 68%)` }}>
+                    <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: `linear-gradient(90deg, ${wnbaTeamHex(p.team)}, transparent)` }} />
                     <div className="relative shrink-0">
-                      <HeadshotPlate hex={wnbaTeamHex(p.team)} src={wnbaHeadshotUrl(p.espnId)} name={p.player} size={48} />
+                      <WnbaHeadshot hex={wnbaTeamHex(p.team)} src={wnbaHeadshotUrl(p.espnId)} name={p.player} size={72} />
                       <div className="absolute -bottom-1.5 -right-1.5">
-                        <LogoPlate hex={wnbaTeamHex(p.team)} src={wnbaLogoUrl(p.team)} code={p.team} size={20} radius={6} variant="clean" />
+                        <LogoPlate hex={wnbaTeamHex(p.team)} src={wnbaLogoUrl(p.team)} code={p.team} size={26} radius={8} variant="clean" />
                       </div>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-spot-sans font-black text-base" style={{ color: "var(--text)" }}>{p.player}</p>
-                      <p className="mt-0.5 font-spot-sans font-semibold text-[10px]" style={{ color: "var(--text-3)" }}>{p.pos} &middot; {p.team} &middot; {p.matchup}</p>
+                      <p className="font-spot-sans font-black text-[17px] leading-tight truncate" style={{ color: "var(--text)" }}>{p.player}</p>
+                      <p className="mt-1 font-spot-sans font-semibold text-[11px]" style={{ color: "var(--text-3)" }}>{p.pos} &middot; {p.team} &middot; {p.matchup}</p>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right shrink-0">
                       <span className="block font-spot-sans font-black text-xl" style={{ color: gc }}>{p.grade}</span>
                       <span className="block font-spot-sans font-bold text-[9px] uppercase tracking-[.1em]" style={{ color: "var(--text-faint)" }}>Edge {p.edge}</span>
                     </div>

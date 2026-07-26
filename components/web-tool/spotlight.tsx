@@ -12,7 +12,7 @@ import { playerHeadshotUrl, teamLogoDarkUrl, type Game } from "@/lib/mlb/api";
  * the listener exists. Checking `complete && naturalWidth === 0` on mount
  * catches that case; onError still covers failures after mount.
  */
-function useImgFallback() {
+export function useImgFallback() {
   const [failed, setFailed] = useState(false);
   const ref = useRef<HTMLImageElement>(null);
   useEffect(() => {
@@ -145,6 +145,49 @@ export function HeadshotPlate({
       {!imgFailed && (
         <div className="absolute inset-0 pointer-events-none"
           style={{ background: `linear-gradient(to bottom, transparent 55%, ${alpha(hex, "55")} 82%, rgba(6,7,13,.92) 100%)` }} />
+      )}
+    </div>
+  );
+}
+
+/* ── WNBA player cutout — landscape, transparent-bg ESPN photo on a team-color plate ──
+   ESPN's WNBA headshots are 600×436 (wider than tall) cutouts with a transparent
+   background, unlike MLB's 213×320 portrait crops — so this uses object-fit: contain
+   on a near-square plate instead of HeadshotPlate's portrait cover-crop, which was
+   clipping WNBA faces down to hair/forehead. */
+
+export function WnbaHeadshot({
+  hex, src, name, size = 88, radius,
+}: { hex: string; src: string; name: string; size?: number; radius?: number }) {
+  const r = radius ?? Math.round(size * 0.18);
+  const { failed: imgFailed, ref, onError } = useImgFallback();
+  const initials = name.split(" ").map((p) => p[0]).slice(0, 2).join("");
+  return (
+    <div
+      className="relative shrink-0 overflow-hidden"
+      style={{
+        width: size, height: size, borderRadius: r,
+        background: `radial-gradient(115% 95% at 50% 4%, ${alpha(hex, "40")}, #0b0d16 76%)`,
+        boxShadow: `inset 0 0 0 1px ${alpha(hex, "38")}`,
+      }}
+    >
+      {!imgFailed ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          ref={ref}
+          src={src}
+          alt={name}
+          onError={onError}
+          className="absolute"
+          style={{ left: "5%", right: "5%", top: "6%", bottom: "0%", width: "90%", height: "94%", objectFit: "contain", filter: "drop-shadow(0 5px 8px rgba(0,0,0,.5))" }}
+        />
+      ) : (
+        <span className="absolute inset-0 flex items-center justify-center font-spot-sans font-black" style={{ fontSize: size * 0.3, color: hex }}>
+          {initials}
+        </span>
+      )}
+      {!imgFailed && (
+        <div className="absolute inset-x-0 bottom-0 pointer-events-none" style={{ height: "38%", background: `linear-gradient(to top, ${alpha(hex, "48")}, transparent)` }} />
       )}
     </div>
   );

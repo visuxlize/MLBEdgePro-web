@@ -1,6 +1,6 @@
 import { PaywallGate } from "@/components/web-tool/paywall-gate";
-import { LogoPlate, HeadshotPlate, SectionLabel } from "@/components/web-tool/spotlight";
-import { gradeColor } from "@/lib/mlb/spotlight-utils";
+import { LogoPlate, WnbaHeadshot, SectionLabel } from "@/components/web-tool/spotlight";
+import { gradeColor, alpha } from "@/lib/mlb/spotlight-utils";
 import { getImpactStats } from "@/lib/wnba/impact";
 import { getSchedule } from "@/lib/wnba/espn";
 import { getPlayerProps } from "@/lib/wnba/sportsblaze";
@@ -41,7 +41,7 @@ async function DailyPicks() {
         const gc = gradeColor(p.grade);
         return (
           <div key={p.id} className="flex items-center gap-3 rounded-[14px] px-4 py-3" style={{ background: "var(--panel-2)", border: "1px solid var(--hairline)" }}>
-            <HeadshotPlate hex={wnbaTeamHex(p.team)} src={wnbaHeadshotUrl(p.espnId)} name={p.player} size={34} />
+            <WnbaHeadshot hex={wnbaTeamHex(p.team)} src={wnbaHeadshotUrl(p.espnId)} name={p.player} size={40} />
             <div className="flex-1 min-w-0">
               <p className="font-spot-sans font-extrabold text-sm" style={{ color: "var(--text)" }}>{p.player} &middot; {p.market} {p.over ? "OVER" : "UNDER"}</p>
               <p className="font-spot-sans text-[10px]" style={{ color: "var(--text-muted)" }}>Line {p.line} &middot; model {p.model}</p>
@@ -62,18 +62,19 @@ async function ImpactGrid() {
         const gc = gradeColor(s.grade);
         return (
           <div key={s.player} className="rounded-[18px] overflow-hidden" style={{ background: "var(--panel)", border: "1px solid var(--hairline)", boxShadow: "var(--shadow-card)" }}>
-            <div className="flex items-center gap-3 px-4 py-3.5" style={{ background: `linear-gradient(120deg, ${wnbaTeamHex(s.team)}22, transparent 70%)` }}>
+            <div className="relative flex items-center gap-3.5 px-4 pt-4 pb-3.5 overflow-hidden" style={{ background: `linear-gradient(135deg, ${alpha(wnbaTeamHex(s.team), "22")}, transparent 68%)` }}>
+              <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: `linear-gradient(90deg, ${wnbaTeamHex(s.team)}, transparent)` }} />
               <div className="relative shrink-0">
-                <HeadshotPlate hex={wnbaTeamHex(s.team)} src={wnbaHeadshotUrl(s.espnId)} name={s.player} size={48} />
+                <WnbaHeadshot hex={wnbaTeamHex(s.team)} src={wnbaHeadshotUrl(s.espnId)} name={s.player} size={72} />
                 <div className="absolute -bottom-1.5 -right-1.5">
-                  <LogoPlate hex={wnbaTeamHex(s.team)} src={wnbaLogoUrl(s.team)} code={s.team} size={20} radius={6} variant="clean" />
+                  <LogoPlate hex={wnbaTeamHex(s.team)} src={wnbaLogoUrl(s.team)} code={s.team} size={26} radius={8} variant="clean" />
                 </div>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-spot-sans font-black text-base" style={{ color: "var(--text)" }}>{s.player}</p>
-                <p className="mt-0.5 font-spot-sans font-semibold text-[10px]" style={{ color: "var(--text-3)" }}>{s.pos} &middot; {s.team}</p>
+                <p className="font-spot-sans font-black text-[17px] leading-tight truncate" style={{ color: "var(--text)" }}>{s.player}</p>
+                <p className="mt-1 font-spot-sans font-semibold text-[11px]" style={{ color: "var(--text-3)" }}>{s.pos} &middot; {s.team}</p>
               </div>
-              <span className="font-spot-sans font-black text-xl" style={{ color: gc }}>{s.grade}</span>
+              <span className="font-spot-sans font-black text-xl shrink-0" style={{ color: gc }}>{s.grade}</span>
             </div>
             <div className="p-4 flex flex-col gap-3.5">
               <div className="grid grid-cols-3 gap-2.5 text-center">
