@@ -13,6 +13,8 @@ import {
   SectionLabel, LogoBadge, GradePill, AIPredictionButton,
   teamHex, teamCode, modelEdge,
 } from "@/components/web-tool/spotlight";
+import { SavedSlipsPanel } from "@/components/web-tool/saved-slips-panel";
+import { SeasonTimeline, MLB_2026_PHASES, NFL_2026_PHASES, WNBA_2026_PHASES } from "@/components/web-tool/season-timeline";
 
 // KICKOFF_TARGET kept for reference only — card now shows live game count
 
@@ -257,6 +259,13 @@ export function HomeClient({ userName, todayDate, mlbGames, nflGames, wnbaGames 
           </div>
         )}
 
+        {/* Season timelines */}
+        <div className="grid gap-3.5 mb-4" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))" }}>
+          <SeasonTimeline title="MLB 2026" subtitle="Regular Season · Ends Sep 27" phases={MLB_2026_PHASES} sport="mlb" />
+          <SeasonTimeline title="NFL 2026" subtitle="Preseason through Super Bowl Feb 9, 2027" phases={NFL_2026_PHASES} sport="nfl" />
+          <SeasonTimeline title="WNBA 2026" subtitle="Regular Season · Finals Oct 13" phases={WNBA_2026_PHASES} sport="wnba" />
+        </div>
+
         {/* Slate + concierge */}
         <div className="grid gap-3.5" style={{ gridTemplateColumns: "1.5fr 1fr" }}>
           <div>
@@ -356,6 +365,11 @@ export function HomeClient({ userName, todayDate, mlbGames, nflGames, wnbaGames 
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Saved Slips */}
+        <div className="mt-4">
+          <SavedSlipsPanel />
         </div>
       </div>
     </div>

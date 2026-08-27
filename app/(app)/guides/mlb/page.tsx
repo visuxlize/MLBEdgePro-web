@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { fetchTodaysGames } from "@/lib/mlb/api";
 import { teamHex, teamCode, gradeColor, modelEdge } from "@/lib/mlb/spotlight-utils";
+import { teamLogoUrl } from "@/lib/mlb/api";
 import { SeasonTimeline, MLB_2026_PHASES } from "@/components/web-tool/season-timeline";
 
 export const dynamic = "force-dynamic";
@@ -199,10 +200,12 @@ export default async function MlbGuidePage() {
               <Link
                 key={t.id}
                 href={`/games?team=${t.id}`}
-                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-spot-sans font-semibold text-[11px] transition-all hover:opacity-80"
-                style={{ background: `${teamHex(t.id)}22`, border: `1px solid ${teamHex(t.id)}40`, color: "var(--text-2)" }}
+                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 font-spot-sans font-semibold text-[11px] transition-all hover:opacity-80"
+                style={{ background: `${teamHex(t.id)}18`, border: `1px solid ${teamHex(t.id)}35`, color: "var(--text-2)" }}
               >
-                <span className="w-3 h-3 rounded-sm inline-block" style={{ background: teamHex(t.id) }} />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={teamLogoUrl(t.id)} alt={t.name} className="w-4 h-4 object-contain"
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                 {t.name}
               </Link>
             ))}

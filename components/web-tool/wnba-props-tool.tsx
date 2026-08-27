@@ -4,6 +4,9 @@ import { useMemo, useState } from "react";
 import { wnbaTeamHex, wnbaLogoUrl, wnbaHeadshotUrl } from "@/lib/wnba/teams";
 import { LogoPlate, WnbaHeadshot, gradeColor, alpha } from "@/components/web-tool/spotlight";
 import type { WnbaPlayerProp, WnbaPropPosition } from "@/lib/wnba/types";
+import { saveSlip, calcPayout } from "@/lib/saved-slips";
+import type { SlipLeg } from "@/lib/saved-slips";
+import { Check, BookmarkPlus } from "lucide-react";
 
 const POSITIONS: (WnbaPropPosition | "All")[] = ["All", "PG", "SG", "SF", "PF", "C"];
 
@@ -21,13 +24,27 @@ function propViz(p: WnbaPlayerProp) {
 export function WnbaPropsTool({ props }: { props: WnbaPlayerProp[] }) {
   const [pos, setPos] = useState<WnbaPropPosition | "All">("All");
   const [slip, setSlip] = useState<string[]>([]);
+  const [saved, setSaved] = useState(false);
 
   const filtered = pos === "All" ? props : props.filter((p) => p.pos === pos);
   const slipProps = props.filter((p) => slip.includes(p.id));
   const slipEdge = slipProps.length ? Math.round(slipProps.reduce((a, p) => a + p.edge, 0) / slipProps.length) : 0;
-  const slipPayout = useMemo(() => (slipProps.length ? slipProps.reduce((a) => a * 1.72, 1).toFixed(2) + "x" : "—"), [slipProps.length]);
+  const slipPayout = calcPayout(slipProps.length);
 
   const toggle = (id: string) => setSlip((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+
+  function handleSave() {
+    const viz = (p: WnbaPlayerProp) => propViz(p);
+    const legs: SlipLeg[] = slipProps.map((p) => ({
+      id: p.id, player: p.player, team: p.team,
+      market: p.market, side: viz(p).side, line: p.line,
+      model: p.model, grade: p.grade, odds: p.odds,
+    }));
+    saveSlip({ sport: "WNBA", legs, combinedPayout: slipPayout, avgEdge: slipEdge });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
+    setSlip([]);
+  }
 
   return (
     <div className="spotlight min-h-screen">
@@ -139,14 +156,27 @@ export function WnbaPropsTool({ props }: { props: WnbaPlayerProp[] }) {
       </div>
 
       {slip.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-30 px-5 pb-4" style={{ pointerEvents: "none" }}>
-          <div className="max-w-screen-2xl mx-auto flex items-center justify-between gap-3.5 rounded-2xl px-4.5 py-3.5" style={{ background: "rgba(17,15,30,.94)", border: "1px solid var(--purple-line)", backdropFilter: "blur(14px)", boxShadow: "0 20px 60px rgba(0,0,0,.6)", pointerEvents: "auto" }}>
-            <span className="font-spot-sans font-bold text-[13px]" style={{ color: "var(--text-2)" }}>
-              <span className="font-black" style={{ color: "var(--purple-2)" }}>{slip.length}</span>-leg parlay &middot; avg edge{" "}
-              <span className="font-spot-mono font-extrabold" style={{ color: "var(--green)" }}>{slipEdge}</span> &middot; est. payout{" "}
-              <span className="font-spot-mono font-extrabold" style={{ color: "var(--text)" }}>{slipPayout}</span>
-            </span>
-            <button onClick={() => setSlip([])} className="font-spot-sans font-bold text-xs" style={{ color: "var(--text-muted)" }}>Clear</button>
+        <div className="fixed bottom-0 left-0 right-0 z-30 px-4 pb-4" style={{ pointerEvents: "none" }}>
+          <div className="max-w-screen-2xl mx-auto flex items-center justify-between gap-3 rounded-2xl px-5 py-3.5"
+            style={{ background: "rgba(11,11,21,.96)", border: "1px solid rgba(45,212,191,.3)", backdropFilter: "blur(16px)", boxShadow: "0 20px 60px rgba(0,0,0,.65)", pointerEvents: "auto" }}>
+            <div>
+              <span className="font-spot-sans font-black text-[13px]" style={{ color: "var(--text)" }}>
+                <span style={{ color: "#2dd4bf" }}>{slip.length}</span>-leg parlay
+              </span>
+              <span className="ml-2.5 font-spot-sans font-semibold text-[12px]" style={{ color: "var(--text-muted)" }}>
+                Avg edge <span className="font-spot-mono font-extrabold" style={{ color: "var(--green)" }}>{slipEdge}</span>
+                {" "}· Payout <span className="font-spot-mono font-extrabold" style={{ color: "var(--text)" }}>{slipPayout}</span>
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={handleSave}
+                className="flex items-center gap-1.5 rounded-xl px-3.5 py-2 font-spot-sans font-extrabold text-[11px] transition-all"
+                style={{ background: saved ? "var(--green-bg)" : "rgba(45,212,191,.12)", color: saved ? "var(--green)" : "#2dd4bf", border: `1px solid ${saved ? "rgba(52,211,153,.32)" : "rgba(45,212,191,.28)"}` }}>
+                {saved ? <Check size={12} /> : <BookmarkPlus size={12} />}
+                {saved ? "Saved!" : "Save Slip"}
+              </button>
+              <button onClick={() => setSlip([])} className="font-spot-sans font-bold text-xs" style={{ color: "var(--text-dim)" }}>Clear</button>
+            </div>
           </div>
         </div>
       )}

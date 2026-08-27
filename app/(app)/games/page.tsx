@@ -148,6 +148,72 @@ function LiveTile({ game, onClick }: { game: Game; onClick: () => void }) {
   );
 }
 
+// ── Compact slate card ────────────────────────────────────────────────────────
+
+function SlateCard({ game, onClick }: { game: Game; onClick: () => void }) {
+  const away = game.teams.away, home = game.teams.home;
+  const awayHex = teamHex(away.team.id), homeHex = teamHex(home.team.id);
+  const isLive = game.status.detailedState === "In Progress";
+  const isFinal = ["Final", "Game Over"].includes(game.status.detailedState);
+  const awayScore = getScore(away, game.linescore, "away");
+  const homeScore = getScore(home, game.linescore, "home");
+  const { edge, grade, homeProb, favId, favCode } = quickEdge(game);
+  const gc = grade === "A+" ? "#34d399" : grade === "A" ? "#34d399" : grade === "B+" ? "#fbbf24" : grade === "B" ? "#fbbf24" : "var(--text-3)";
+  const ls = game.linescore;
+  const statusLabel = isLive
+    ? `${ls?.inningState ?? ""} ${ls?.currentInningOrdinal ?? ""}`.trim().toUpperCase() || "LIVE"
+    : isFinal ? "FINAL" : gameTime(game.gameDate);
+
+  return (
+    <button onClick={onClick} className="w-full text-left rounded-[16px] p-3.5 transition-all hover:scale-[1.01]"
+      style={{ background: "var(--panel)", border: `1px solid ${isLive ? "rgba(239,68,68,.3)" : "var(--hairline)"}` }}>
+      {/* Status row */}
+      <div className="flex items-center justify-between mb-2.5">
+        <span className="font-spot-mono font-bold text-[10px] inline-flex items-center gap-1.5"
+          style={{ color: isLive ? "var(--red-soft)" : isFinal ? "var(--text-ghost)" : "var(--text-muted)" }}>
+          {isLive && <span className="spot-live-dot inline-block rounded-full" style={{ width: 5, height: 5, background: "var(--red)" }} />}
+          {statusLabel}
+        </span>
+        <span className="font-spot-sans font-black text-sm rounded-lg px-2 py-0.5" style={{ color: gc, background: `${gc}18` }}>{grade}</span>
+      </div>
+      {/* Teams */}
+      {[
+        { s: away, sc: awayScore, pct: 100 - homeProb },
+        { s: home, sc: homeScore, pct: homeProb },
+      ].map(({ s, sc, pct }, i) => (
+        <div key={i} className="flex items-center gap-2.5 mb-1.5">
+          <LogoBadge teamId={s.team.id} name={s.team.name} size={28} />
+          <span className="flex-1 font-spot-sans font-extrabold text-sm" style={{ color: "var(--text)" }}>
+            {teamCode(s.team.id, s.team.name)}
+          </span>
+          {s.probablePitcher && !(isLive || isFinal) && (
+            <span className="font-spot-sans text-[10px] mr-1" style={{ color: "var(--text-dim)" }}>
+              {lastName(s.probablePitcher.fullName)}
+            </span>
+          )}
+          <span className="font-spot-mono font-extrabold text-sm" style={{ color: isLive || isFinal ? "var(--text)" : "var(--text-3)" }}>
+            {isLive || isFinal ? (sc ?? "—") : `${pct}%`}
+          </span>
+        </div>
+      ))}
+      {/* Win prob bar */}
+      <div className="flex h-1 rounded overflow-hidden mt-1" style={{ background: "rgba(255,255,255,.08)" }}>
+        <div style={{ width: `${100 - homeProb}%`, background: awayHex }} />
+        <div style={{ flex: 1, background: homeHex }} />
+      </div>
+      {/* AI pick */}
+      {!isFinal && (
+        <div className="mt-2.5 flex items-center gap-1.5">
+          <span className="font-spot-sans font-extrabold text-[10px] uppercase tracking-[.08em]" style={{ color: "var(--orange)" }}>
+            Model: {favCode} ML
+          </span>
+          <span className="font-spot-mono font-bold text-[10px]" style={{ color: "var(--text-dim)" }}>Edge {edge}</span>
+        </div>
+      )}
+    </button>
+  );
+}
+
 // ── Editorial hero (top edge) ────────────────────────────────────────────────
 
 function EditorialHero({ game, onClick }: { game: Game; onClick: () => void }) {
@@ -439,11 +505,31 @@ export default function GamesPage() {
 
         <DateStrip date={date} onChange={setDate} />
 
+        {/* Stat strip */}
+        {!loading && games.length > 0 && (
+          <div className="flex items-center gap-3 mb-5 flex-wrap">
+            {[
+              { label: "Games",    value: games.length,    color: "var(--text-3)" },
+              { label: "Live",     value: live.length,     color: "var(--red)" },
+              { label: "Upcoming", value: upcoming.length, color: "var(--orange)" },
+              { label: "Final",    value: final.length,    color: "var(--green)" },
+            ].map((s) => (
+              <div key={s.label} className="flex items-center gap-2 rounded-xl px-4 py-2.5"
+                style={{ background: "var(--panel)", border: "1px solid var(--hairline)" }}>
+                <div>
+                  <p className="font-spot-mono font-black text-xl leading-none" style={{ color: s.color }}>{s.value}</p>
+                  <p className="font-spot-sans font-bold text-[9px] uppercase tracking-[.10em] mt-0.5" style={{ color: "var(--text-muted)" }}>{s.label}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Content */}
         {loading ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="rounded-[var(--r-card)] animate-pulse" style={{ background: "rgba(255,255,255,.03)", minHeight: 188 }} />
+          <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))" }}>
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="rounded-[16px] animate-pulse" style={{ background: "rgba(255,255,255,.03)", height: 120 }} />
             ))}
           </div>
         ) : games.length === 0 ? (
@@ -453,41 +539,39 @@ export default function GamesPage() {
             <button onClick={() => setDate(todayStr())} className="mt-4 font-spot-sans text-xs font-bold" style={{ color: "var(--orange)" }}>Go to today</button>
           </div>
         ) : (
-          <div className="space-y-8">
-            {/* Live Now strip */}
+          <div className="space-y-7">
+            {/* Live Now */}
             {live.length > 0 && (
               <div>
-                <SectionLabel className="mb-3 inline-flex items-center gap-2" style={{ color: "var(--red-soft)" }}>
-                  <span className="spot-live-dot inline-block rounded-full" style={{ width: 6, height: 6, background: "var(--red)" }} /> Live Now — {live.length}
-                </SectionLabel>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="spot-live-dot inline-block rounded-full" style={{ width: 7, height: 7, background: "var(--red)" }} />
+                  <SectionLabel style={{ color: "var(--red-soft)" }}>Live Now · {live.length}</SectionLabel>
+                </div>
                 <div className="flex gap-3 overflow-x-auto hide-scrollbar pb-1">
                   {live.map((g) => <LiveTile key={g.gamePk} game={g} onClick={() => handleGameClick(g.gamePk)} />)}
                 </div>
               </div>
             )}
 
-            {/* Editorial hero */}
-            {hero && <EditorialHero game={hero} onClick={() => handleGameClick(hero.gamePk)} />}
-
-            {/* Upcoming grid */}
-            {gridUpcoming.length > 0 && (
+            {/* Upcoming */}
+            {upcoming.length > 0 && (
               <div>
-                <SectionLabel className="mb-3">Upcoming — {gridUpcoming.length}</SectionLabel>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {gridUpcoming.map((g) => (
-                    <SpotlightCard key={g.gamePk} game={g} fav={isFav(g)} onClick={() => handleGameClick(g.gamePk)} />
+                <SectionLabel className="mb-3" style={{ color: "var(--orange-soft)" }}>Upcoming · {upcoming.length}</SectionLabel>
+                <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))" }}>
+                  {upcoming.map((g) => (
+                    <SlateCard key={g.gamePk} game={g} onClick={() => handleGameClick(g.gamePk)} />
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Final grid */}
+            {/* Final */}
             {final.length > 0 && (
               <div>
-                <SectionLabel className="mb-3" style={{ color: "var(--text-ghost)" }}>Final — {final.length}</SectionLabel>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <SectionLabel className="mb-3" style={{ color: "var(--text-dim)" }}>Final · {final.length}</SectionLabel>
+                <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))" }}>
                   {final.map((g) => (
-                    <SpotlightCard key={g.gamePk} game={g} fav={isFav(g)} onClick={() => handleGameClick(g.gamePk)} />
+                    <SlateCard key={g.gamePk} game={g} onClick={() => handleGameClick(g.gamePk)} />
                   ))}
                 </div>
               </div>

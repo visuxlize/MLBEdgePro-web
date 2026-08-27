@@ -7,8 +7,9 @@ import {
   Check, Flame, Layers, Plus, Receipt, Trash2, X,
   Zap, TrendingUp, TrendingDown,
   Activity, ChevronRight, RefreshCw,
-  Clock, Trophy, Shield, Target, LayoutDashboard, Settings2, Bot,
+  Clock, Trophy, Shield, Target, LayoutDashboard, Settings2, Bot, BookmarkPlus,
 } from "lucide-react";
+import { saveSlip } from "@/lib/saved-slips";
 import { useRouter } from "next/navigation";
 import { playerHeadshotUrl, teamLogoUrl } from "@/lib/mlb/api";
 import { lookupOdds, type FanDuelOddsMap } from "@/lib/odds";
@@ -979,9 +980,6 @@ function DailySlipCard({ slip }: { slip: DailySlip }) {
         })}
       </div>
 
-      {/* Save button — always at the bottom, visually separated */}
-      <div className="px-4 py-3.5 border-t border-white/[0.06] shrink-0">
-      </div>
     </div>
   );
 }
@@ -1097,6 +1095,20 @@ function SlipPanel({ slip, onRemove, onClear, onOddsChange }: {
 }) {
   const combined = combinedProbability(slip);
   const [wager, setWager] = useState("10");
+  const [saved, setSaved] = useState(false);
+
+  function handleSaveSlip() {
+    const legs = slip.map((e) => ({
+      id: e.id, player: e.description.split(" vs ")[0] ?? e.description,
+      team: "", market: e.description, side: "OVER",
+      line: 0, model: 0, grade: "B", odds: e.odds || "-110",
+    }));
+    const legCount = slip.length;
+    const payout = (Math.pow(1.72, legCount)).toFixed(2) + "x";
+    saveSlip({ sport: "MLB", legs, combinedPayout: payout, avgEdge: Math.round(combined) });
+    setSaved(true);
+    setTimeout(() => { setSaved(false); onClear(); }, 2000);
+  }
 
   const wagerNum = parseFloat(wager) || 0;
   const hasOdds  = slip.some((e) => e.odds);
@@ -1197,6 +1209,18 @@ function SlipPanel({ slip, onRemove, onClear, onOddsChange }: {
         </div>
       )}
 
+      {slip.length > 0 && (
+        <div className="px-4 py-3.5 border-t border-white/[0.06] shrink-0">
+          <button onClick={handleSaveSlip}
+            className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 font-spot-sans font-extrabold text-[12px] transition-all"
+            style={saved
+              ? { background: "var(--green-bg)", color: "var(--green)", border: "1px solid rgba(52,211,153,.32)" }
+              : { background: "var(--orange-tint)", color: "var(--orange)", border: "1px solid var(--orange-line)" }}>
+            {saved ? <Check size={13} /> : <BookmarkPlus size={13} />}
+            {saved ? "Slip saved to Home!" : "Save Slip"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

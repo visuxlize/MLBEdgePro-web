@@ -5,9 +5,6 @@ export interface TimelinePhase {
   shortLabel?: string;
   start: string;
   end?: string;
-  color?: string;
-  isPlayoffs?: boolean;
-  isChampionship?: boolean;
 }
 
 interface SeasonTimelineProps {
@@ -27,9 +24,13 @@ function parseDate(s: string): Date {
   return new Date(s + "T00:00:00");
 }
 
+function fmtDate(s: string) {
+  const d = parseDate(s);
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
 export function SeasonTimeline({ title, subtitle, phases, sport }: SeasonTimelineProps) {
   const color = SPORT_COLOR[sport] ?? "#f97316";
-
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -43,7 +44,7 @@ export function SeasonTimeline({ title, subtitle, phases, sport }: SeasonTimelin
   }
 
   const todayPct = pct(today);
-  const clampedToday = Math.max(0, Math.min(100, todayPct));
+  const todayInRange = todayPct >= 0 && todayPct <= 100;
 
   const activePhaseIndex = phases.findIndex((p) => {
     const start = parseDate(p.start);
@@ -51,38 +52,40 @@ export function SeasonTimeline({ title, subtitle, phases, sport }: SeasonTimelin
     return today >= start && today <= end;
   });
 
-  const fmtDate = (s: string) => {
-    const d = parseDate(s);
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  };
-
   return (
     <div className="rounded-[20px] overflow-hidden" style={{ background: "var(--panel)", border: "1px solid var(--hairline)" }}>
       {/* Header */}
-      <div className="px-6 pt-5 pb-4" style={{ background: `linear-gradient(135deg, ${color}18, var(--panel) 70%)`, borderBottom: "1px solid var(--hairline)" }}>
-        <p className="font-spot-sans font-extrabold text-[10px] uppercase tracking-[.16em]" style={{ color }}>Season Timeline</p>
-        <p className="mt-0.5 font-spot-sans font-black text-xl" style={{ color: "var(--text)" }}>{title}</p>
-        <p className="mt-0.5 font-spot-sans text-xs" style={{ color: "var(--text-muted)" }}>{subtitle}</p>
+      <div className="px-5 pt-4 pb-3 flex items-start justify-between gap-4 flex-wrap"
+        style={{ background: `linear-gradient(135deg, ${color}18, var(--panel) 70%)`, borderBottom: "1px solid var(--hairline)" }}>
+        <div>
+          <p className="font-spot-sans font-extrabold text-[10px] uppercase tracking-[.16em]" style={{ color }}> Season Timeline</p>
+          <p className="mt-0.5 font-spot-sans font-black text-lg" style={{ color: "var(--text)" }}>{title}</p>
+          <p className="font-spot-sans text-[11px]" style={{ color: "var(--text-muted)" }}>{subtitle}</p>
+        </div>
+        {/* Active phase badge */}
+        {activePhaseIndex >= 0 && (
+          <span className="self-start mt-1 font-spot-sans font-extrabold text-[10px] uppercase tracking-[.12em] px-2.5 py-1 rounded-full"
+            style={{ background: color, color: "#fff" }}>
+            {phases[activePhaseIndex].shortLabel ?? phases[activePhaseIndex].label}
+          </span>
+        )}
       </div>
 
       {/* Phase pills */}
-      <div className="px-6 pt-4 pb-2 flex items-center gap-2 flex-wrap">
+      <div className="px-5 pt-3 pb-1 flex items-center gap-2 flex-wrap">
         {phases.map((p, i) => {
           const isActive = i === activePhaseIndex;
           const isPast = activePhaseIndex >= 0 && i < activePhaseIndex;
-          const isFuture = activePhaseIndex >= 0 && i > activePhaseIndex;
           return (
-            <span
-              key={p.label}
-              className="font-spot-sans font-extrabold text-[10px] uppercase tracking-[.10em] px-2.5 py-1 rounded-full"
+            <span key={p.label}
+              className="font-spot-sans font-extrabold text-[10px] uppercase tracking-[.08em] px-2.5 py-1 rounded-full"
               style={
                 isActive
                   ? { background: color, color: "#fff" }
                   : isPast
-                  ? { background: "rgba(255,255,255,.06)", color: "var(--text-dim)", textDecoration: "line-through" }
-                  : { background: "rgba(255,255,255,.05)", border: "1px solid var(--hairline)", color: "var(--text-muted)" }
-              }
-            >
+                  ? { background: "rgba(255,255,255,.05)", color: "var(--text-ghost)", textDecoration: "line-through" }
+                  : { background: "rgba(255,255,255,.04)", border: "1px solid var(--hairline)", color: "var(--text-3)" }
+              }>
               {p.shortLabel ?? p.label}
             </span>
           );
@@ -90,84 +93,66 @@ export function SeasonTimeline({ title, subtitle, phases, sport }: SeasonTimelin
       </div>
 
       {/* Timeline bar */}
-      <div className="px-6 pb-5">
-        {/* Labels */}
-        <div className="relative" style={{ height: 20 }}>
-          {phases.map((p) => {
-            const startPct = pct(parseDate(p.start));
-            return (
-              <span
-                key={p.label}
-                className="absolute font-spot-sans font-semibold text-[9px] uppercase tracking-[.08em]"
-                style={{ left: `${startPct}%`, top: 0, transform: "translateX(-50%)", color: "var(--text-dim)", whiteSpace: "nowrap" }}
-              >
-                {p.shortLabel ?? p.label}
-              </span>
-            );
-          })}
-        </div>
-
-        {/* Bar */}
-        <div className="relative" style={{ height: 6, borderRadius: 3, background: "rgba(255,255,255,.08)" }}>
-          {/* Completed segment */}
-          {clampedToday > 0 && (
-            <div
-              className="absolute left-0 top-0 h-full rounded-l"
-              style={{ width: `${clampedToday}%`, background: `linear-gradient(90deg, ${color}80, ${color})`, transition: "width .6s ease" }}
-            />
-          )}
-          {/* Today dot */}
-          {clampedToday >= 0 && clampedToday <= 100 && (
-            <div
-              className="absolute top-1/2 -translate-y-1/2"
-              style={{
-                left: `${clampedToday}%`, transform: "translate(-50%, -50%)",
-                width: 12, height: 12, borderRadius: "50%",
-                background: color, border: "2px solid #fff",
-                boxShadow: `0 0 0 3px ${color}40`,
-              }}
-            />
+      <div className="px-5 pb-4 pt-2">
+        {/* Bar + Today marker */}
+        <div className="relative" style={{ height: 8, borderRadius: 4, background: "rgba(255,255,255,.07)" }}>
+          {/* Filled portion */}
+          {todayPct > 0 && (
+            <div className="absolute left-0 top-0 h-full rounded-l"
+              style={{ width: `${Math.min(todayPct, 100)}%`, background: `linear-gradient(90deg, ${color}70, ${color})` }} />
           )}
           {/* Phase dividers */}
           {phases.slice(1).map((p) => {
             const pp = pct(parseDate(p.start));
             return (
-              <div
-                key={p.label}
-                className="absolute top-0 bottom-0"
-                style={{ left: `${pp}%`, width: 1, background: "rgba(255,255,255,.18)" }}
-              />
+              <div key={p.label} className="absolute top-0 bottom-0"
+                style={{ left: `${pp}%`, width: 1, background: "rgba(255,255,255,.15)" }} />
             );
           })}
+          {/* Today dot */}
+          {todayInRange && (
+            <div className="absolute top-1/2"
+              style={{
+                left: `${todayPct}%`, transform: "translate(-50%, -50%)",
+                width: 14, height: 14, borderRadius: "50%",
+                background: color, border: "2px solid #0b0d15",
+                boxShadow: `0 0 0 3px ${color}50, 0 0 12px ${color}60`,
+                zIndex: 2,
+              }} />
+          )}
         </div>
 
-        {/* Start / end dates */}
-        <div className="flex items-center justify-between mt-2">
-          <span className="font-spot-mono font-semibold text-[10px]" style={{ color: "var(--text-muted)" }}>{fmtDate(phases[0].start)}</span>
-          {clampedToday > 5 && clampedToday < 95 && (
-            <span
-              className="font-spot-sans font-black text-[10px] px-2 py-0.5 rounded-full"
-              style={{ background: color, color: "#fff", position: "absolute", left: `${clampedToday}%`, transform: "translateX(-50%)", marginTop: 14 }}
-            >
+        {/* Start / Today / End labels */}
+        <div className="relative flex items-start justify-between mt-1.5">
+          <span className="font-spot-mono text-[9px]" style={{ color: "var(--text-dim)" }}>
+            {fmtDate(phases[0].start)}
+          </span>
+          {todayInRange && todayPct > 8 && todayPct < 92 && (
+            <span className="absolute font-spot-sans font-black text-[9px] px-1.5 py-0.5 rounded-full"
+              style={{
+                left: `${todayPct}%`, transform: "translateX(-50%)",
+                background: color, color: "#fff",
+              }}>
               Today
             </span>
           )}
-          <span className="font-spot-mono font-semibold text-[10px]" style={{ color: "var(--text-muted)" }}>
+          <span className="font-spot-mono text-[9px]" style={{ color: "var(--text-dim)" }}>
             {phases[phases.length - 1].end ? fmtDate(phases[phases.length - 1].end!) : fmtDate(phases[phases.length - 1].start)}
           </span>
         </div>
 
-        {/* Bottom phase dates */}
-        <div className="mt-4 grid gap-1.5" style={{ gridTemplateColumns: `repeat(${phases.length}, 1fr)` }}>
+        {/* Bottom phase date grid */}
+        <div className="mt-3 grid gap-1" style={{ gridTemplateColumns: `repeat(${phases.length}, 1fr)` }}>
           {phases.map((p, i) => {
             const isActive = i === activePhaseIndex;
             return (
-              <div key={p.label} className="text-center">
-                <p className="font-spot-sans font-extrabold text-[10px] uppercase tracking-[.08em]" style={{ color: isActive ? color : "var(--text-3)" }}>
+              <div key={p.label} className="text-center min-w-0">
+                <p className="font-spot-sans font-extrabold text-[9px] uppercase tracking-[.06em] truncate"
+                  style={{ color: isActive ? color : "var(--text-3)" }}>
                   {p.shortLabel ?? p.label}
                 </p>
-                <p className="font-spot-mono text-[9px]" style={{ color: "var(--text-muted)" }}>
-                  {fmtDate(p.start)}{p.end && p.end !== p.start ? ` – ${fmtDate(p.end)}` : ""}
+                <p className="font-spot-mono text-[8px] truncate" style={{ color: "var(--text-muted)" }}>
+                  {fmtDate(p.start)}{p.end && p.end !== p.start ? ` – ${fmtDate(p.end).replace(/\w+ /, "")}` : ""}
                 </p>
               </div>
             );
@@ -192,7 +177,7 @@ export const NFL_2026_PHASES: TimelinePhase[] = [
   { label: "Regular Season",  shortLabel: "Reg Season", start: "2026-09-10", end: "2027-01-04" },
   { label: "Wild Card",       shortLabel: "Wild Card",  start: "2027-01-11", end: "2027-01-12" },
   { label: "Divisional",      shortLabel: "Divisional", start: "2027-01-18", end: "2027-01-19" },
-  { label: "Conference",      shortLabel: "Conf. Champ",start: "2027-01-26", end: "2027-01-26" },
+  { label: "Conf. Champ",     shortLabel: "Conf. Champ",start: "2027-01-26", end: "2027-01-26" },
   { label: "Super Bowl",      shortLabel: "Super Bowl", start: "2027-02-09", end: "2027-02-09" },
 ];
 

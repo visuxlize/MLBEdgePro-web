@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { getSchedule } from "@/lib/wnba/espn";
-import { wnbaTeamHex, WNBA_TEAMS } from "@/lib/wnba/teams";
+import { wnbaTeamHex, wnbaLogoUrl, WNBA_TEAMS } from "@/lib/wnba/teams";
 import { SeasonTimeline, WNBA_2026_PHASES } from "@/components/web-tool/season-timeline";
 
 export const dynamic = "force-dynamic";
@@ -159,10 +159,12 @@ export default async function WnbaGuidePage() {
                 <Link
                   key={abbr}
                   href="/wnba"
-                  className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-spot-sans font-semibold text-[11px] transition-all hover:opacity-80"
-                  style={{ background: `${hex}22`, border: `1px solid ${hex}40`, color: "var(--text-2)" }}
+                  className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 font-spot-sans font-semibold text-[11px] transition-all hover:opacity-80"
+                  style={{ background: `${hex}18`, border: `1px solid ${hex}35`, color: "var(--text-2)" }}
                 >
-                  <span className="w-3 h-3 rounded-sm inline-block" style={{ background: hex }} />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={wnbaLogoUrl(abbr)} alt={info.name} className="w-4 h-4 object-contain"
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                   {info.name}
                 </Link>
               );
