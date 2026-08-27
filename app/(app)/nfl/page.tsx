@@ -9,6 +9,7 @@ import type { NflGame, NflWeekKey } from "@/lib/nfl/types";
 import { nflTeamHex, nflLogoUrl } from "@/lib/nfl/teams";
 import { LogoPlate, SectionLabel, gradeColor, alpha } from "@/components/web-tool/spotlight";
 import { NflTeaser } from "@/components/web-tool/nfl-teaser";
+import { SeasonTimeline, NFL_2026_PHASES } from "@/components/web-tool/season-timeline";
 
 const WEEKS: { key: NflWeekKey; label: string; range: string }[] = [
   { key: "HOF_PRE1", label: "HOF + PRE 1", range: "AUG 6–15" },
@@ -36,8 +37,8 @@ function WeekPills({ week, onChange }: { week: NflWeekKey; onChange: (w: NflWeek
             onClick={() => onChange(w.key)}
             className="rounded-xl px-4 py-2 text-center transition-all"
             style={active
-              ? { background: "#0f172a", color: "#fff" }
-              : { background: "#fff", border: "1px solid var(--hairline)", color: "var(--text-muted)" }}
+              ? { background: "rgba(255,255,255,.95)", color: "#0f172a", boxShadow: "0 2px 8px rgba(0,0,0,.3)" }
+              : { background: "var(--panel)", border: "1px solid var(--hairline)", color: "var(--text-muted)" }}
           >
             <span className="block font-spot-sans font-extrabold text-[11px] tracking-[.06em]">{w.label}</span>
             <span className="block mt-0.5 font-spot-mono font-semibold text-[9px]" style={{ color: active ? "rgba(255,255,255,.6)" : "var(--text-dim)" }}>{w.range}</span>
@@ -126,7 +127,7 @@ function LiveTile({ game, onClick }: { game: NflGame; onClick: () => void }) {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       className="w-full text-left rounded-[16px] overflow-hidden mb-4"
-      style={{ background: "#fff", border: "2px solid rgba(220,38,38,.35)", boxShadow: "0 0 0 4px rgba(220,38,38,.05), var(--shadow-panel)" }}
+      style={{ background: "var(--panel)", border: "2px solid rgba(239,68,68,.35)", boxShadow: "0 0 0 4px rgba(239,68,68,.06), var(--shadow-panel)" }}
     >
       {/* Live header */}
       <div className="flex items-center justify-between px-5 pt-4 pb-3" style={{ borderBottom: "1px solid var(--hairline)" }}>
@@ -207,7 +208,7 @@ function MatchupCard({ game, onClick }: { game: NflGame; onClick: () => void }) 
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       className="flex flex-col rounded-[16px] overflow-hidden"
-      style={{ background: "#fff", border: "1px solid var(--hairline)", boxShadow: "var(--shadow-card)" }}
+      style={{ background: "var(--panel)", border: "1px solid var(--hairline)", boxShadow: "var(--shadow-card)" }}
     >
       {/* Card header — date + status */}
       <div className="flex items-center justify-between px-4 pt-3.5 pb-2" style={{ borderBottom: "1px solid var(--hairline)" }}>
@@ -384,7 +385,7 @@ function Dashboard() {
   return (
     <div className="spotlight min-h-screen">
       {/* ── Page header ── */}
-      <div style={{ background: "#fff", borderBottom: "1px solid var(--hairline)" }}>
+      <div style={{ background: "var(--panel)", borderBottom: "1px solid var(--hairline)" }}>
         <div className="max-w-screen-xl mx-auto px-4 sm:px-6 py-6">
           {/* Sport badge + title */}
           <div className="flex items-start justify-between gap-4 flex-wrap mb-5">
@@ -425,6 +426,16 @@ function Dashboard() {
           {/* Week selector */}
           <WeekPills week={week} onChange={setWeek} />
         </div>
+      </div>
+
+      {/* Season Timeline */}
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 pt-6">
+        <SeasonTimeline
+          title="NFL 2026 Season"
+          subtitle="Preseason Aug 6 · Regular Season Sep 10 · Super Bowl Feb 9, 2027"
+          phases={NFL_2026_PHASES}
+          sport="nfl"
+        />
       </div>
 
       {/* ── Games grid ── */}

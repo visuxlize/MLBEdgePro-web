@@ -1,0 +1,214 @@
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
+import { fetchTodaysGames } from "@/lib/mlb/api";
+import { teamHex, teamCode, gradeColor, modelEdge } from "@/lib/mlb/spotlight-utils";
+import { SeasonTimeline, MLB_2026_PHASES } from "@/components/web-tool/season-timeline";
+
+export const dynamic = "force-dynamic";
+
+const MLB_TEAMS = [
+  { id: 133, name: "Athletics" },      { id: 109, name: "Diamondbacks" },
+  { id: 144, name: "Braves" },         { id: 110, name: "Orioles" },
+  { id: 111, name: "Red Sox" },        { id: 112, name: "Cubs" },
+  { id: 113, name: "Reds" },           { id: 114, name: "Guardians" },
+  { id: 115, name: "Rockies" },        { id: 116, name: "Tigers" },
+  { id: 117, name: "Astros" },         { id: 118, name: "Royals" },
+  { id: 108, name: "Angels" },         { id: 119, name: "Dodgers" },
+  { id: 146, name: "Marlins" },        { id: 158, name: "Brewers" },
+  { id: 142, name: "Twins" },          { id: 121, name: "Mets" },
+  { id: 147, name: "Yankees" },        { id: 133, name: "Athletics" },
+  { id: 143, name: "Phillies" },       { id: 134, name: "Pirates" },
+  { id: 135, name: "Padres" },         { id: 137, name: "Giants" },
+  { id: 136, name: "Mariners" },       { id: 138, name: "Cardinals" },
+  { id: 139, name: "Rays" },           { id: 140, name: "Rangers" },
+  { id: 141, name: "Blue Jays" },      { id: 120, name: "Nationals" },
+];
+
+const QUICK_LINKS = [
+  { label: "Today's Games", desc: "Full slate with edge grades", href: "/games", color: "var(--orange)" },
+  { label: "Live Scores", desc: "Live innings, win probability", href: "/scores", color: "var(--red)" },
+  { label: "HR Nuke Report", desc: "Top HR props ranked by model", href: "/hr-deep-dive", color: "var(--gold)" },
+  { label: "Props Builder", desc: "Build parlays from model picks", href: "/props", color: "var(--green)" },
+  { label: "Edge AI", desc: "Ask the model anything", href: "/ai", color: "var(--purple-2)" },
+];
+
+const STRATEGY_CARDS = [
+  {
+    title: "Reading Edge Grades",
+    body: "An A+ grade means our model finds 12–18% of value over the closing line. Stick to A and above for +EV bets.",
+    tag: "Strategy",
+  },
+  {
+    title: "Run Line vs Moneyline",
+    body: "The run line (-1.5) inflates your payout but requires your team to win by 2+. Best used on heavy ML favorites priced above -180.",
+    tag: "Betting Basics",
+  },
+  {
+    title: "Park Factors",
+    body: "Coors Field inflates all offensive numbers by ~15%. Pitcher park factors compound with individual matchup grades.",
+    tag: "Advanced",
+  },
+  {
+    title: "First 5 Innings (F5)",
+    body: "The F5 bet isolates starting pitching. Use this when you like the SP edge but not the bullpen situation.",
+    tag: "Prop Types",
+  },
+  {
+    title: "Platoon Splits",
+    body: "Left-handed starters are historically more vulnerable to RH lineups. Our model weights L/R splits on every prop.",
+    tag: "Advanced",
+  },
+  {
+    title: "Weather Impact",
+    body: "Wind above 12 mph out to center raises over rates by ~7%. Check the weather badge on each game card.",
+    tag: "Factors",
+  },
+];
+
+export default async function MlbGuidePage() {
+  const games = await fetchTodaysGames().catch(() => []);
+  const todayGames = games.slice(0, 6);
+
+  return (
+    <div className="spotlight min-h-screen">
+      {/* Header */}
+      <div style={{ background: "var(--panel)", borderBottom: "1px solid var(--hairline)" }}>
+        <div className="max-w-screen-xl mx-auto px-4 sm:px-6 py-8">
+          <div className="flex items-center gap-2 mb-2">
+            <Link href="/guides" className="font-spot-sans font-semibold text-[11px] uppercase tracking-[.12em]" style={{ color: "var(--text-muted)" }}>
+              Guides
+            </Link>
+            <ChevronRight size={12} style={{ color: "var(--text-dim)" }} />
+            <span className="font-spot-sans font-bold text-[11px] uppercase tracking-[.12em]" style={{ color: "var(--orange)" }}>MLB</span>
+          </div>
+          <h1 className="font-spot-sans font-black text-4xl sm:text-5xl uppercase leading-tight" style={{ color: "var(--text)", letterSpacing: "-.01em" }}>
+            ⚾ MLB Analysis
+          </h1>
+          <p className="mt-2 font-spot-sans text-sm max-w-2xl" style={{ color: "var(--text-muted)" }}>
+            Pitcher matchups, run line edges, park factor breakdowns, and model-backed prop picks — for every MLB game.
+          </p>
+        </div>
+      </div>
+
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+        {/* Season Timeline */}
+        <SeasonTimeline
+          title="MLB 2026 Season"
+          subtitle="Regular season runs Mar 26 – Sep 27 · World Series Oct 30"
+          phases={MLB_2026_PHASES}
+          sport="mlb"
+        />
+
+        {/* Quick Links */}
+        <div>
+          <p className="spot-label mb-3" style={{ color: "var(--orange)" }}>Jump Into the Data</p>
+          <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))" }}>
+            {QUICK_LINKS.map((q) => (
+              <Link
+                key={q.href}
+                href={q.href}
+                className="flex items-center gap-3 rounded-[16px] px-4 py-4 transition-all hover:scale-[1.02] spot-lift"
+                style={{ background: "var(--panel)", border: "1px solid var(--hairline)" }}
+              >
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ background: `color-mix(in srgb, ${q.color} 15%, transparent)` }}>
+                  <span className="text-base">
+                    {q.href === "/games" ? "⚾" : q.href === "/scores" ? "📊" : q.href === "/hr-deep-dive" ? "💥" : q.href === "/props" ? "🎯" : "🤖"}
+                  </span>
+                </div>
+                <div>
+                  <p className="font-spot-sans font-extrabold text-sm" style={{ color: "var(--text)" }}>{q.label}</p>
+                  <p className="font-spot-sans text-[11px]" style={{ color: "var(--text-muted)" }}>{q.desc}</p>
+                </div>
+                <ChevronRight size={14} className="ml-auto shrink-0" style={{ color: "var(--text-dim)" }} />
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Today's Games */}
+        {todayGames.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <p className="spot-label" style={{ color: "var(--orange)" }}>Today&apos;s Games</p>
+              <Link href="/games" className="font-spot-sans font-bold text-[11px]" style={{ color: "var(--orange)" }}>All games →</Link>
+            </div>
+            <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill,minmax(260px,1fr))" }}>
+              {todayGames.map((g) => {
+                const m = modelEdge(g);
+                const gc = gradeColor(m.grade);
+                const awayHex = teamHex(g.teams.away.team.id);
+                const homeHex = teamHex(g.teams.home.team.id);
+                return (
+                  <Link
+                    key={g.gamePk}
+                    href={`/game/${g.gamePk}`}
+                    className="rounded-[16px] p-4 spot-lift"
+                    style={{ background: "var(--panel)", border: "1px solid var(--hairline)" }}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="font-spot-mono font-bold text-[10px]" style={{ color: "var(--text-muted)" }}>
+                        {new Date(g.gameDate).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" })} ET
+                      </span>
+                      <span className="rounded-lg px-2.5 py-1 font-spot-sans font-black text-[12px]" style={{ color: gc, background: `color-mix(in srgb, ${gc} 14%, transparent)` }}>
+                        {m.grade}
+                      </span>
+                    </div>
+                    {[{ team: g.teams.away.team, pct: m.awayProb, hex: awayHex }, { team: g.teams.home.team, pct: m.homeProb, hex: homeHex }].map(({ team, pct, hex }, i) => (
+                      <div key={i} className="flex items-center gap-2 mb-1.5">
+                        <div className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0" style={{ background: hex }}>
+                          <span className="font-spot-sans font-black text-[8px] text-white">{teamCode(team.id, team.name).slice(0, 3)}</span>
+                        </div>
+                        <span className="flex-1 font-spot-sans font-extrabold text-sm" style={{ color: "var(--text)" }}>{teamCode(team.id, team.name)}</span>
+                        <span className="font-spot-mono font-bold text-[12px]" style={{ color: "var(--text-3)" }}>{pct}%</span>
+                      </div>
+                    ))}
+                    <div className="flex h-1.5 rounded overflow-hidden mt-2" style={{ background: "rgba(255,255,255,.08)" }}>
+                      <div style={{ width: `${m.awayProb}%`, background: awayHex }} />
+                      <div style={{ flex: 1, background: homeHex }} />
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Strategy Cards */}
+        <div>
+          <p className="spot-label mb-3" style={{ color: "var(--text-faint)" }}>Betting Strategy</p>
+          <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))" }}>
+            {STRATEGY_CARDS.map((c) => (
+              <div key={c.title} className="rounded-[16px] p-4" style={{ background: "var(--panel)", border: "1px solid var(--hairline)" }}>
+                <span className="inline-block font-spot-sans font-extrabold text-[9px] uppercase tracking-[.10em] px-2 py-0.5 rounded mb-2"
+                  style={{ color: "var(--orange)", background: "var(--orange-tint)", border: "1px solid var(--orange-line)" }}>
+                  {c.tag}
+                </span>
+                <p className="font-spot-sans font-extrabold text-sm" style={{ color: "var(--text)" }}>{c.title}</p>
+                <p className="mt-1 font-spot-sans text-[12px] leading-relaxed" style={{ color: "var(--text-muted)" }}>{c.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Browse Teams */}
+        <div>
+          <p className="spot-label mb-3" style={{ color: "var(--text-faint)" }}>Browse by Team</p>
+          <div className="flex flex-wrap gap-2">
+            {MLB_TEAMS.filter((t, i, arr) => arr.findIndex((x) => x.id === t.id) === i).map((t) => (
+              <Link
+                key={t.id}
+                href={`/games?team=${t.id}`}
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-spot-sans font-semibold text-[11px] transition-all hover:opacity-80"
+                style={{ background: `${teamHex(t.id)}22`, border: `1px solid ${teamHex(t.id)}40`, color: "var(--text-2)" }}
+              >
+                <span className="w-3 h-3 rounded-sm inline-block" style={{ background: teamHex(t.id) }} />
+                {t.name}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

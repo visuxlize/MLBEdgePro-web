@@ -63,8 +63,8 @@ export function LogoPlate({
     <div
       className="shrink-0 flex items-center justify-center relative overflow-hidden"
       style={clean ? {
-        width: size, height: size, borderRadius: r, background: "#f1f5f9",
-        boxShadow: `inset 0 0 0 1.5px ${alpha(hex, "40")}, 0 1px 4px rgba(0,0,0,.08)`,
+        width: size, height: size, borderRadius: r, background: "#12141c",
+        boxShadow: `inset 0 0 0 1.5px ${alpha(hex, "40")}, 0 2px 8px rgba(0,0,0,.5)`,
       } : {
         width: size, height: size, borderRadius: r, background: hex,
         boxShadow: "inset 0 0 0 1.5px rgba(255,255,255,.45), 0 2px 6px rgba(0,0,0,.18)",

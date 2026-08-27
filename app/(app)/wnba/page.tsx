@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight, CircleDot, ArrowRight } from "lucide-react";
 import type { WnbaGame } from "@/lib/wnba/types";
 import { wnbaTeamHex, wnbaLogoUrl } from "@/lib/wnba/teams";
 import { LogoPlate, WinProbBar, GradePill, AIPredictionButton, LivePill, SectionLabel, gradeColor, alpha } from "@/components/web-tool/spotlight";
+import { SeasonTimeline, WNBA_2026_PHASES } from "@/components/web-tool/season-timeline";
 
 function localDateStr(date = new Date()) {
   const y = date.getFullYear();
@@ -212,6 +213,15 @@ export default function WnbaPage() {
               <span className="font-spot-mono">{games.length} {games.length === 1 ? "game" : "games"}</span>
             </div>
           )}
+        </div>
+
+        <div className="mb-5">
+          <SeasonTimeline
+            title="WNBA 2026 Season"
+            subtitle="Regular season May 15 – Sep 20 · Finals Oct 13"
+            phases={WNBA_2026_PHASES}
+            sport="wnba"
+          />
         </div>
 
         <DateStrip date={date} onChange={setDate} />

@@ -88,7 +88,7 @@ export function NflTeaser() {
 
             <div
               className="relative inline-flex items-stretch mt-6 rounded-[18px] overflow-hidden"
-              style={{ background: "#fff", border: "1px solid var(--hairline)", boxShadow: "var(--shadow-panel)" }}
+              style={{ background: "var(--panel)", border: "1px solid var(--orange-line)", boxShadow: "0 18px 50px rgba(0,0,0,.45), 0 0 40px rgba(249,115,22,.08)" }}
             >
               <div className="flex flex-col items-center justify-center px-5 py-4" style={{ background: "linear-gradient(135deg,#FF7828,#C85014)" }}>
                 <span className="font-spot-mono font-black leading-[0.9]" style={{ fontSize: 52, color: "#fff" }}>{days}</span>
@@ -96,17 +96,17 @@ export function NflTeaser() {
               </div>
               <div className="flex items-center gap-1.5 px-6 py-4">
                 <div className="text-center" style={{ minWidth: 44 }}>
-                  <span className="block font-spot-mono font-black text-3xl leading-none" style={{ color: "var(--text)" }}>{hrs}</span>
+                  <span className="block font-spot-mono font-black text-3xl leading-none" style={{ color: "#fff" }}>{hrs}</span>
                   <span className="block mt-1 font-spot-sans font-bold text-[8px] uppercase tracking-[.18em]" style={{ color: "var(--text-muted)" }}>Hrs</span>
                 </div>
-                <span className="font-spot-mono font-black text-2xl leading-none pb-3" style={{ color: "var(--text-ghost)" }}>:</span>
+                <span className="font-spot-mono font-black text-2xl leading-none pb-3" style={{ color: "#3a4150" }}>:</span>
                 <div className="text-center" style={{ minWidth: 44 }}>
-                  <span className="block font-spot-mono font-black text-3xl leading-none" style={{ color: "var(--text)" }}>{min}</span>
+                  <span className="block font-spot-mono font-black text-3xl leading-none" style={{ color: "#fff" }}>{min}</span>
                   <span className="block mt-1 font-spot-sans font-bold text-[8px] uppercase tracking-[.18em]" style={{ color: "var(--text-muted)" }}>Min</span>
                 </div>
-                <span className="font-spot-mono font-black text-2xl leading-none pb-3" style={{ color: "var(--text-ghost)" }}>:</span>
+                <span className="font-spot-mono font-black text-2xl leading-none pb-3" style={{ color: "#3a4150" }}>:</span>
                 <div className="text-center" style={{ minWidth: 44 }}>
-                  <span className="block font-spot-mono font-black text-3xl leading-none" style={{ color: "var(--green)" }}>{sec}</span>
+                  <span className="block font-spot-mono font-black text-3xl leading-none" style={{ color: "#34d399" }}>{sec}</span>
                   <span className="block mt-1 font-spot-sans font-bold text-[8px] uppercase tracking-[.18em]" style={{ color: "var(--text-muted)" }}>Sec</span>
                 </div>
               </div>
@@ -117,7 +117,7 @@ export function NflTeaser() {
 
             <div className="relative grid gap-3 mt-7 mx-auto text-left" style={{ gridTemplateColumns: "repeat(2,minmax(200px,1fr))", maxWidth: 560 }}>
               {FEATURES.map((f) => (
-                <div key={f.title} className="rounded-[18px] p-4" style={{ background: "#fff", border: "1px solid var(--hairline)", boxShadow: "var(--shadow-card)" }}>
+                <div key={f.title} className="rounded-[18px] p-4.5" style={{ background: "var(--panel)", border: "1px solid var(--hairline)" }}>
                   <span style={{ color: f.color }}>{f.glyph}</span>
                   <p className="mt-2 font-spot-sans font-extrabold text-sm" style={{ color: "var(--text)" }}>{f.title}</p>
                   <p className="mt-1 font-spot-sans text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>{f.body}</p>
@@ -129,7 +129,7 @@ export function NflTeaser() {
           {/* Right — early access panel */}
           <div
             className="relative overflow-hidden rounded-[22px]"
-            style={{ flex: "1 1 320px", minWidth: 300, background: "#fff", border: "1px solid var(--hairline)", boxShadow: "var(--shadow-panel)" }}
+            style={{ flex: "1 1 320px", minWidth: 300, background: "linear-gradient(180deg, rgba(249,115,22,.12), #0b0d15 45%)", border: "1px solid var(--orange-line)", boxShadow: "0 28px 80px rgba(0,0,0,.5), 0 0 50px rgba(249,115,22,.08)" }}
           >
             <div className="relative p-6 flex flex-col gap-4">
               <div>
@@ -155,7 +155,7 @@ export function NflTeaser() {
                     onChange={(e) => setEmail(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleNotify()}
                     className="rounded-[14px] px-4 py-3 font-spot-sans text-sm outline-none"
-                    style={{ color: "var(--text)", background: "var(--panel-2)", border: "1px solid var(--hairline)" }}
+                    style={{ color: "#fff", background: "#191C22", border: "1px solid rgba(255,255,255,.09)" }}
                   />
                   <button
                     onClick={handleNotify}

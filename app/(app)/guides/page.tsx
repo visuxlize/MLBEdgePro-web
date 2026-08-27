@@ -83,11 +83,11 @@ export default async function GuidesPage() {
   return (
     <div className="spotlight min-h-screen">
       {/* Page header */}
-      <div style={{ background: "#fff", borderBottom: "1px solid var(--hairline)" }}>
+      <div style={{ background: "var(--panel)", borderBottom: "1px solid var(--hairline)" }}>
         <div className="max-w-screen-xl mx-auto px-4 sm:px-6 py-8">
           <div className="flex items-center gap-3 mb-2">
-            <BookOpen size={20} style={{ color: "var(--text-muted)" }} />
-            <span className="font-spot-sans font-bold text-[11px] uppercase tracking-[.14em]" style={{ color: "var(--text-muted)" }}>
+            <BookOpen size={20} style={{ color: "var(--orange)" }} />
+            <span className="font-spot-sans font-bold text-[11px] uppercase tracking-[.14em]" style={{ color: "var(--orange-soft)" }}>
               Guides & Analysis
             </span>
           </div>
@@ -97,6 +97,21 @@ export default async function GuidesPage() {
           <p className="mt-2 font-spot-sans text-sm max-w-xl" style={{ color: "var(--text-muted)" }}>
             Deep-dive analysis across every sport — organized by league, team, and individual matchup.
           </p>
+
+          {/* Browse by Sport — quick nav at top */}
+          <div className="flex items-center gap-2.5 flex-wrap mt-5">
+            {sports.filter(s => s.subcategories.length > 0).map((s) => (
+              <Link
+                key={s.key}
+                href={s.href}
+                className="inline-flex items-center gap-2 rounded-full px-4 py-2 font-spot-sans font-extrabold text-[12px] uppercase tracking-[.08em] transition-all hover:opacity-80"
+                style={{ background: `${s.accentColor}18`, border: `1px solid ${s.accentColor}40`, color: s.accentColor }}
+              >
+                {s.emoji} {s.label}
+                <ChevronRight size={12} />
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -106,8 +121,8 @@ export default async function GuidesPage() {
           {sports.map((s) => (
             <div
               key={s.key}
-              className="flex flex-col rounded-[16px] overflow-hidden"
-              style={{ background: "#fff", border: "1px solid var(--hairline)", boxShadow: "var(--shadow-card)" }}
+              className="flex flex-col rounded-[20px] overflow-hidden"
+              style={{ background: "var(--panel)", border: "1px solid var(--hairline)", boxShadow: "var(--shadow-card)" }}
             >
               {/* Sport header */}
               <div className="px-5 pt-5 pb-4" style={{ borderBottom: "1px solid var(--hairline)" }}>
@@ -115,7 +130,7 @@ export default async function GuidesPage() {
                   <div className="flex items-center gap-3">
                     <span
                       className="w-10 h-10 rounded-xl flex items-center justify-center text-[20px]"
-                      style={{ background: `${s.accentColor}12`, border: `1px solid ${s.accentColor}25` }}
+                      style={{ background: `${s.accentColor}18`, border: `1px solid ${s.accentColor}35` }}
                     >
                       {s.emoji}
                     </span>
@@ -141,7 +156,7 @@ export default async function GuidesPage() {
                     <Link
                       key={sub.href}
                       href={sub.href}
-                      className="flex items-center justify-between px-5 py-3 transition-colors hover:bg-gray-50 group"
+                      className="flex items-center justify-between px-5 py-3 transition-colors group"
                       style={{ borderBottom: "1px solid var(--hairline-2)" }}
                     >
                       <span className="font-spot-sans font-semibold text-[13px]" style={{ color: "var(--text-3)" }}>{sub.label}</span>
@@ -152,7 +167,7 @@ export default async function GuidesPage() {
               ) : (
                 <div className="flex-1 flex items-center justify-center py-8">
                   <span className="font-spot-sans font-bold text-[12px] uppercase tracking-[.10em]"
-                    style={{ color: "var(--text-dim)", background: "var(--panel-2)", padding: "6px 14px", borderRadius: 8 }}>
+                    style={{ color: "var(--text-dim)", background: "rgba(255,255,255,.05)", padding: "6px 14px", borderRadius: 8, border: "1px solid var(--hairline)" }}>
                     Coming Soon
                   </span>
                 </div>
@@ -162,8 +177,8 @@ export default async function GuidesPage() {
               {s.subcategories.length > 0 && (
                 <Link
                   href={s.href}
-                  className="flex items-center justify-between px-5 py-3.5 font-spot-sans font-extrabold text-[12px] uppercase tracking-[.08em] transition-colors hover:opacity-90"
-                  style={{ background: s.accentColor, color: "#fff" }}
+                  className="flex items-center justify-between px-5 py-3.5 font-spot-sans font-extrabold text-[12px] uppercase tracking-[.08em] transition-all hover:opacity-90"
+                  style={{ background: `linear-gradient(135deg, ${s.accentColor}cc, ${s.accentColor})`, color: "#fff" }}
                 >
                   <span>Browse {s.label} Analysis</span>
                   <ChevronRight size={14} />
@@ -171,35 +186,6 @@ export default async function GuidesPage() {
               )}
             </div>
           ))}
-        </div>
-
-        {/* Browse by section header — sport → teams → games hierarchy */}
-        <div className="mt-10">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="h-px flex-1" style={{ background: "var(--hairline)" }} />
-            <span className="font-spot-sans font-bold text-[10px] uppercase tracking-[.14em]" style={{ color: "var(--text-dim)" }}>Browse by Sport</span>
-            <div className="h-px flex-1" style={{ background: "var(--hairline)" }} />
-          </div>
-
-          <div className="grid gap-2.5" style={{ gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))" }}>
-            {sports.filter(s => s.subcategories.length > 0).map((s) => (
-              <Link
-                key={s.key}
-                href={s.href}
-                className="flex items-center gap-3 rounded-[12px] px-4 py-3.5 transition-all group hover:shadow-sm"
-                style={{ background: "#fff", border: "1px solid var(--hairline)" }}
-              >
-                <span className="text-xl">{s.emoji}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="font-spot-sans font-black text-sm uppercase tracking-[.04em]" style={{ color: "var(--text)" }}>{s.label}</p>
-                  <p className="font-spot-sans text-[11px]" style={{ color: "var(--text-muted)" }}>
-                    Sport → Teams → Games
-                  </p>
-                </div>
-                <ChevronRight size={14} className="shrink-0 group-hover:translate-x-0.5 transition-transform" style={{ color: "var(--text-dim)" }} />
-              </Link>
-            ))}
-          </div>
         </div>
       </div>
     </div>
