@@ -63,11 +63,11 @@ export function LogoPlate({
     <div
       className="shrink-0 flex items-center justify-center relative overflow-hidden"
       style={clean ? {
-        width: size, height: size, borderRadius: r, background: "#12141c",
-        boxShadow: `inset 0 0 0 1.5px ${alpha(hex, "55")}, 0 2px 6px rgba(0,0,0,.35)`,
+        width: size, height: size, borderRadius: r, background: "#f1f5f9",
+        boxShadow: `inset 0 0 0 1.5px ${alpha(hex, "40")}, 0 1px 4px rgba(0,0,0,.08)`,
       } : {
         width: size, height: size, borderRadius: r, background: hex,
-        boxShadow: "inset 0 0 0 1.5px rgba(255,255,255,.55), 0 3px 8px rgba(0,0,0,.4)",
+        boxShadow: "inset 0 0 0 1.5px rgba(255,255,255,.45), 0 2px 6px rgba(0,0,0,.18)",
       }}
       title={name ?? code}
     >
@@ -288,7 +288,7 @@ export function AIPredictionButton({
   const inner = (
     <div
       className="flex items-center justify-between gap-3 rounded-[var(--r-tile)] px-3.5 py-2.5 spot-lift"
-      style={{ background: "var(--purple-tint)", border: "1px solid var(--purple-line)" }}
+      style={{ background: "rgba(124,92,250,.06)", border: "1px solid rgba(124,92,250,.16)" }}
     >
       <span className="inline-flex items-center gap-1.5 spot-label-sm" style={{ color: "var(--purple-2)" }}>
         <span>◆</span> AI Prediction

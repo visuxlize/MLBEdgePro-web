@@ -239,68 +239,76 @@ html {
 
 /* ═══════════════════════════════════════════════════════════════════════════════
    SPOTLIGHT DESIGN SYSTEM — scoped to .spotlight on the redesigned user pages.
-   Tokens are additive so the landing/marketing/other app pages are untouched.
+   Light theme matching the BestOdds design language.
    ═══════════════════════════════════════════════════════════════════════════════ */
 
 .spotlight {
-  /* ---- Surfaces ---- */
-  --bg:            #06070d;
-  --panel:         #0b0d15;
-  --panel-2:       #0c0e16;
-  --panel-wash:    radial-gradient(130% 70% at 50% -8%, #161126, #06070d 58%);
-  --hairline:      rgba(255,255,255,.06);
-  --hairline-2:    rgba(255,255,255,.05);
-  --ring-inset:    inset 0 0 0 2px rgba(255,255,255,.18);
-  --inset-soft:    rgba(0,0,0,.25);
+  /* ---- Surfaces (light) ---- */
+  --bg:            #ffffff;
+  --panel:         #f8fafc;
+  --panel-2:       #f1f5f9;
+  --panel-wash:    #ffffff;
+  --hairline:      #e2e8f0;
+  --hairline-2:    #edf2f7;
+  --ring-inset:    inset 0 0 0 2px rgba(0,0,0,.12);
+  --inset-soft:    rgba(0,0,0,.06);
+
+  /* ---- Primary — Teal (BestOdds brand) ---- */
+  --teal:          #009688;
+  --teal-2:        #26a69a;
+  --teal-soft:     #4db6ac;
+  --teal-tint:     rgba(0,150,136,.08);
+  --teal-line:     rgba(0,150,136,.22);
+  --grad-teal:     linear-gradient(135deg,#009688,#26a69a);
 
   /* ---- Accents ---- */
   --orange:        #f97316;
   --orange-2:      #fb923c;
-  --orange-soft:   #f8a878;
-  --orange-tint:   rgba(249,115,22,.10);
-  --orange-line:   rgba(249,115,22,.30);
+  --orange-soft:   #ea6c00;
+  --orange-tint:   rgba(249,115,22,.08);
+  --orange-line:   rgba(249,115,22,.20);
   --grad-orange:   linear-gradient(135deg,#f97316,#fb923c);
 
   --purple:        #7c5cfa;
-  --purple-2:      #a78bfa;
-  --purple-soft:   #c9bdf3;
-  --purple-tint:   rgba(124,92,250,.10);
-  --purple-line:   rgba(167,139,250,.30);
+  --purple-2:      #8b5cf6;
+  --purple-soft:   #7c5cfa;
+  --purple-tint:   rgba(124,92,250,.07);
+  --purple-line:   rgba(139,92,246,.18);
   --grad-purple:   linear-gradient(135deg,#7c5cfa,#a78bfa);
 
-  --gold:          #f59e0b;
-  --gold-2:        #fbbf24;
-  --gold-soft:     #fcd97a;
-  --gold-tint:     rgba(245,158,11,.12);
-  --gold-line:     rgba(251,191,36,.30);
-  --grad-gold:     linear-gradient(135deg,#f59e0b,#fbbf24);
+  --gold:          #d97706;
+  --gold-2:        #f59e0b;
+  --gold-soft:     #b45309;
+  --gold-tint:     rgba(217,119,6,.08);
+  --gold-line:     rgba(245,158,11,.22);
+  --grad-gold:     linear-gradient(135deg,#d97706,#f59e0b);
 
   /* ---- Grades / status ---- */
-  --green:         #34d399;   --green-bg:  rgba(52,211,153,.16);
-  --grade-b:       #fb923c;   --grade-b-bg:rgba(251,146,60,.16);
-  --grade-c:       #a78bfa;   --grade-c-bg:rgba(167,139,250,.18);
-  --red:           #ef4444;   --red-soft:  #fda4a4;  --red-bg: rgba(239,68,68,.16);
-  --blue:          #60a5fa;
+  --green:         #059669;   --green-bg:  rgba(5,150,105,.09);
+  --grade-b:       #d97706;   --grade-b-bg:rgba(217,119,6,.09);
+  --grade-c:       #7c5cfa;   --grade-c-bg:rgba(124,92,250,.09);
+  --red:           #dc2626;   --red-soft:  #ef4444;   --red-bg: rgba(220,38,38,.08);
+  --blue:          #2563eb;
 
-  /* ---- Text ---- */
-  --text:          #ffffff;
-  --text-2:        #cfd6e0;
-  --text-3:        #aab2bd;
-  --text-muted:    #8b94a1;
-  --text-dim:      #6b7280;
-  --text-faint:    #5b6472;
-  --text-ghost:    #4d5563;
+  /* ---- Text (dark on light) ---- */
+  --text:          #0f172a;
+  --text-2:        #1e293b;
+  --text-3:        #334155;
+  --text-muted:    #64748b;
+  --text-dim:      #94a3b8;
+  --text-faint:    #cbd5e1;
+  --text-ghost:    #e2e8f0;
 
   /* ---- Radii ---- */
-  --r-pill:        20px;   --r-panel: 20px;  --r-card: 18px;
-  --r-tile:        12px;   --r-badge: 11px;  --r-chip: 10px;  --r-sm: 8px;
+  --r-pill:        20px;   --r-panel: 16px;  --r-card: 12px;
+  --r-tile:        10px;   --r-badge: 8px;   --r-chip: 8px;  --r-sm: 6px;
   --r-window:      96px 16px 16px 96px;
 
-  /* ---- Shadows ---- */
-  --shadow-panel:  0 28px 80px rgba(0,0,0,.5);
-  --shadow-card:   0 20px 60px rgba(0,0,0,.45);
-  --shadow-badge:  0 8px 22px rgba(0,0,0,.5);
-  --glow-edge:     0 6px 30px rgba(52,211,153,.40);
+  /* ---- Shadows (light-mode appropriate) ---- */
+  --shadow-panel:  0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.06);
+  --shadow-card:   0 1px 2px rgba(0,0,0,.06), 0 2px 8px rgba(0,0,0,.04);
+  --shadow-badge:  0 2px 6px rgba(0,0,0,.10);
+  --glow-edge:     0 4px 20px rgba(5,150,105,.25);
 
   /* ---- Type ---- */
   --font-spot-sans: 'Hanken Grotesk', system-ui, sans-serif;
@@ -308,8 +316,7 @@ html {
 
   font-family: var(--font-spot-sans);
   color: var(--text);
-  background: var(--panel-wash);
-  background-attachment: fixed;
+  background: var(--bg);
 }
 
 /* Numbers & stats — JetBrains Mono everywhere inside spotlight */
@@ -318,22 +325,43 @@ html {
 .font-spot-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; font-feature-settings: 'tnum' 1; }
 .font-spot-sans { font-family: 'Hanken Grotesk', system-ui, sans-serif; }
 
-/* Section labels */
-.spot-label    { font: 700 11px/1 'Hanken Grotesk', sans-serif; text-transform: uppercase; letter-spacing: .14em; }
-.spot-label-sm { font: 800 10px/1 'Hanken Grotesk', sans-serif; text-transform: uppercase; letter-spacing: .12em; }
+/* Section labels — BestOdds style: bold uppercase black */
+.spot-label    { font: 800 11px/1 'Hanken Grotesk', sans-serif; text-transform: uppercase; letter-spacing: .12em; color: var(--text); }
+.spot-label-sm { font: 800 10px/1 'Hanken Grotesk', sans-serif; text-transform: uppercase; letter-spacing: .10em; color: var(--text-muted); }
+
+/* Section heading — large bold uppercase like BestOdds "STATISTICS", "PLAYERS PROPS" */
+.spot-section-heading {
+  font: 900 18px/1.1 'Hanken Grotesk', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+  color: var(--text);
+}
 
 /* Surfaces */
-.spot-panel { background: var(--panel);   border: 1px solid var(--hairline); border-radius: var(--r-panel); }
-.spot-card  { background: var(--panel);   border: 1px solid var(--hairline); border-radius: var(--r-card); }
+.spot-panel { background: var(--panel);   border: 1px solid var(--hairline); border-radius: var(--r-panel); box-shadow: var(--shadow-card); }
+.spot-card  { background: var(--bg);      border: 1px solid var(--hairline); border-radius: var(--r-card);  box-shadow: var(--shadow-card); }
+
+/* HOT badge — BestOdds orange trending pill */
+.spot-hot-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--orange); color: #fff;
+  font: 800 9px/1 'Hanken Grotesk', sans-serif;
+  text-transform: uppercase; letter-spacing: .10em;
+  padding: 3px 7px; border-radius: 6px;
+}
+
+/* Scrollbar — light in spotlight scope */
+.spotlight ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); }
+.spotlight ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.20); }
 
 /* Conic grade / HR ring — drive with --grade (color) and --edge (0-100) */
 .spot-ring {
   position: relative; width: 58px; height: 58px; border-radius: 50%;
-  background: conic-gradient(var(--grade) calc(var(--edge) * 1%), rgba(255,255,255,.08) 0);
+  background: conic-gradient(var(--grade) calc(var(--edge) * 1%), rgba(0,0,0,.08) 0);
   display: grid; place-items: center;
 }
 .spot-ring::before {
-  content: ""; position: absolute; inset: 5px; border-radius: 50%; background: var(--panel);
+  content: ""; position: absolute; inset: 5px; border-radius: 50%; background: var(--bg);
 }
 .spot-ring > * { position: relative; z-index: 1; }
 

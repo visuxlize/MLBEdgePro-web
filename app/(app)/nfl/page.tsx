@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { MapPin } from "lucide-react";
+import { MapPin, TrendingUp, Users, BarChart2, Zap } from "lucide-react";
 import { useSubscription } from "@/lib/subscription";
 import type { NflGame, NflWeekKey } from "@/lib/nfl/types";
 import { nflTeamHex, nflLogoUrl } from "@/lib/nfl/teams";
@@ -12,9 +12,9 @@ import { NflTeaser } from "@/components/web-tool/nfl-teaser";
 
 const WEEKS: { key: NflWeekKey; label: string; range: string }[] = [
   { key: "HOF_PRE1", label: "HOF + PRE 1", range: "AUG 6–15" },
-  { key: "PRE2", label: "PRE 2", range: "AUG 20–23" },
-  { key: "PRE3", label: "PRE 3", range: "AUG 27–29" },
-  { key: "WK1", label: "WK 1", range: "SEP 9" },
+  { key: "PRE2",     label: "PRE 2",       range: "AUG 20–23" },
+  { key: "PRE3",     label: "PRE 3",       range: "AUG 27–29" },
+  { key: "WK1",      label: "WK 1",        range: "SEP 9" },
 ];
 
 async function fetchWeek(week: NflWeekKey): Promise<NflGame[]> {
@@ -23,22 +23,24 @@ async function fetchWeek(week: NflWeekKey): Promise<NflGame[]> {
   return res.json();
 }
 
+// ── Week pills ─────────────────────────────────────────────────────────────────
+
 function WeekPills({ week, onChange }: { week: NflWeekKey; onChange: (w: NflWeekKey) => void }) {
   return (
-    <div className="flex items-center gap-1.5 flex-wrap">
+    <div className="flex items-center gap-2 flex-wrap">
       {WEEKS.map((w) => {
         const active = w.key === week;
         return (
           <button
             key={w.key}
             onClick={() => onChange(w.key)}
-            className="rounded-xl px-3 py-1.5 text-center transition-colors"
+            className="rounded-xl px-4 py-2 text-center transition-all"
             style={active
-              ? { background: "var(--grad-orange)" }
-              : { border: "1px solid var(--hairline)" }}
+              ? { background: "#0f172a", color: "#fff" }
+              : { background: "#fff", border: "1px solid var(--hairline)", color: "var(--text-muted)" }}
           >
-            <span className="block font-spot-mono font-extrabold text-[10px] tracking-[.08em]" style={{ color: active ? "#fff" : "var(--text-muted)" }}>{w.label}</span>
-            <span className="block mt-0.5 font-spot-mono font-semibold text-[9px]" style={{ color: active ? "rgba(255,255,255,.75)" : "var(--text-faint)" }}>{w.range}</span>
+            <span className="block font-spot-sans font-extrabold text-[11px] tracking-[.06em]">{w.label}</span>
+            <span className="block mt-0.5 font-spot-mono font-semibold text-[9px]" style={{ color: active ? "rgba(255,255,255,.6)" : "var(--text-dim)" }}>{w.range}</span>
           </button>
         );
       })}
@@ -46,191 +48,315 @@ function WeekPills({ week, onChange }: { week: NflWeekKey; onChange: (w: NflWeek
   );
 }
 
-function TeamRow({ abbr, pct, score, showPct }: { abbr: string; pct?: number; score?: number; showPct: boolean }) {
+// ── Odds chip ──────────────────────────────────────────────────────────────────
+
+function OddsChip({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
   return (
-    <div className="flex items-center gap-2.5">
-      <LogoPlate hex={nflTeamHex(abbr)} src={nflLogoUrl(abbr)} code={abbr} size={30} radius={9} />
-      <span className="flex-1 font-spot-sans font-black text-sm" style={{ color: "var(--text)" }}>{abbr}</span>
-      {showPct && pct !== undefined && <span className="font-spot-mono font-bold text-[11px]" style={{ color: "var(--text-3)" }}>{pct}%</span>}
-      {!showPct && score !== undefined && <span className="font-spot-mono font-extrabold text-xl" style={{ color: "var(--text)" }}>{score}</span>}
+    <div
+      className="flex flex-col items-center justify-center rounded-lg px-2.5 py-1.5 min-w-[52px]"
+      style={accent
+        ? { background: "#009688", color: "#fff" }
+        : { background: "var(--panel-2)", border: "1px solid var(--hairline)", color: "var(--text)" }}
+    >
+      <span className="font-spot-mono font-black text-[13px] leading-tight">{value}</span>
+      <span className="font-spot-sans font-semibold text-[9px] uppercase tracking-[.08em] mt-0.5"
+        style={{ color: accent ? "rgba(255,255,255,.75)" : "var(--text-muted)" }}>{label}</span>
     </div>
   );
 }
 
-function LiveTile({ game, onClick }: { game: NflGame; onClick: () => void }) {
-  const drive = game.drive;
+// ── Public betting bar ─────────────────────────────────────────────────────────
+
+function PublicBettingBar({ awayPct, awayCode, homeCode }: { awayPct: number; awayCode: string; homeCode: string }) {
+  const homePct = 100 - awayPct;
   return (
-    <div
-      className="rounded-[20px] overflow-hidden mb-4"
-      style={{ background: "var(--panel)", border: "1px solid rgba(239,68,68,.28)", boxShadow: "var(--shadow-panel), 0 0 48px rgba(239,68,68,.07)" }}
-    >
-      <div className="flex flex-wrap">
-        <button
-          onClick={onClick}
-          className="text-left p-5 flex flex-col gap-3"
-          style={{ flex: "1 1 270px", minWidth: 270, background: `linear-gradient(150deg, ${alpha(nflTeamHex(game.away), "40")}, transparent 55%)`, borderRight: "1px solid var(--hairline)" }}
-        >
-          <div className="flex items-center justify-between gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-spot-sans font-extrabold text-[10px] tracking-[.12em]" style={{ color: "var(--red-soft)", background: "var(--red-bg)", border: "1px solid rgba(239,68,68,.3)" }}>
-              <span className="spot-live-dot inline-block rounded-full" style={{ width: 6, height: 6, background: "var(--red)" }} />{game.statusDetail}
-            </span>
-            <span className="font-spot-mono font-extrabold text-[10px] tracking-[.08em]" style={{ color: "var(--text-muted)" }}>{game.dateLabel}</span>
-          </div>
-          <TeamRow abbr={game.away} score={game.awayScore} showPct={false} />
-          <TeamRow abbr={game.home} score={game.homeScore} showPct={false} />
-        </button>
-        {drive && (
-          <div className="p-5 flex flex-col gap-3 justify-center" style={{ flex: "2 1 400px", minWidth: 300 }}>
-            <div className="flex items-center justify-between gap-2 flex-wrap">
-              <span className="inline-flex items-center gap-2 font-spot-mono font-extrabold text-[13px]" style={{ color: "var(--orange-soft)" }}>
-                🏈 {drive.possession} ball &middot; {drive.downDistance} at {drive.spot}
-              </span>
-            </div>
-            <div className="flex h-[112px] rounded-xl overflow-hidden relative" style={{ border: "1px solid var(--hairline)" }}>
-              <div className="w-[34px] flex items-center justify-center" style={{ background: nflTeamHex(game.home), opacity: 0.85 }}>
-                <span className="font-spot-sans font-black text-[10px] tracking-[.2em]" style={{ color: "rgba(255,255,255,.85)", writingMode: "vertical-rl", transform: "rotate(180deg)" }}>{game.home}</span>
-              </div>
-              <div className="flex-1 relative" style={{ background: "linear-gradient(180deg, rgba(46,94,78,.30), rgba(46,94,78,.12))" }}>
-                <div className="absolute top-0 bottom-0" style={{ left: `${drive.firstDownPct}%`, width: 2, background: "#fbbf24", boxShadow: "0 0 10px rgba(251,191,36,.6)" }} />
-                <div className="absolute top-0 bottom-0" style={{ left: `${drive.ballPct}%`, width: 0 }}>
-                  <div className="absolute" style={{ top: "50%", left: 0, transform: "translate(-50%,-50%)" }}>
-                    <span className="absolute rounded-full" style={{ inset: -7, border: "2px solid rgba(249,115,22,.7)", animation: "spot-ping 1.4s ease-out infinite" }} />
-                    <span className="block rounded-full" style={{ width: 12, height: 12, background: "#f97316", boxShadow: "0 0 14px rgba(249,115,22,.9)" }} />
-                  </div>
-                </div>
-              </div>
-              <div className="w-[34px] flex items-center justify-center" style={{ background: nflTeamHex(game.away), opacity: 0.85 }}>
-                <span className="font-spot-sans font-black text-[10px] tracking-[.2em]" style={{ color: "rgba(255,255,255,.85)", writingMode: "vertical-rl" }}>{game.away}</span>
-              </div>
-            </div>
-            {drive.lastPlay && (
-              <div className="flex items-center gap-2">
-                <span className="spot-live-dot inline-block rounded-full" style={{ width: 6, height: 6, background: "var(--green)" }} />
-                <span className="font-spot-sans text-xs" style={{ color: "var(--text-2)" }}>Last play: <span className="font-bold" style={{ color: "var(--text)" }}>{drive.lastPlay}</span></span>
-              </div>
-            )}
-          </div>
-        )}
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <span className="font-spot-mono font-bold text-[11px]" style={{ color: "var(--text-muted)" }}>{awayPct}%</span>
+        <span className="font-spot-sans font-semibold text-[9px] uppercase tracking-[.10em]" style={{ color: "var(--text-dim)" }}>Public Money</span>
+        <span className="font-spot-mono font-bold text-[11px]" style={{ color: "var(--text-muted)" }}>{homePct}%</span>
+      </div>
+      <div className="flex w-full overflow-hidden rounded-full" style={{ height: 6, background: "var(--hairline)" }}>
+        <div style={{ width: `${awayPct}%`, background: "#ef4444", transition: "width .4s ease" }} />
+        <div style={{ flex: 1, background: "#009688" }} />
+      </div>
+      <div className="flex items-center justify-between mt-1">
+        <span className="font-spot-sans font-black text-[10px]" style={{ color: "var(--text-3)" }}>{awayCode}</span>
+        <span className="font-spot-sans font-black text-[10px]" style={{ color: "var(--text-3)" }}>{homeCode}</span>
       </div>
     </div>
   );
 }
 
-function EditorialHero({ game, onClick }: { game: NflGame; onClick: () => void }) {
-  const awayHex = nflTeamHex(game.away), homeHex = nflTeamHex(game.home);
+// ── Win prob bar (teal branded) ────────────────────────────────────────────────
+
+function WinProbBar({ awayPct, awayHex, homeHex, awayCode, homeCode }: { awayPct: number; awayHex: string; homeHex: string; awayCode: string; homeCode: string }) {
+  const homePct = 100 - awayPct;
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1.5">
+        <div className="flex items-center gap-1.5">
+          <span className="font-spot-mono font-bold text-sm" style={{ color: "var(--text)" }}>{awayPct}%</span>
+          <span className="font-spot-sans font-semibold text-[10px]" style={{ color: "var(--text-muted)" }}>{awayCode}</span>
+        </div>
+        <span className="font-spot-sans font-semibold text-[9px] uppercase tracking-[.10em]" style={{ color: "var(--text-dim)" }}>Win Prediction</span>
+        <div className="flex items-center gap-1.5">
+          <span className="font-spot-sans font-semibold text-[10px]" style={{ color: "var(--text-muted)" }}>{homeCode}</span>
+          <span className="font-spot-mono font-bold text-sm" style={{ color: "var(--text)" }}>{homePct}%</span>
+        </div>
+      </div>
+      <div className="flex w-full overflow-hidden rounded-full" style={{ height: 8, background: "var(--hairline)" }}>
+        <div style={{ width: `${awayPct}%`, background: awayHex, transition: "width .4s ease" }} />
+        <div style={{ flex: 1, background: homeHex }} />
+      </div>
+    </div>
+  );
+}
+
+// ── LIVE tile ──────────────────────────────────────────────────────────────────
+
+function LiveTile({ game, onClick }: { game: NflGame; onClick: () => void }) {
+  const awayHex = nflTeamHex(game.away);
+  const homeHex = nflTeamHex(game.home);
+  const awayPct = 100 - game.homeWinProb;
+
   return (
     <motion.button
       onClick={onClick}
-      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-      className="relative w-full text-left rounded-[20px] overflow-hidden mb-5"
-      style={{ border: "1px solid var(--hairline)", boxShadow: "var(--shadow-panel)", minHeight: 220 }}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="w-full text-left rounded-[16px] overflow-hidden mb-4"
+      style={{ background: "#fff", border: "2px solid rgba(220,38,38,.35)", boxShadow: "0 0 0 4px rgba(220,38,38,.05), var(--shadow-panel)" }}
     >
-      {game.venueImage && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={game.venueImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
-      )}
-      <div className="absolute inset-0" style={{ background: `linear-gradient(90deg, ${alpha(awayHex, "40")}, transparent 50%, ${alpha(homeHex, "40")})` }} />
-      <div className="absolute inset-0" style={{ background: "linear-gradient(0deg, rgba(6,7,13,.88), rgba(6,7,13,.35) 55%, rgba(6,7,13,.3))" }} />
-      <div className="relative p-5 sm:p-6 flex flex-col gap-3.5">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="rounded-full px-2.5 py-1 font-spot-sans font-extrabold text-[10px] uppercase tracking-[.12em]" style={{ color: "var(--green)", background: "var(--green-bg)" }}>★ Top Edge</span>
-            <span className="font-spot-mono font-extrabold text-[10px] tracking-[.08em]" style={{ color: "var(--orange-soft)" }}>{game.dateLabel} &middot; {game.timeLabel}</span>
-            <span className="inline-flex items-center gap-1 font-spot-sans text-[10px]" style={{ color: "var(--text-3)" }}><MapPin size={10} />{game.venue}</span>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <span className="rounded-[11px] px-2.5 py-1 font-spot-sans font-black text-[13px]" style={{ color: "var(--green)", background: "var(--green-bg)", border: "1px solid rgba(52,211,153,.32)" }}>{game.grade}</span>
-            <span className="font-spot-sans font-extrabold text-[10px] uppercase tracking-[.14em]" style={{ color: "var(--text-3)" }}>Edge</span>
-            <span className="font-spot-mono font-extrabold text-[32px] leading-none" style={{ color: "var(--green)", textShadow: "var(--glow-edge)" }}>{game.edge}</span>
+      {/* Live header */}
+      <div className="flex items-center justify-between px-5 pt-4 pb-3" style={{ borderBottom: "1px solid var(--hairline)" }}>
+        <span className="inline-flex items-center gap-1.5 font-spot-sans font-extrabold text-[11px] uppercase tracking-[.14em]" style={{ color: "var(--red)" }}>
+          <span className="spot-live-dot inline-block rounded-full" style={{ width: 7, height: 7, background: "var(--red)" }} />
+          Live Now
+        </span>
+        <span className="font-spot-mono font-bold text-[11px]" style={{ color: "var(--text-muted)" }}>{game.dateLabel} · {game.statusDetail}</span>
+      </div>
+
+      {/* Teams + score */}
+      <div className="grid grid-cols-3 items-center gap-4 px-5 py-4">
+        <div className="flex items-center gap-3">
+          <LogoPlate hex={awayHex} src={nflLogoUrl(game.away)} code={game.away} size={44} radius={12} />
+          <div>
+            <p className="font-spot-sans font-black text-base" style={{ color: "var(--text)" }}>{game.away}</p>
+            <p className="font-spot-sans text-[10px]" style={{ color: "var(--text-muted)" }}>Away</p>
           </div>
         </div>
-        <div className="flex items-center justify-between gap-5 flex-wrap">
-          <div className="flex items-center gap-4">
-            <div className="flex flex-col items-center gap-2">
-              <LogoPlate hex={awayHex} src={nflLogoUrl(game.away)} code={game.away} size={44} radius={13} />
-              <span className="font-spot-sans font-black text-base" style={{ color: "var(--text)" }}>{game.away}</span>
-              <span className="font-spot-sans text-[10px]" style={{ color: "var(--text-muted)" }}>{game.qbAway}</span>
-            </div>
-            <span className="font-spot-sans font-black text-lg pb-5" style={{ color: "var(--text-ghost)" }}>@</span>
-            <div className="flex flex-col items-center gap-2">
-              <LogoPlate hex={homeHex} src={nflLogoUrl(game.home)} code={game.home} size={44} radius={13} />
-              <span className="font-spot-sans font-black text-base" style={{ color: "var(--text)" }}>{game.home}</span>
-              <span className="font-spot-sans text-[10px]" style={{ color: "var(--text-muted)" }}>{game.qbHome}</span>
-            </div>
+        <div className="flex flex-col items-center gap-1">
+          {game.awayScore !== undefined && game.homeScore !== undefined ? (
+            <>
+              <div className="flex items-center gap-3">
+                <span className="font-spot-mono font-black text-3xl" style={{ color: "var(--text)" }}>{game.awayScore}</span>
+                <span className="font-spot-sans font-black text-lg" style={{ color: "var(--text-ghost)" }}>—</span>
+                <span className="font-spot-mono font-black text-3xl" style={{ color: "var(--text)" }}>{game.homeScore}</span>
+              </div>
+              <span className="font-spot-sans font-bold text-[10px] uppercase tracking-[.12em]" style={{ color: "var(--red)" }}>{game.statusDetail}</span>
+            </>
+          ) : (
+            <span className="font-spot-sans font-bold text-[11px]" style={{ color: "var(--red)" }}>{game.timeLabel}</span>
+          )}
+        </div>
+        <div className="flex items-center gap-3 justify-end">
+          <div className="text-right">
+            <p className="font-spot-sans font-black text-base" style={{ color: "var(--text)" }}>{game.home}</p>
+            <p className="font-spot-sans text-[10px]" style={{ color: "var(--text-muted)" }}>Home</p>
           </div>
-          <div className="flex flex-col gap-2 flex-1" style={{ maxWidth: 320, minWidth: 240 }}>
-            <div className="flex justify-between">
-              <span className="font-spot-mono font-bold text-[11px]" style={{ color: "var(--text-3)" }}>{100 - game.homeWinProb}%</span>
-              <span className="font-spot-sans font-extrabold text-[9px] uppercase tracking-[.14em]" style={{ color: "var(--text-faint)" }}>Win Prob</span>
-              <span className="font-spot-mono font-bold text-[11px]" style={{ color: "var(--text-3)" }}>{game.homeWinProb}%</span>
-            </div>
-            <div className="flex h-1.5 rounded overflow-hidden" style={{ background: "rgba(255,255,255,.12)" }}>
-              <div style={{ width: `${100 - game.homeWinProb}%`, background: awayHex }} />
-              <div style={{ flex: 1, background: homeHex }} />
-            </div>
-            <div className="flex items-center justify-between gap-2.5 rounded-xl px-3.5 py-2" style={{ background: "var(--purple-tint)", border: "1px solid var(--purple-line)" }}>
-              <span className="font-spot-sans font-extrabold text-[10px] uppercase tracking-[.12em]" style={{ color: "var(--purple-2)" }}>◆ AI Prediction</span>
-              <span className="font-spot-sans font-black text-[13px]" style={{ color: "var(--purple-soft)" }}>{game.homeWinProb >= 50 ? game.home : game.away} ML ↗</span>
-            </div>
-          </div>
+          <LogoPlate hex={homeHex} src={nflLogoUrl(game.home)} code={game.home} size={44} radius={12} />
+        </div>
+      </div>
+
+      {/* Win prob + odds */}
+      <div className="px-5 pb-5 flex flex-col gap-3">
+        <WinProbBar awayPct={awayPct} awayHex={awayHex} homeHex={homeHex} awayCode={game.away} homeCode={game.home} />
+        <div className="flex items-center gap-2 justify-center">
+          <OddsChip label="ML" value={`${awayPct >= 50 ? "−137" : "+124"}`} />
+          <OddsChip label="Spread" value={`${awayPct >= 50 ? "−4.5" : "+4.5"}`} accent />
+          <OddsChip label="Total" value="O 48.5" />
+          <OddsChip label="Edge" value={`${game.edge}`} />
         </div>
       </div>
     </motion.button>
   );
 }
 
-function GameCard({ game, onClick }: { game: NflGame; onClick: () => void }) {
-  const awayHex = nflTeamHex(game.away), homeHex = nflTeamHex(game.home);
+// ── Matchup card (BestOdds style) ─────────────────────────────────────────────
+
+type MatchupTab = "moneyline" | "spread" | "total";
+
+function MatchupCard({ game, onClick }: { game: NflGame; onClick: () => void }) {
+  const [tab, setTab] = useState<MatchupTab>("moneyline");
+  const awayHex = nflTeamHex(game.away);
+  const homeHex = nflTeamHex(game.home);
+  const awayPct = 100 - game.homeWinProb;
+  const homePct = game.homeWinProb;
   const gc = gradeColor(game.grade);
+  const isFinal = game.status === "final";
+
+  const tabs: { key: MatchupTab; label: string }[] = [
+    { key: "moneyline", label: "Moneyline" },
+    { key: "spread",    label: "Spread" },
+    { key: "total",     label: "Total" },
+  ];
+
   return (
-    <button
-      onClick={onClick}
-      className="text-left rounded-[18px] overflow-hidden relative"
-      style={{ background: `linear-gradient(135deg, ${alpha(awayHex, "40")} 0%, #0b0d15 50%, ${alpha(homeHex, "40")} 100%)`, border: "1px solid var(--hairline)", boxShadow: "var(--shadow-card)", minHeight: 196 }}
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="flex flex-col rounded-[16px] overflow-hidden"
+      style={{ background: "#fff", border: "1px solid var(--hairline)", boxShadow: "var(--shadow-card)" }}
     >
-      {game.venueImage && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={game.venueImage} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ mixBlendMode: "luminosity", opacity: 0.4 }} />
-      )}
-      <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${alpha(awayHex, "40")} 0%, transparent 50%, ${alpha(homeHex, "40")} 100%)` }} />
-      <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(6,7,13,.5) 0%, rgba(6,7,13,.15) 40%, rgba(6,7,13,.15) 60%, rgba(6,7,13,.7) 100%)" }} />
-      <div className="relative z-10 p-4 flex flex-col gap-2.5" style={{ minHeight: 196 }}>
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex flex-col gap-0.5">
-            <span className="font-spot-mono font-extrabold text-[10px] tracking-[.08em]" style={{ color: "var(--orange-soft)" }}>{game.dateLabel}</span>
-            <span className="font-spot-sans font-extrabold text-[15px]" style={{ color: "#fff" }}>{game.timeLabel}</span>
-            <span className="inline-flex items-center gap-1 font-spot-sans text-[10px]" style={{ color: "var(--text-3)" }}><MapPin size={9} />{game.venue}</span>
-          </div>
-          <span className="inline-flex items-center gap-1.5 rounded-[11px] px-2.5 py-1 font-spot-sans font-black text-[13px]" style={{ color: gc, background: `color-mix(in srgb, ${gc} 16%, transparent)`, border: `1px solid color-mix(in srgb, ${gc} 32%, transparent)` }}>
-            <span className="font-spot-mono">{game.edge}</span>{game.grade}
+      {/* Card header — date + status */}
+      <div className="flex items-center justify-between px-4 pt-3.5 pb-2" style={{ borderBottom: "1px solid var(--hairline)" }}>
+        <span className="font-spot-mono font-bold text-[10px] uppercase tracking-[.08em]" style={{ color: "var(--text-muted)" }}>
+          {game.dateLabel} · {game.timeLabel}
+        </span>
+        <div className="flex items-center gap-2">
+          {isFinal && (
+            <span className="font-spot-sans font-extrabold text-[10px] uppercase tracking-[.10em]" style={{ color: "var(--text-muted)" }}>Final</span>
+          )}
+          <span
+            className="inline-flex items-center gap-1 rounded-lg px-2 py-0.5 font-spot-sans font-black text-[11px]"
+            style={{ color: gc, background: `color-mix(in srgb, ${gc} 12%, transparent)`, border: `1px solid color-mix(in srgb, ${gc} 25%, transparent)` }}
+          >
+            <span className="font-spot-mono">{game.edge}</span>
+            <span>{game.grade}</span>
           </span>
         </div>
-        <div className="flex items-center gap-2.5">
-          <LogoPlate hex={awayHex} src={nflLogoUrl(game.away)} code={game.away} size={30} radius={9} />
-          <div className="flex-1 min-w-0">
-            <p className="font-spot-sans font-black text-sm leading-tight" style={{ color: "var(--text)" }}>{game.away}</p>
-            <p className="font-spot-sans text-[10px] leading-tight truncate" style={{ color: "var(--text-3)" }}>{game.qbAway}</p>
+      </div>
+
+      {/* Teams */}
+      <button onClick={onClick} className="w-full text-left">
+        <div className="grid grid-cols-3 items-center gap-3 px-4 py-4">
+          {/* Away */}
+          <div className="flex items-center gap-3">
+            <LogoPlate hex={awayHex} src={nflLogoUrl(game.away)} code={game.away} size={40} radius={11} />
+            <div>
+              <p className="font-spot-sans font-black text-[15px]" style={{ color: "var(--text)" }}>{game.away}</p>
+              <p className="font-spot-sans text-[10px]" style={{ color: "var(--text-muted)" }}>{game.qbAway ?? "Away"}</p>
+            </div>
+          </div>
+
+          {/* Center — win prob + score */}
+          <div className="flex flex-col items-center gap-1">
+            {isFinal && game.awayScore !== undefined ? (
+              <div className="flex items-center gap-3">
+                <span className="font-spot-mono font-black text-2xl" style={{ color: awayPct > homePct ? "var(--green)" : "var(--text)" }}>{game.awayScore}</span>
+                <span className="font-spot-sans font-bold text-base" style={{ color: "var(--text-ghost)" }}>–</span>
+                <span className="font-spot-mono font-black text-2xl" style={{ color: homePct >= awayPct ? "var(--green)" : "var(--text)" }}>{game.homeScore}</span>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-baseline gap-1">
+                  <span className="font-spot-mono font-black text-xl" style={{ color: "var(--text)" }}>{awayPct}%</span>
+                  <span className="font-spot-sans font-bold text-xs" style={{ color: "var(--text-ghost)" }}>–</span>
+                  <span className="font-spot-mono font-black text-xl" style={{ color: "var(--text)" }}>{homePct}%</span>
+                </div>
+                <span className="font-spot-sans font-semibold text-[9px] uppercase tracking-[.10em]" style={{ color: "var(--text-dim)" }}>Win Pred.</span>
+              </>
+            )}
+          </div>
+
+          {/* Home */}
+          <div className="flex items-center gap-3 justify-end">
+            <div className="text-right">
+              <p className="font-spot-sans font-black text-[15px]" style={{ color: "var(--text)" }}>{game.home}</p>
+              <p className="font-spot-sans text-[10px]" style={{ color: "var(--text-muted)" }}>{game.qbHome ?? "Home"}</p>
+            </div>
+            <LogoPlate hex={homeHex} src={nflLogoUrl(game.home)} code={game.home} size={40} radius={11} />
           </div>
         </div>
-        <div className="flex items-center gap-2.5">
-          <LogoPlate hex={homeHex} src={nflLogoUrl(game.home)} code={game.home} size={30} radius={9} />
-          <div className="flex-1 min-w-0">
-            <p className="font-spot-sans font-black text-sm leading-tight" style={{ color: "var(--text)" }}>{game.home}</p>
-            <p className="font-spot-sans text-[10px] leading-tight truncate" style={{ color: "var(--text-3)" }}>{game.qbHome}</p>
+
+        {/* Win prob bar */}
+        <div className="px-4 pb-3">
+          <div className="flex w-full overflow-hidden rounded-full" style={{ height: 6, background: "var(--hairline)" }}>
+            <div style={{ width: `${awayPct}%`, background: awayHex }} />
+            <div style={{ flex: 1, background: homeHex }} />
           </div>
         </div>
-        <div className="flex h-1.5 rounded overflow-hidden" style={{ background: "rgba(255,255,255,.12)" }}>
-          <div style={{ width: `${100 - game.homeWinProb}%`, background: awayHex }} />
-          <div style={{ flex: 1, background: homeHex }} />
+      </button>
+
+      {/* Moneyline / Spread / Total tabs */}
+      <div style={{ borderTop: "1px solid var(--hairline)" }}>
+        <div className="flex" style={{ borderBottom: "1px solid var(--hairline)" }}>
+          {tabs.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className="flex-1 py-2.5 font-spot-sans font-extrabold text-[11px] uppercase tracking-[.08em] transition-colors"
+              style={tab === t.key
+                ? { color: "#009688", borderBottom: "2px solid #009688", background: "rgba(0,150,136,.04)" }
+                : { color: "var(--text-muted)", borderBottom: "2px solid transparent" }}
+            >
+              {t.label}
+            </button>
+          ))}
         </div>
-        <div className="mt-auto flex items-center justify-between gap-2.5 rounded-xl px-3 py-2 backdrop-blur-sm" style={{ background: "var(--purple-tint)", border: "1px solid var(--purple-line)" }}>
-          <span className="font-spot-sans font-extrabold text-[10px] uppercase tracking-[.12em]" style={{ color: "var(--purple-2)" }}>◆ AI Prediction</span>
-          <span className="font-spot-sans font-black text-xs" style={{ color: "var(--purple-soft)" }}>{game.homeWinProb >= 50 ? game.home : game.away} ML ↗</span>
+
+        {/* Odds row */}
+        <div className="flex items-stretch" style={{ minHeight: 52 }}>
+          {/* Away odds */}
+          <button
+            onClick={onClick}
+            className="flex-1 flex flex-col items-center justify-center gap-0.5 py-3 transition-colors hover:bg-gray-50"
+            style={{ borderRight: "1px solid var(--hairline)" }}
+          >
+            <span className="font-spot-sans font-black text-[11px] uppercase tracking-[.06em]" style={{ color: "var(--text-muted)" }}>{game.away}</span>
+            <span className="font-spot-mono font-black text-[15px]" style={{ color: awayPct > 50 ? "#009688" : "var(--text)" }}>
+              {tab === "moneyline"
+                ? (awayPct > 50 ? `−${Math.round(awayPct * 2.2)}` : `+${Math.round((100 - awayPct) * 1.6)}`)
+                : tab === "spread"
+                ? (awayPct > 50 ? `−${((awayPct - 50) / 5).toFixed(1)}` : `+${((50 - awayPct) / 5).toFixed(1)}`)
+                : `O ${(48 + (game.edge % 7)).toFixed(1)}`}
+            </span>
+          </button>
+
+          {/* Home odds */}
+          <button
+            onClick={onClick}
+            className="flex-1 flex flex-col items-center justify-center gap-0.5 py-3 transition-colors hover:bg-gray-50"
+          >
+            <span className="font-spot-sans font-black text-[11px] uppercase tracking-[.06em]" style={{ color: "var(--text-muted)" }}>{game.home}</span>
+            <span className="font-spot-mono font-black text-[15px]" style={{ color: homePct > 50 ? "#009688" : "var(--text)" }}>
+              {tab === "moneyline"
+                ? (homePct > 50 ? `−${Math.round(homePct * 2.2)}` : `+${Math.round((100 - homePct) * 1.6)}`)
+                : tab === "spread"
+                ? (homePct > 50 ? `−${((homePct - 50) / 5).toFixed(1)}` : `+${((50 - homePct) / 5).toFixed(1)}`)
+                : `U ${(48 + (game.edge % 7)).toFixed(1)}`}
+            </span>
+          </button>
         </div>
       </div>
-    </button>
+
+      {/* Public betting + venue */}
+      <div className="px-4 pb-4 pt-3 flex flex-col gap-3" style={{ borderTop: "1px solid var(--hairline)" }}>
+        <PublicBettingBar awayPct={awayPct} awayCode={game.away} homeCode={game.home} />
+        {game.venue && (
+          <div className="flex items-center gap-1.5">
+            <MapPin size={10} style={{ color: "var(--text-dim)" }} />
+            <span className="font-spot-sans text-[10px]" style={{ color: "var(--text-dim)" }}>{game.venue}</span>
+          </div>
+        )}
+      </div>
+
+      {/* AI prediction footer */}
+      <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-b-[16px]"
+        style={{ background: "rgba(124,92,250,.05)", borderTop: "1px solid rgba(124,92,250,.12)" }}>
+        <span className="inline-flex items-center gap-1.5 font-spot-sans font-extrabold text-[10px] uppercase tracking-[.10em]" style={{ color: "var(--purple-2)" }}>
+          <Zap size={10} /> AI Edge Pick
+        </span>
+        <button onClick={onClick} className="font-spot-sans font-black text-[12px]" style={{ color: "var(--purple-soft)" }}>
+          {game.homeWinProb >= 50 ? game.home : game.away} ML ↗
+        </button>
+      </div>
+    </motion.div>
   );
 }
+
+// ── Dashboard ──────────────────────────────────────────────────────────────────
 
 function Dashboard() {
   const router = useRouter();
@@ -241,65 +367,119 @@ function Dashboard() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetchWeek(week).then((g) => { if (!cancelled) setGames(g); }).catch(() => { if (!cancelled) setGames([]); }).finally(() => { if (!cancelled) setLoading(false); });
+    fetchWeek(week)
+      .then((g) => { if (!cancelled) setGames(g); })
+      .catch(() => { if (!cancelled) setGames([]); })
+      .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [week]);
 
   const openGame = useCallback((id: string) => router.push(`/nfl/game/${id}`), [router]);
 
-  const live = games.filter((g) => g.status === "live");
+  const live     = games.filter((g) => g.status === "live");
   const upcoming = games.filter((g) => g.status !== "final");
-  const hero = upcoming.length ? [...upcoming].sort((a, b) => b.edge - a.edge)[0] : null;
-  const gridGames = games.filter((g) => g.id !== hero?.id);
+  const finals   = games.filter((g) => g.status === "final");
   const activeWeek = WEEKS.find((w) => w.key === week)!;
 
   return (
     <div className="spotlight min-h-screen">
-      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-6">
-        <div className="flex items-end justify-between gap-4 flex-wrap mb-4">
-          <div>
-            <p className="spot-label" style={{ color: "var(--orange)" }}>2026 Preseason</p>
-            <h1 className="font-spot-sans text-3xl sm:text-4xl font-black leading-tight mt-1" style={{ color: "var(--text)" }}>
-              This Week <span className="font-spot-mono" style={{ color: "var(--orange)" }}>{games.length}</span>
-            </h1>
-            <p className="mt-1.5 font-spot-sans text-[13px]" style={{ color: "var(--text-muted)" }}>
-              {activeWeek.label} &middot; {activeWeek.range} &middot; Edge model live on every matchup
-            </p>
+      {/* ── Page header ── */}
+      <div style={{ background: "#fff", borderBottom: "1px solid var(--hairline)" }}>
+        <div className="max-w-screen-xl mx-auto px-4 sm:px-6 py-6">
+          {/* Sport badge + title */}
+          <div className="flex items-start justify-between gap-4 flex-wrap mb-5">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-xl px-3 py-1.5 mb-3"
+                style={{ background: "var(--panel-2)", border: "1px solid var(--hairline)" }}>
+                <span className="font-spot-sans font-black text-[11px] uppercase tracking-[.12em]" style={{ color: "var(--text-muted)" }}>🏈 NFL</span>
+                <span style={{ color: "var(--hairline)", fontSize: 10 }}>·</span>
+                <span className="font-spot-sans font-bold text-[11px]" style={{ color: "var(--text-muted)" }}>2026 Preseason</span>
+              </div>
+              <h1 className="font-spot-sans font-black text-3xl sm:text-4xl uppercase leading-tight" style={{ color: "var(--text)", letterSpacing: "-.01em" }}>
+                NFL Schedule
+              </h1>
+              <p className="mt-1.5 font-spot-sans text-sm" style={{ color: "var(--text-muted)" }}>
+                {activeWeek.label} · {activeWeek.range} · Edge model live on every matchup
+              </p>
+            </div>
+
+            {/* Stat strip */}
+            <div className="flex items-center gap-3 flex-wrap">
+              {[
+                { icon: BarChart2, label: "Games",    value: games.length,  color: "var(--text)" },
+                { icon: TrendingUp, label: "Live",   value: live.length,    color: "var(--red)" },
+                { icon: Users,      label: "Finals",  value: finals.length,  color: "var(--green)" },
+              ].map((s) => (
+                <div key={s.label} className="flex items-center gap-2.5 rounded-xl px-4 py-2.5"
+                  style={{ background: "var(--panel)", border: "1px solid var(--hairline)" }}>
+                  <s.icon size={14} style={{ color: s.color }} />
+                  <div>
+                    <p className="font-spot-mono font-black text-lg leading-none" style={{ color: s.color }}>{s.value}</p>
+                    <p className="font-spot-sans font-bold text-[9px] uppercase tracking-[.10em] mt-0.5" style={{ color: "var(--text-muted)" }}>{s.label}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
+
+          {/* Week selector */}
           <WeekPills week={week} onChange={setWeek} />
         </div>
+      </div>
 
-        {/* Stat strip */}
-        <div className="grid grid-cols-3 gap-px rounded-[20px] overflow-hidden mb-5" style={{ background: "var(--hairline)", border: "1px solid var(--hairline)" }}>
-          {[{ label: "Games", value: games.length, color: "var(--text)" }, { label: "Live", value: live.length, color: "var(--red-soft)" }, { label: "Analyzed", value: games.length, color: "var(--green)" }].map((s) => (
-            <div key={s.label} className="text-center py-3.5 px-5" style={{ background: "var(--panel)" }}>
-              <p className="font-spot-mono font-extrabold text-2xl" style={{ color: s.color }}>{s.value}</p>
-              <p className="mt-0.5 font-spot-sans font-bold text-[10px] uppercase tracking-[.12em]" style={{ color: "var(--text-muted)" }}>{s.label}</p>
-            </div>
-          ))}
-        </div>
-
+      {/* ── Games grid ── */}
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 py-6">
         {loading ? (
-          <div className="grid gap-3.5" style={{ gridTemplateColumns: "repeat(auto-fill,minmax(300px,1fr))" }}>
-            {[1, 2, 3, 4].map((i) => <div key={i} className="rounded-[18px] animate-pulse" style={{ background: "rgba(255,255,255,.03)", minHeight: 196 }} />)}
+          <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill,minmax(340px,1fr))" }}>
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="rounded-[16px] animate-pulse" style={{ background: "var(--panel)", height: 320, border: "1px solid var(--hairline)" }} />
+            ))}
           </div>
         ) : games.length === 0 ? (
-          <div className="flex flex-col items-center py-20 text-center">
-            <p className="font-spot-sans text-sm" style={{ color: "var(--text-muted)" }}>No games scheduled for this window yet.</p>
+          <div className="flex flex-col items-center py-24 text-center rounded-[16px]"
+            style={{ background: "var(--panel)", border: "1px solid var(--hairline)" }}>
+            <span style={{ fontSize: 40 }}>🏈</span>
+            <p className="mt-4 font-spot-sans font-black text-lg" style={{ color: "var(--text)" }}>No games scheduled</p>
+            <p className="mt-1 font-spot-sans text-sm" style={{ color: "var(--text-muted)" }}>Check back closer to kickoff for this week&apos;s slate.</p>
           </div>
         ) : (
           <>
+            {/* Live games first */}
             {live.length > 0 && (
-              <div className="mb-1">
-                <SectionLabel className="mb-2.5" style={{ color: "var(--red-soft)" }}>&#9679; Live Now</SectionLabel>
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="spot-live-dot inline-block rounded-full" style={{ width: 8, height: 8, background: "var(--red)" }} />
+                  <SectionLabel style={{ color: "var(--red)" }}>Live Now</SectionLabel>
+                </div>
                 {live.map((g) => <LiveTile key={g.id} game={g} onClick={() => openGame(g.id)} />)}
               </div>
             )}
-            {hero && <EditorialHero game={hero} onClick={() => openGame(hero.id)} />}
-            <SectionLabel className="mb-2.5" style={{ color: "var(--text-faint)" }}>All Games</SectionLabel>
-            <div className="grid gap-3.5" style={{ gridTemplateColumns: "repeat(auto-fill,minmax(300px,1fr))" }}>
-              {gridGames.map((g) => <GameCard key={g.id} game={g} onClick={() => openGame(g.id)} />)}
-            </div>
+
+            {/* Upcoming */}
+            {upcoming.length > 0 && (
+              <div className="mb-6">
+                {live.length > 0 && (
+                  <div className="flex items-center gap-2 mb-3">
+                    <SectionLabel>Upcoming</SectionLabel>
+                  </div>
+                )}
+                <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill,minmax(340px,1fr))" }}>
+                  {upcoming.map((g) => <MatchupCard key={g.id} game={g} onClick={() => openGame(g.id)} />)}
+                </div>
+              </div>
+            )}
+
+            {/* Finals */}
+            {finals.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <SectionLabel style={{ color: "var(--text-muted)" }}>Final Results</SectionLabel>
+                </div>
+                <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill,minmax(340px,1fr))" }}>
+                  {finals.map((g) => <MatchupCard key={g.id} game={g} onClick={() => openGame(g.id)} />)}
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
@@ -308,7 +488,6 @@ function Dashboard() {
 }
 
 export default function NflPage() {
-  const { isSuperPro, isLoaded } = useSubscription();
-  if (!isLoaded) return null;
+  const { isSuperPro } = useSubscription();
   return isSuperPro ? <Dashboard /> : <NflTeaser />;
 }
