@@ -1,11 +1,8 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import { fetchTodaysGames } from "@/lib/mlb/api";
-import { teamHex, teamCode, gradeColor, modelEdge } from "@/lib/mlb/spotlight-utils";
+import { teamHex } from "@/lib/mlb/spotlight-utils";
 import { teamLogoUrl } from "@/lib/mlb/api";
 import { SeasonTimeline, MLB_2026_PHASES } from "@/components/web-tool/season-timeline";
-
-export const dynamic = "force-dynamic";
 
 const MLB_TEAMS = [
   { id: 133, name: "Athletics" },      { id: 109, name: "Diamondbacks" },
@@ -66,10 +63,7 @@ const STRATEGY_CARDS = [
   },
 ];
 
-export default async function MlbGuidePage() {
-  const games = await fetchTodaysGames().catch(() => []);
-  const todayGames = games.slice(0, 6);
-
+export default function MlbGuidePage() {
   return (
     <div className="spotlight min-h-screen">
       {/* Header */}
@@ -126,54 +120,6 @@ export default async function MlbGuidePage() {
             ))}
           </div>
         </div>
-
-        {/* Today's Games */}
-        {todayGames.length > 0 && (
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <p className="spot-label" style={{ color: "var(--orange)" }}>Today&apos;s Games</p>
-              <Link href="/games" className="font-spot-sans font-bold text-[11px]" style={{ color: "var(--orange)" }}>All games →</Link>
-            </div>
-            <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill,minmax(260px,1fr))" }}>
-              {todayGames.map((g) => {
-                const m = modelEdge(g);
-                const gc = gradeColor(m.grade);
-                const awayHex = teamHex(g.teams.away.team.id);
-                const homeHex = teamHex(g.teams.home.team.id);
-                return (
-                  <Link
-                    key={g.gamePk}
-                    href={`/game/${g.gamePk}`}
-                    className="rounded-[16px] p-4 spot-lift"
-                    style={{ background: "var(--panel)", border: "1px solid var(--hairline)" }}
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="font-spot-mono font-bold text-[10px]" style={{ color: "var(--text-muted)" }}>
-                        {new Date(g.gameDate).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" })} ET
-                      </span>
-                      <span className="rounded-lg px-2.5 py-1 font-spot-sans font-black text-[12px]" style={{ color: gc, background: `color-mix(in srgb, ${gc} 14%, transparent)` }}>
-                        {m.grade}
-                      </span>
-                    </div>
-                    {[{ team: g.teams.away.team, pct: m.awayProb, hex: awayHex }, { team: g.teams.home.team, pct: m.homeProb, hex: homeHex }].map(({ team, pct, hex }, i) => (
-                      <div key={i} className="flex items-center gap-2 mb-1.5">
-                        <div className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0" style={{ background: hex }}>
-                          <span className="font-spot-sans font-black text-[8px] text-white">{teamCode(team.id, team.name).slice(0, 3)}</span>
-                        </div>
-                        <span className="flex-1 font-spot-sans font-extrabold text-sm" style={{ color: "var(--text)" }}>{teamCode(team.id, team.name)}</span>
-                        <span className="font-spot-mono font-bold text-[12px]" style={{ color: "var(--text-3)" }}>{pct}%</span>
-                      </div>
-                    ))}
-                    <div className="flex h-1.5 rounded overflow-hidden mt-2" style={{ background: "rgba(255,255,255,.08)" }}>
-                      <div style={{ width: `${m.awayProb}%`, background: awayHex }} />
-                      <div style={{ flex: 1, background: homeHex }} />
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
         {/* Strategy Cards */}
         <div>

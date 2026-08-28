@@ -1,11 +1,8 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import { getWeekSchedule } from "@/lib/nfl/espn";
 import { SeasonTimeline, NFL_2026_PHASES } from "@/components/web-tool/season-timeline";
 import { nflTeamHex, nflLogoUrl } from "@/lib/nfl/teams";
 import type { NflWeekKey } from "@/lib/nfl/types";
-
-export const dynamic = "force-dynamic";
 
 const WEEKS: { key: NflWeekKey; label: string; range: string; dates: string }[] = [
   { key: "HOF_PRE1", label: "HOF + PRE 1", range: "AUG 6–15", dates: "Aug 6 – Aug 15, 2026" },
@@ -47,8 +44,7 @@ const STRATEGY_CARDS = [
   { title: "Anytime TD Props", tag: "Prop Types", body: "The model projects anytime TD probability for every skill player. Values appear most often on RBs in run-heavy game scripts." },
 ];
 
-export default async function NflGuidePage() {
-  const preseasonGames = await getWeekSchedule("PRE3").catch(() => []);
+export default function NflGuidePage() {
 
   return (
     <div className="spotlight min-h-screen">
@@ -122,57 +118,6 @@ export default async function NflGuidePage() {
             ))}
           </div>
         </div>
-
-        {/* Live PRE3 games */}
-        {preseasonGames.length > 0 && (
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <p className="spot-label" style={{ color: "var(--purple-2)" }}>PRE 3 · Aug 27–29 Games</p>
-              <Link href="/nfl" className="font-spot-sans font-bold text-[11px]" style={{ color: "var(--purple-2)" }}>Full slate →</Link>
-            </div>
-            <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill,minmax(260px,1fr))" }}>
-              {preseasonGames.slice(0, 8).map((g) => {
-                const awayHex = nflTeamHex(g.away);
-                const homeHex = nflTeamHex(g.home);
-                const gameDate = new Date(g.date);
-                return (
-                  <Link
-                    key={g.id}
-                    href="/nfl"
-                    className="rounded-[16px] p-4 spot-lift"
-                    style={{ background: "var(--panel)", border: "1px solid var(--hairline)" }}
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="font-spot-mono font-bold text-[10px]" style={{ color: "var(--text-muted)" }}>
-                        {gameDate.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
-                      </span>
-                      <span className="font-spot-sans font-extrabold text-[9px] uppercase tracking-[.10em] px-2 py-0.5 rounded-full"
-                        style={{ color: "var(--purple-2)", background: "var(--purple-tint)", border: "1px solid var(--purple-line)" }}>
-                        Preseason
-                      </span>
-                    </div>
-                    {([
-                      { abbr: g.away, hex: awayHex },
-                      { abbr: g.home, hex: homeHex },
-                    ] as { abbr: string; hex: string }[]).map(({ abbr, hex }, i) => (
-                      <div key={i} className="flex items-center gap-2 mb-1.5">
-                        <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0" style={{ background: hex }}>
-                          <span className="font-spot-sans font-black text-[8px] text-white">{abbr.slice(0, 3)}</span>
-                        </div>
-                        <span className="flex-1 font-spot-sans font-extrabold text-sm" style={{ color: "var(--text)" }}>{abbr}</span>
-                        <span className="font-spot-mono font-bold text-[11px]" style={{ color: "var(--text-dim)" }}>{abbr}</span>
-                      </div>
-                    ))}
-                    <div className="flex h-1.5 rounded overflow-hidden mt-2" style={{ background: "rgba(255,255,255,.08)" }}>
-                      <div style={{ width: "48%", background: awayHex }} />
-                      <div style={{ flex: 1, background: homeHex }} />
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
         {/* Strategy */}
         <div>

@@ -5,18 +5,18 @@ import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useUser, useClerk } from "@clerk/nextjs";
 import {
-  CircleDot, BarChart3, BookOpen, Target,
+  CircleDot, BarChart3, Layers, Target,
   Settings, Lock, Menu, X, Zap, LogOut, ChevronRight, Bot, Home as HomeIcon,
 } from "lucide-react";
 import { useSubscription } from "@/lib/subscription";
 import { motion, AnimatePresence } from "framer-motion";
 
 const MLB_NAV = [
-  { href: "/games",        icon: CircleDot,  label: "Today's Games", requiredTier: null           },
-  { href: "/scores",       icon: BarChart3,  label: "Live Scores",   requiredTier: null           },
-  { href: "/guides",       icon: BookOpen,   label: "Guides",        requiredTier: "fan" as const },
-  { href: "/hr-deep-dive", icon: Target,     label: "HR Nuke",       requiredTier: "pro" as const },
-  { href: "/ai",           icon: Bot,        label: "Edge AI",       requiredTier: "pro" as const },
+  { href: "/games",        icon: CircleDot, label: "Today's Games", requiredTier: null           },
+  { href: "/scores",       icon: BarChart3, label: "Live Scores",   requiredTier: null           },
+  { href: "/props",        icon: Layers,    label: "Props",         requiredTier: null           },
+  { href: "/hr-deep-dive", icon: Target,    label: "HR Nuke",       requiredTier: "pro" as const },
+  { href: "/ai",           icon: Bot,       label: "Edge AI",       requiredTier: "pro" as const },
 ];
 
 function DiamondLogo() {

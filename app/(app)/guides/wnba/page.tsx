@@ -1,10 +1,7 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import { getSchedule } from "@/lib/wnba/espn";
 import { wnbaTeamHex, wnbaLogoUrl, WNBA_TEAMS } from "@/lib/wnba/teams";
 import { SeasonTimeline, WNBA_2026_PHASES } from "@/components/web-tool/season-timeline";
-
-export const dynamic = "force-dynamic";
 
 const QUICK_LINKS = [
   { label: "Today's Games", desc: "Full slate with impact scores", href: "/wnba", emoji: "🏀" },
@@ -21,10 +18,7 @@ const STRATEGY_CARDS = [
   { title: "Home Court Edge", tag: "Factors", body: "Home WNBA teams cover ~54% of games. In rivalry matchups (e.g., NY Liberty vs. Las Vegas Aces), the edge narrows significantly." },
 ];
 
-export default async function WnbaGuidePage() {
-  const games = await getSchedule().catch(() => []);
-  const todayGames = games.slice(0, 6);
-
+export default function WnbaGuidePage() {
   const teams = Object.entries(WNBA_TEAMS);
 
   return (
@@ -78,59 +72,6 @@ export default async function WnbaGuidePage() {
             ))}
           </div>
         </div>
-
-        {/* Today's Games */}
-        {todayGames.length > 0 && (
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <p className="spot-label" style={{ color: "#2dd4bf" }}>Today&apos;s Games</p>
-              <Link href="/wnba" className="font-spot-sans font-bold text-[11px]" style={{ color: "#2dd4bf" }}>Full slate →</Link>
-            </div>
-            <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill,minmax(260px,1fr))" }}>
-              {todayGames.map((g) => {
-                const awayHex = wnbaTeamHex(g.away);
-                const homeHex = wnbaTeamHex(g.home);
-                const gameDate = new Date(g.date);
-                return (
-                  <Link
-                    key={g.id}
-                    href="/wnba"
-                    className="rounded-[16px] p-4 spot-lift"
-                    style={{ background: "var(--panel)", border: "1px solid var(--hairline)" }}
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="font-spot-mono font-bold text-[10px]" style={{ color: "var(--text-muted)" }}>
-                        {gameDate.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" })} ET
-                      </span>
-                      {g.status === "live" && (
-                        <span className="font-spot-sans font-extrabold text-[9px] uppercase tracking-[.10em] px-2 py-0.5 rounded-full"
-                          style={{ color: "var(--red)", background: "var(--red-bg)", border: "1px solid rgba(239,68,68,.3)" }}>
-                          Live
-                        </span>
-                      )}
-                    </div>
-                    {([
-                      { abbr: g.away, hex: awayHex },
-                      { abbr: g.home, hex: homeHex },
-                    ] as { abbr: string; hex: string }[]).map(({ abbr, hex }, i) => (
-                      <div key={i} className="flex items-center gap-2 mb-1.5">
-                        <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0" style={{ background: hex }}>
-                          <span className="font-spot-sans font-black text-[8px] text-white">{abbr.slice(0, 3)}</span>
-                        </div>
-                        <span className="flex-1 font-spot-sans font-extrabold text-sm" style={{ color: "var(--text)" }}>{WNBA_TEAMS[abbr]?.name ?? abbr}</span>
-                        <span className="font-spot-mono font-bold text-[11px]" style={{ color: "var(--text-dim)" }}>{abbr}</span>
-                      </div>
-                    ))}
-                    <div className="flex h-1.5 rounded overflow-hidden mt-2" style={{ background: "rgba(255,255,255,.08)" }}>
-                      <div style={{ width: "48%", background: awayHex }} />
-                      <div style={{ flex: 1, background: homeHex }} />
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
         {/* Strategy Cards */}
         <div>
