@@ -7,6 +7,7 @@ import { useUser, useClerk } from "@clerk/nextjs";
 import {
   CircleDot, BarChart3, Layers, Target,
   Settings, Lock, Menu, X, Zap, LogOut, ChevronRight, Bot, Home as HomeIcon,
+  Trophy,
 } from "lucide-react";
 import { useSubscription } from "@/lib/subscription";
 import { motion, AnimatePresence } from "framer-motion";
@@ -55,14 +56,24 @@ function BasketballIcon({ size = 12 }: { size?: number }) {
   );
 }
 
-type Sport = "mlb" | "nfl" | "wnba";
+function SoccerIcon({ size = 12 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.7">
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 3.5l2.5 3.5-2.5 1.5-2.5-1.5L12 3.5zM12 20.5l-2.5-3.5 2.5-1.5 2.5 1.5L12 20.5zM3.5 12l3.5-2.5L8.5 12l-1.5 2.5L3.5 12zM20.5 12l-3.5 2.5L15.5 12l1.5-2.5L20.5 12z" />
+    </svg>
+  );
+}
+
+type Sport = "mlb" | "nfl" | "wnba" | "soccer";
 
 function SportPill({ sport }: { sport: Sport }) {
   const router = useRouter();
   const tabs: { key: Sport; href: string; label: string; icon: (p: { size?: number }) => React.JSX.Element; gradient: string; textCls: string }[] = [
-    { key: "mlb",  href: "/games", label: "MLB",  icon: BaseballIcon,   gradient: "from-[#f97316] to-[#fb923c]", textCls: "text-white" },
-    { key: "nfl",  href: "/nfl",   label: "NFL",  icon: FootballIcon,   gradient: "from-[#f97316] to-[#fb923c]", textCls: "text-white" },
-    { key: "wnba", href: "/wnba",  label: "WNBA", icon: BasketballIcon, gradient: "from-[#2dd4bf] to-[#5eead4]", textCls: "text-[#06070d]" },
+    { key: "mlb",    href: "/games",  label: "MLB",    icon: BaseballIcon,   gradient: "from-[#f97316] to-[#fb923c]", textCls: "text-white" },
+    { key: "nfl",    href: "/nfl",    label: "NFL",    icon: FootballIcon,   gradient: "from-[#f97316] to-[#fb923c]", textCls: "text-white" },
+    { key: "wnba",   href: "/wnba",   label: "WNBA",   icon: BasketballIcon, gradient: "from-[#2dd4bf] to-[#5eead4]", textCls: "text-[#06070d]" },
+    { key: "soccer", href: "/soccer", label: "⚽",      icon: SoccerIcon,    gradient: "from-[#34d399] to-[#6ee7b7]", textCls: "text-[#06070d]" },
   ];
   return (
     <div className="flex items-center p-[3px] rounded-full border border-white/[0.08] bg-white/[0.03]">
@@ -107,11 +118,18 @@ export function AppSidebar() {
   const { signOut }  = useClerk();
   const [open, setOpen] = useState(false);
 
-  const sport: Sport = pathname.startsWith("/wnba") ? "wnba" : pathname.startsWith("/nfl") ? "nfl" : "mlb";
-  const sportLabel = sport === "wnba" ? "WNBA" : sport === "nfl" ? "NFL" : "MLB";
+  const sport: Sport =
+    pathname.startsWith("/soccer") ? "soccer" :
+    pathname.startsWith("/wnba") ? "wnba" :
+    pathname.startsWith("/nfl") ? "nfl" : "mlb";
+  const sportLabel = sport === "soccer" ? "Soccer" : sport === "wnba" ? "WNBA" : sport === "nfl" ? "NFL" : "MLB";
+  const SOCCER_NAV = [
+    { href: "/soccer",       icon: CircleDot, label: "Fixtures",  requiredTier: null as null },
+    { href: "/soccer/props", icon: Layers,    label: "Props",     requiredTier: null as null },
+  ];
   const navItems = [
     HOME_ITEM,
-    ...(sport === "wnba" ? WNBA_NAV : sport === "nfl" ? nflNav(isSuperPro) : MLB_NAV),
+    ...(sport === "soccer" ? SOCCER_NAV : sport === "wnba" ? WNBA_NAV : sport === "nfl" ? nflNav(isSuperPro) : MLB_NAV),
   ];
 
   function isLocked(requiredTier: "fan" | "pro" | null): boolean {
@@ -165,7 +183,7 @@ export function AppSidebar() {
               </Link>
             );
           })}
-          {(sport === "nfl" || sport === "wnba") && (
+          {(sport === "nfl" || sport === "wnba" || sport === "soccer") && (
             <span className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-white/25 cursor-default">
               <Bot size={14} strokeWidth={1.7} />
               <span>Edge AI</span>
@@ -323,7 +341,7 @@ export function AppSidebar() {
                     </Link>
                   );
                 })}
-                {(sport === "nfl" || sport === "wnba") && (
+                {(sport === "nfl" || sport === "wnba" || sport === "soccer") && (
                   <span className="flex items-center gap-3 px-4 py-3 rounded-2xl font-medium text-white/25 cursor-default">
                     <Bot size={18} strokeWidth={1.7} />
                     <span className="flex-1">Edge AI</span>
