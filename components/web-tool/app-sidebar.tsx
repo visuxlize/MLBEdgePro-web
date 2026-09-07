@@ -5,7 +5,7 @@ import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useUser, useClerk } from "@clerk/nextjs";
 import {
-  CircleDot, BarChart3, Layers, Target,
+  CircleDot, BarChart3, Layers, Target, LayoutGrid,
   Settings, Lock, Menu, X, Zap, LogOut, ChevronRight, Bot, Home as HomeIcon,
   Trophy,
 } from "lucide-react";
@@ -124,8 +124,9 @@ export function AppSidebar() {
     pathname.startsWith("/nfl") ? "nfl" : "mlb";
   const sportLabel = sport === "soccer" ? "Soccer" : sport === "wnba" ? "WNBA" : sport === "nfl" ? "NFL" : "MLB";
   const SOCCER_NAV = [
-    { href: "/soccer",       icon: CircleDot, label: "Fixtures",  requiredTier: null as null },
-    { href: "/soccer/props", icon: Layers,    label: "Props",     requiredTier: null as null },
+    { href: "/soccer",         icon: CircleDot,  label: "Fixtures",  requiredTier: null as null },
+    { href: "/soccer/leagues", icon: LayoutGrid, label: "Leagues",   requiredTier: null as null },
+    { href: "/soccer/props",   icon: Layers,     label: "Props",     requiredTier: "fan" as const },
   ];
   const navItems = [
     HOME_ITEM,

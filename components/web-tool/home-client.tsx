@@ -218,6 +218,37 @@ export function HomeClient({ userName, todayDate, mlbGames, nflGames, wnbaGames 
             </p>
             <p className="mt-3.5 font-spot-sans font-extrabold text-xs" style={{ color: "#2dd4bf" }}>Open WNBA dashboard &rarr;</p>
           </button>
+
+          {/* Soccer — Pro Add-On */}
+          <button
+            onClick={() => router.push("/soccer")}
+            className="relative overflow-hidden text-left rounded-[20px] p-5"
+            style={{ background: "linear-gradient(135deg, rgba(52,211,153,.13), #0b0d15 62%)", border: "1px solid rgba(52,211,153,.28)" }}
+          >
+            {/* NEW badge */}
+            <div className="absolute top-3 right-3 flex items-center gap-1.5">
+              <span className="rounded-full px-2 py-0.5 font-spot-sans font-extrabold text-[9px] uppercase tracking-[.12em]"
+                style={{ color: "#34d399", background: "rgba(52,211,153,.15)", border: "1px solid rgba(52,211,153,.3)" }}>
+                NEW
+              </span>
+              <span className="rounded-full px-2 py-0.5 font-spot-sans font-extrabold text-[9px] uppercase tracking-[.12em]"
+                style={{ color: "#a78bfa", background: "var(--purple-tint)", border: "1px solid var(--purple-line)" }}>
+                PRO
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 font-spot-sans font-extrabold text-[11px] uppercase tracking-[.12em]" style={{ color: "#34d399" }}>
+              <svg viewBox="0 0 24 24" width={12} height={12} fill="none" stroke="currentColor" strokeWidth="1.7">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 3c0 0-2 3-2 9s2 9 2 9M12 3c0 0 2 3 2 9s-2 9-2 9M3 12h18" />
+              </svg>
+              Soccer &middot; New Sport
+            </div>
+            <p className="mt-3 font-spot-sans font-black text-2xl" style={{ color: "var(--text)" }}>10 leagues covered</p>
+            <p className="mt-1 font-spot-sans text-xs font-medium" style={{ color: "var(--text-muted)" }}>
+              EPL, La Liga, Serie A, Bundesliga, UCL &amp; more · xG + PPDA analytics
+            </p>
+            <p className="mt-3.5 font-spot-sans font-extrabold text-xs" style={{ color: "#34d399" }}>Explore Soccer &rarr;</p>
+          </button>
         </div>
 
         {/* AI Live Market ticker */}
@@ -258,6 +289,44 @@ export function HomeClient({ userName, todayDate, mlbGames, nflGames, wnbaGames 
             </div>
           </div>
         )}
+
+        {/* Soccer feature strip */}
+        <div className="relative overflow-hidden rounded-[20px] mb-4 p-5"
+          style={{ background: "linear-gradient(105deg, rgba(52,211,153,.10) 0%, rgba(110,231,183,.06) 40%, rgba(11,13,21,0) 70%)", border: "1px solid rgba(52,211,153,.22)" }}>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0"
+                style={{ background: "rgba(52,211,153,.15)", border: "1px solid rgba(52,211,153,.3)" }}>
+                <svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="#34d399" strokeWidth="1.7">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 3c0 0-2 3-2 9s2 9 2 9M12 3c0 0 2 3 2 9s-2 9-2 9M3 12h18" />
+                </svg>
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-0.5">
+                  <p className="font-spot-sans font-black text-sm" style={{ color: "var(--text)" }}>Soccer / Football is live</p>
+                  <span className="rounded-full px-2 py-0.5 font-spot-sans font-extrabold text-[9px] uppercase tracking-[.1em]"
+                    style={{ color: "#34d399", background: "rgba(52,211,153,.14)", border: "1px solid rgba(52,211,153,.28)" }}>NEW</span>
+                </div>
+                <p className="font-spot-sans text-xs" style={{ color: "var(--text-muted)" }}>
+                  10 leagues · xG model · PPDA · Player props &middot; EPL, La Liga, UCL, MLS &amp; more
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button onClick={() => router.push("/soccer/leagues")}
+                className="rounded-xl px-3.5 py-2 font-spot-sans font-extrabold text-[11px] transition-all hover:opacity-80"
+                style={{ background: "rgba(52,211,153,.12)", color: "#34d399", border: "1px solid rgba(52,211,153,.28)" }}>
+                Browse Leagues
+              </button>
+              <button onClick={() => router.push("/soccer")}
+                className="rounded-xl px-3.5 py-2 font-spot-sans font-extrabold text-[11px] transition-all hover:opacity-80"
+                style={{ background: "rgba(52,211,153,.22)", color: "#06070d", border: "1px solid rgba(52,211,153,.4)" }}>
+                Today&rsquo;s Fixtures &rarr;
+              </button>
+            </div>
+          </div>
+        </div>
 
         {/* Season timelines */}
         <div className="grid gap-3.5 mb-4" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))" }}>

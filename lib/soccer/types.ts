@@ -9,6 +9,10 @@ export interface SoccerLeagueDef {
   shortLabel: string;
   region: "europe" | "americas" | "continental";
   color: string;
+  country: string;
+  espnLeagueId: string;
+  teams: number;
+  format: string;
 }
 
 export interface SoccerTeamInfo {

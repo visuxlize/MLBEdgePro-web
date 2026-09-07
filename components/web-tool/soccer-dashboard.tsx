@@ -149,8 +149,8 @@ const TABS: { key: Tab; label: string; color?: string }[] = [
   { key: "brasileirao", label: "Brasileirão",   color: "#009c3b" },
 ];
 
-export function SoccerDashboard({ matches }: { matches: SoccerMatch[] }) {
-  const [tab, setTab] = useState<Tab>("all");
+export function SoccerDashboard({ matches, initialLeague }: { matches: SoccerMatch[]; initialLeague?: string }) {
+  const [tab, setTab] = useState<Tab>((initialLeague as Tab) ?? "all");
 
   const filtered = useMemo(
     () => (tab === "all" ? matches : matches.filter((m) => m.league === tab)),
