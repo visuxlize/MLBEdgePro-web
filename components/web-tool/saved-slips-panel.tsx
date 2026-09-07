@@ -5,12 +5,13 @@ import { loadSavedSlips, deleteSlip, type SavedSlip, type SlipSport } from "@/li
 import { BookmarkCheck, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 
 const SPORT_COLOR: Record<SlipSport, string> = {
-  MLB: "#f97316",
-  NFL: "#a78bfa",
-  WNBA: "#2dd4bf",
+  MLB:    "#f97316",
+  NFL:    "#a78bfa",
+  WNBA:   "#2dd4bf",
+  Soccer: "#34d399",
 };
 
-const SPORT_EMOJI: Record<SlipSport, string> = { MLB: "⚾", NFL: "🏈", WNBA: "🏀" };
+const SPORT_EMOJI: Record<SlipSport, string> = { MLB: "⚾", NFL: "🏈", WNBA: "🏀", Soccer: "⚽" };
 
 export function SavedSlipsPanel() {
   const [slips, setSlips] = useState<SavedSlip[]>([]);
@@ -22,7 +23,7 @@ export function SavedSlipsPanel() {
   }, []);
 
   const filtered = sport === "All" ? slips : slips.filter((s) => s.sport === sport);
-  const sports: SlipSport[] = ["MLB", "NFL", "WNBA"];
+  const sports: SlipSport[] = ["MLB", "NFL", "WNBA", "Soccer"];
   const hasSport = (sp: SlipSport) => slips.some((s) => s.sport === sp);
 
   function remove(id: string) {

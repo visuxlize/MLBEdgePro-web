@@ -63,6 +63,8 @@ export interface SoccerPlayerProp {
   teamAbbr: string;
   teamHex: string;
   teamLogo: string;
+  opponent: string;
+  matchDate: string;
   position: SoccerPosition;
   league: SoccerLeagueKey;
   matchup: string;

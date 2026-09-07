@@ -1,6 +1,6 @@
 "use client";
 
-export type SlipSport = "MLB" | "NFL" | "WNBA";
+export type SlipSport = "MLB" | "NFL" | "WNBA" | "Soccer";
 
 export interface SlipLeg {
   id: string;

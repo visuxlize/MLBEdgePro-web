@@ -87,6 +87,29 @@ const nflFeatures = [
   },
 ];
 
+const soccerFeatures = [
+  {
+    icon: CircleDot,
+    title: "Fixtures by League",
+    description: "EPL, La Liga, Serie A, Bundesliga, Ligue 1, UCL, Europa League, MLS, Liga MX, and Brasileirão — every match organized by competition, live results front and center.",
+  },
+  {
+    icon: TrendingUp,
+    title: "xG & PPDA Analytics",
+    description: "Expected goals, PPDA (passes allowed per defensive action), possession, and 3-way win probability on every fixture — derived from a Poisson model seeded per match.",
+  },
+  {
+    icon: ClipboardList,
+    title: "Player Prop Builder",
+    description: "Goals, shots on target, assists, and cards for elite players vs their opponent. Model projection vs the book's line — build a parlay slip and save it.",
+  },
+  {
+    icon: Sparkles,
+    title: "10 Leagues · Leagues Browser",
+    description: "Navigate every competition by continent — Europe, UEFA tournaments, and Americas. Each league card shows format, club count, and links to live fixtures.",
+  },
+];
+
 const wnbaFeatures = [
   {
     icon: CircleDot,
@@ -370,7 +393,87 @@ export function LandingFeatures() {
           </div>
 
           <p className="relative mt-7 text-xs text-white/30 leading-relaxed">
-            After the success of our World Cup analysis, we&rsquo;re adding a new sport every season &mdash; NFL and WNBA are live now, with more on the way.
+            After the success of our World Cup analysis, we&rsquo;re adding a new sport every season &mdash; NFL and WNBA are live now, with Soccer joining below.
+          </p>
+        </motion.div>
+
+        {/* Soccer Edge Pro — new sport, live now */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="relative mt-6 rounded-3xl border border-[#34d399]/25 overflow-hidden p-7 sm:p-10"
+          style={{ background: "linear-gradient(135deg, rgba(52,211,153,0.09), rgba(11,13,21,0) 65%)" }}
+        >
+          <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-[#34d399]/08 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -left-24 w-56 h-56 rounded-full bg-[#34d399]/06 blur-3xl pointer-events-none" />
+
+          <div className="relative flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-9">
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="inline-flex items-center gap-2 rounded-full border border-[#34d399]/30 bg-[#34d399]/10 px-3.5 py-1.5 text-xs font-black text-[#34d399] tracking-widest uppercase">
+                  <Zap size={11} strokeWidth={2.5} />
+                  New Sport &middot; Live Now
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-[#818cf8]/30 bg-[#818cf8]/10 px-3 py-1.5 text-xs font-black text-[#818cf8] tracking-widest uppercase">
+                  Pro Add-On
+                </span>
+              </div>
+              <h3 className="mt-4 text-2xl sm:text-3xl font-black tracking-tight text-white">
+                Now live:{" "}
+                <span style={{ background: "linear-gradient(135deg,#34d399,#6ee7b7)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                  Soccer / Football Edge Pro
+                </span>
+              </h3>
+              <p className="mt-3 text-sm sm:text-base text-white/50 leading-relaxed max-w-xl">
+                10 of the world&rsquo;s top competitions — from the Premier League to the Champions League
+                to MLS — now fully covered with xG analytics, PPDA, win probability, player props, and a
+                leagues browser organized by continent. The same edge-model depth you trust for MLB, built for the beautiful game.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {["EPL", "La Liga", "Serie A", "Bundesliga", "Ligue 1", "UCL", "Europa", "MLS", "Liga MX", "Brasileirão"].map((l) => (
+                  <span key={l} className="rounded-full px-2.5 py-1 text-[10px] font-bold text-[#34d399] tracking-wider"
+                    style={{ background: "rgba(52,211,153,.08)", border: "1px solid rgba(52,211,153,.2)" }}>
+                    {l}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <Link href="/trial?tier=pro" className="shrink-0">
+              <span className="inline-flex items-center gap-2 rounded-full font-bold text-sm px-5 py-2.5 group transition-opacity hover:opacity-85"
+                style={{ background: "linear-gradient(135deg,#34d399,#6ee7b7)", color: "#06070d" }}>
+                Try Pro Free &mdash; 3 Days
+                <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" strokeWidth={2.5} />
+              </span>
+            </Link>
+          </div>
+
+          <div className="relative grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {soccerFeatures.map((f, i) => {
+              const Icon = f.icon;
+              return (
+                <motion.div
+                  key={f.title}
+                  custom={i}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true, margin: "-40px" }}
+                  variants={fadeUp}
+                  className="flex flex-col rounded-2xl border border-white/[0.08] bg-[#0D1117]/60 p-5"
+                >
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-4 bg-[#34d399]/12">
+                    <Icon size={18} strokeWidth={1.7} style={{ color: "#34d399" }} />
+                  </div>
+                  <h4 className="text-base font-bold text-white mb-1.5">{f.title}</h4>
+                  <p className="text-sm text-white/45 leading-relaxed">{f.description}</p>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          <p className="relative mt-7 text-xs text-white/30 leading-relaxed">
+            Soccer is a Pro add-on &mdash; unlock it alongside NFL, WNBA, and the full MLB suite with a single Pro plan. More sports and competitions will be added each season.
           </p>
         </motion.div>
       </Container>
