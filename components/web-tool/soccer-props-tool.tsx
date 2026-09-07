@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { BookmarkPlus, Check } from "lucide-react";
+import { BookmarkPlus, Check, Target } from "lucide-react";
 import type { SoccerPlayerProp, SoccerPropType, SoccerPosition, SoccerLeagueKey } from "@/lib/soccer/types";
 import { soccerGradeColor, getSoccerPlayerProps } from "@/lib/soccer/analytics";
 import { soccerHeadshotUrl, leagueDef } from "@/lib/soccer/leagues";
@@ -61,7 +61,7 @@ function PropCard({ prop, inSlip, onToggle }: {
           <img
             src={soccerHeadshotUrl(prop.espnPlayerId)}
             alt={prop.playerName}
-            className="w-12 h-12 rounded-xl object-cover object-top"
+            className="w-16 h-16 rounded-2xl object-cover object-top"
             style={{ background: `${prop.teamHex}30` }}
             onError={(e) => {
               const el = e.currentTarget as HTMLImageElement;
@@ -70,12 +70,12 @@ function PropCard({ prop, inSlip, onToggle }: {
               if (fb) fb.style.display = "flex";
             }}
           />
-          <div className="w-12 h-12 rounded-xl items-center justify-center font-spot-sans font-black text-[13px] text-white"
+          <div className="w-16 h-16 rounded-2xl items-center justify-center font-spot-sans font-black text-[15px] text-white"
             style={{ display: "none", background: prop.teamHex }}>
             {prop.playerName.split(" ").map((n) => n[0]).join("").slice(0, 2)}
           </div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={prop.teamLogo} alt="" className="absolute -bottom-1 -right-1 w-5 h-5 object-contain rounded-md"
+          <img src={prop.teamLogo} alt="" className="absolute -bottom-1 -right-1 w-6 h-6 object-contain rounded-lg"
             style={{ background: "var(--panel)", padding: "1px" }}
             onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
         </div>
@@ -190,7 +190,7 @@ export function SoccerPropsTool() {
         <div className="max-w-screen-xl mx-auto px-4 sm:px-6 py-5">
           <p className="spot-label mb-0.5" style={{ color: "var(--green)" }}>PROP PROJECTIONS</p>
           <h1 className="font-spot-sans font-black text-2xl sm:text-3xl uppercase leading-tight" style={{ color: "var(--text)", letterSpacing: "-.01em" }}>
-            ⚽ Soccer Props
+            Soccer Props
           </h1>
           <p className="mt-1 font-spot-sans text-[12px]" style={{ color: "var(--text-muted)" }}>
             Model vs the book — goals, shots, assists & cards across Europe &amp; Americas
@@ -250,7 +250,7 @@ export function SoccerPropsTool() {
           </div>
         ) : (
           <div className="text-center py-16">
-            <p className="text-4xl mb-3">🎯</p>
+            <div className="flex justify-center mb-3"><Target size={36} style={{ color: "var(--text-dim)" }} /></div>
             <p className="font-spot-sans font-bold text-sm" style={{ color: "var(--text-muted)" }}>No props match your filters</p>
           </div>
         )}

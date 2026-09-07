@@ -73,7 +73,7 @@ function SportPill({ sport }: { sport: Sport }) {
     { key: "mlb",    href: "/games",  label: "MLB",    icon: BaseballIcon,   gradient: "from-[#f97316] to-[#fb923c]", textCls: "text-white" },
     { key: "nfl",    href: "/nfl",    label: "NFL",    icon: FootballIcon,   gradient: "from-[#f97316] to-[#fb923c]", textCls: "text-white" },
     { key: "wnba",   href: "/wnba",   label: "WNBA",   icon: BasketballIcon, gradient: "from-[#2dd4bf] to-[#5eead4]", textCls: "text-[#06070d]" },
-    { key: "soccer", href: "/soccer", label: "⚽",      icon: SoccerIcon,    gradient: "from-[#34d399] to-[#6ee7b7]", textCls: "text-[#06070d]" },
+    { key: "soccer", href: "/soccer", label: "Soccer",  icon: SoccerIcon,    gradient: "from-[#34d399] to-[#6ee7b7]", textCls: "text-[#06070d]" },
   ];
   return (
     <div className="flex items-center p-[3px] rounded-full border border-white/[0.08] bg-white/[0.03]">

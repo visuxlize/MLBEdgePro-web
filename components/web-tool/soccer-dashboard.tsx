@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import { CircleDot } from "lucide-react";
 import type { SoccerMatch, SoccerLeagueKey } from "@/lib/soccer/types";
 import { SOCCER_LEAGUES, leagueDef } from "@/lib/soccer/leagues";
 import { soccerMatchEdge, soccerGradeColor } from "@/lib/soccer/analytics";
@@ -134,18 +135,18 @@ function MatchCard({ match }: { match: SoccerMatch }) {
 
 type Tab = SoccerLeagueKey | "all";
 
-const TABS: { key: Tab; label: string; emoji: string }[] = [
-  { key: "all",         label: "All",      emoji: "🌍" },
-  { key: "epl",         label: "EPL",      emoji: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
-  { key: "laliga",      label: "La Liga",  emoji: "🇪🇸" },
-  { key: "seriea",      label: "Serie A",  emoji: "🇮🇹" },
-  { key: "bundesliga",  label: "Bundesliga", emoji: "🇩🇪" },
-  { key: "ligue1",      label: "Ligue 1",  emoji: "🇫🇷" },
-  { key: "ucl",         label: "UCL",      emoji: "⭐" },
-  { key: "europa",      label: "UEL",      emoji: "🟠" },
-  { key: "mls",         label: "MLS",      emoji: "🇺🇸" },
-  { key: "ligamx",      label: "Liga MX",  emoji: "🇲🇽" },
-  { key: "brasileirao", label: "Brasileirão", emoji: "🇧🇷" },
+const TABS: { key: Tab; label: string; color?: string }[] = [
+  { key: "all",         label: "All" },
+  { key: "epl",         label: "EPL",          color: "#38003c" },
+  { key: "laliga",      label: "La Liga",       color: "#ff4b44" },
+  { key: "seriea",      label: "Serie A",       color: "#024494" },
+  { key: "bundesliga",  label: "Bundesliga",    color: "#d20515" },
+  { key: "ligue1",      label: "Ligue 1",       color: "#091c3e" },
+  { key: "ucl",         label: "UCL",           color: "#001d5b" },
+  { key: "europa",      label: "UEL",           color: "#f26522" },
+  { key: "mls",         label: "MLS",           color: "#1a3e72" },
+  { key: "ligamx",      label: "Liga MX",       color: "#006847" },
+  { key: "brasileirao", label: "Brasileirão",   color: "#009c3b" },
 ];
 
 export function SoccerDashboard({ matches }: { matches: SoccerMatch[] }) {
@@ -176,7 +177,7 @@ export function SoccerDashboard({ matches }: { matches: SoccerMatch[] }) {
             <div>
               <p className="spot-label mb-0.5" style={{ color: "var(--green)" }}>FOOTBALL</p>
               <h1 className="font-spot-sans font-black text-2xl sm:text-3xl uppercase" style={{ color: "var(--text)", letterSpacing: "-.01em" }}>
-                ⚽ Today&apos;s Fixtures
+                Today&apos;s Fixtures
               </h1>
             </div>
             <Link href="/soccer/props"
@@ -199,7 +200,7 @@ export function SoccerDashboard({ matches }: { matches: SoccerMatch[] }) {
                   style={tab === t.key
                     ? { background: "var(--green-bg)", color: "var(--green)", border: "1px solid rgba(52,211,153,.3)" }
                     : { background: "var(--panel-2)", color: "var(--text-muted)", border: "1px solid var(--hairline)" }}>
-                  <span>{t.emoji}</span>
+                  {t.color && <span className="w-2 h-2 rounded-full shrink-0" style={{ background: t.color }} />}
                   <span>{t.label}</span>
                   {count > 0 && <span className="opacity-60 font-spot-mono text-[9px]">{count}</span>}
                 </button>
@@ -253,7 +254,7 @@ export function SoccerDashboard({ matches }: { matches: SoccerMatch[] }) {
 
         {filtered.length === 0 && (
           <div className="text-center py-16">
-            <p className="text-4xl mb-3">⚽</p>
+            <div className="flex justify-center mb-3"><CircleDot size={36} style={{ color: "var(--text-dim)" }} /></div>
             <p className="font-spot-sans font-bold text-sm" style={{ color: "var(--text-muted)" }}>No fixtures scheduled today</p>
             <p className="font-spot-sans text-[12px] mt-1" style={{ color: "var(--text-faint)" }}>Check back tomorrow for matchday data</p>
           </div>
