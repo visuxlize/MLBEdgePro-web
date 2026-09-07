@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { SeasonTimeline, NFL_2026_PHASES } from "@/components/web-tool/season-timeline";

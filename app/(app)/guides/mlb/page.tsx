@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { teamHex } from "@/lib/mlb/spotlight-utils";
