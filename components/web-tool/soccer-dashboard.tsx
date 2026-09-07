@@ -284,11 +284,17 @@ function PlayerSpotlight() {
       <div className="relative h-20 flex items-end px-4 pb-0 overflow-hidden"
         style={{ background: `linear-gradient(135deg, ${top.teamHex}30 0%, var(--panel-2) 100%)` }}>
         <div className="absolute right-0 bottom-0 w-24 h-24 opacity-60">
+          <div className="absolute inset-0 flex items-end justify-center">
+            <svg viewBox="0 0 60 72" width="100%" height="100%" fill="none" aria-hidden="true">
+              <circle cx="30" cy="20" r="13" fill={top.teamHex} opacity="0.5" />
+              <path d="M6 72c0-15.464 10.745-28 24-28s24 12.536 24 28" fill={top.teamHex} opacity="0.3" />
+            </svg>
+          </div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={`https://a.espncdn.com/i/headshots/soccer/players/full/${top.espnPlayerId}.png`}
             alt={top.playerName}
-            className="w-full h-full object-contain object-bottom"
+            className="absolute inset-0 w-full h-full object-contain object-bottom"
             onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
           />
         </div>

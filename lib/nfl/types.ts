@@ -78,4 +78,6 @@ export interface NflPlayerProp {
   grade: string;
   odds: string;
   over: boolean;
+  week?: NflWeekKey;
+  gameDate?: string;
 }
