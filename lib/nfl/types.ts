@@ -81,3 +81,126 @@ export interface NflPlayerProp {
   week?: NflWeekKey;
   gameDate?: string;
 }
+
+/* ── League-wide (all weeks, standings, players) ─────────────────────────── */
+
+export interface NflOdds {
+  provider: string;
+  /** Home-team spread (negative = home favored) */
+  homeSpread: number | null;
+  overUnder: number | null;
+  homeML?: string;
+  awayML?: string;
+}
+
+export interface NflLeaderLine {
+  category: "Passing" | "Rushing" | "Receiving";
+  player: string;
+  line: string;
+  team: string;
+  espnId: string;
+}
+
+export interface NflSeasonGame {
+  id: string;
+  seasonType: 1 | 2 | 3;
+  weekNum: number;
+  weekLabel: string;
+  date: string;
+  dateLabel: string;
+  timeLabel: string;
+  venue: string;
+  away: string;
+  home: string;
+  awayScore?: number;
+  homeScore?: number;
+  awayRecord?: string;
+  homeRecord?: string;
+  status: NflGameStatus;
+  statusDetail: string;
+  broadcast?: string;
+  odds?: NflOdds;
+  leaders: NflLeaderLine[];
+  homeWinProb: number;
+  edge: number;
+  grade: string;
+}
+
+export interface NflStandingRow {
+  abbr: string;
+  name: string;
+  conf: "AFC" | "NFC";
+  division: string;
+  seed: number;
+  wins: number;
+  losses: number;
+  ties: number;
+  pct: number;
+  pf: number;
+  pa: number;
+  diff: number;
+  gp: number;
+  streak: string;
+  home: string;
+  road: string;
+  divRecord: string;
+  confRecord: string;
+  /** Edge Power: points differential per game, shrunk for sample size */
+  power: number;
+  ppg: number;
+  papg: number;
+}
+
+export interface NflPlayerSeason {
+  espnId: string;
+  name: string;
+  team: string;
+  pos: string;
+  gp: number;
+  /** raw season stats keyed by ESPN stat name */
+  s: Record<string, number>;
+}
+
+export type NflPropMarket = "Pass Yds" | "Pass TDs" | "Rush Yds" | "Rec Yds" | "Receptions";
+
+export interface NflPropPlay {
+  id: string;
+  espnId: string;
+  player: string;
+  pos: string;
+  team: string;
+  opp: string;
+  home: boolean;
+  gameId: string;
+  kickoff: string;
+  market: NflPropMarket;
+  /** Prop line — real DraftKings line when posted, otherwise a season-average reference */
+  line: number;
+  source: "draftkings" | "model";
+  openLine?: number;
+  updated?: string;
+  proj: number;
+  seasonAvg: number;
+  factor: number;
+  prob: number;
+  baseProb: number;
+  over: boolean;
+  edge: number;
+  grade: string;
+  gp: number;
+  /** Plain-English reasons behind the lean */
+  notes: string[];
+}
+
+export interface NflTeamStatRow { label: string; away: string; home: string; awayPct: number; homePct: number }
+
+export interface NflGameDetail {
+  game: NflSeasonGame;
+  teamStats: NflTeamStatRow[];
+  injuries: { team: string; player: string; status: string; pos: string }[];
+  winProbSeries: number[];
+  /** ESPN's matchup predictor — home win % */
+  predictorHome?: number;
+  venueImage?: string;
+  recap?: string;
+}

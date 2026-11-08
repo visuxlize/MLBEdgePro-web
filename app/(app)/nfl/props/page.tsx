@@ -1,21 +1,22 @@
 import { PaywallGate } from "@/components/web-tool/paywall-gate";
-import { getPlayerProps } from "@/lib/nfl/sportsblaze";
-import { NflPropsTool } from "@/components/web-tool/nfl-props-tool";
+import { NflPropsBoard } from "@/components/web-tool/nfl-props-board";
+import { getNflProps } from "@/lib/nfl/league";
+
+export const dynamic = "force-dynamic";
 
 export default async function NflPropsPage() {
-  const props = await getPlayerProps();
-
+  const { props, games, weekLabel, liveLines } = await getNflProps();
   return (
     <PaywallGate
-      requiredTier="pro"
-      feature="NFL Prop Builder"
+      requiredTier="fan"
+      feature="NFL Game Props Analysis"
       benefits={[
-        "Model projection vs. the book on every prop",
-        "Position filters — QB, RB, WR, TE",
-        "One-tap parlay slip with live edge & payout",
+        "Real DraftKings prop lines with open-to-current movement",
+        "Hit probability, grade and the reasons behind each lean",
+        "Filter by market and game; one-tap slip",
       ]}
     >
-      <NflPropsTool props={props} />
+      <NflPropsBoard props={props} games={games} weekLabel={weekLabel} liveLines={liveLines} />
     </PaywallGate>
   );
 }

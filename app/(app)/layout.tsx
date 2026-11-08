@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AppSidebar } from "@/components/web-tool/app-sidebar";
 import { PendingTrialRedirect } from "@/components/PendingTrialRedirect";
 import { FloatingChat } from "@/components/web-tool/floating-chat";
+import { OffseasonGuard } from "@/components/web-tool/offseason-guard";
 
 function DisclaimerStrip() {
   return (
@@ -24,8 +25,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-background flex flex-col">
       <PendingTrialRedirect />
       <AppSidebar />
-      <main className="flex-1 w-full">{children}</main>
-      <DisclaimerStrip />
+      {/* Phones: clear the bottom tab bar. 640–1023: clear the vertical rail. */}
+      <div className="flex-1 flex flex-col pb-[calc(62px+env(safe-area-inset-bottom))] sm:pb-0 sm:pl-[calc(76px+env(safe-area-inset-left))] lg:pl-0">
+        <OffseasonGuard>
+          <main className="flex-1 w-full">{children}</main>
+        </OffseasonGuard>
+        <DisclaimerStrip />
+      </div>
       <FloatingChat />
     </div>
   );

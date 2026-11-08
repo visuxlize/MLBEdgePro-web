@@ -368,3 +368,69 @@ html {
 /* Card hover lift */
 .spot-lift { transition: transform .25s cubic-bezier(.4,0,.2,1), border-color .2s ease, box-shadow .25s ease; }
 .spot-lift:hover { transform: translateY(-3px); box-shadow: var(--shadow-card); }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   RESPONSIVE SHELL — phone / foldable (closed + open) / desktop
+   • < 640px   : bottom tab bar, single column, edge-to-edge backgrounds
+   • 640–1023  : vertical side rail (inner display of a foldable), 2-column layouts
+   • ≥ 1024    : top nav, full multi-column layouts
+   Safe areas are handled per-edge so vertical bars on either side never cover content.
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+.page-pad {
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+}
+@media (min-width: 640px) {
+  .page-pad { padding-left: max(24px, env(safe-area-inset-left)); padding-right: max(24px, env(safe-area-inset-right)); }
+}
+
+/* Horizontally scrolling rows (date strips, week pickers, chips) that snap on touch */
+.snap-row { display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.snap-row::-webkit-scrollbar { display: none; }
+.snap-row > * { scroll-snap-align: center; flex-shrink: 0; }
+
+/* Tap feedback + entrance choreography */
+.press { transition: transform .18s cubic-bezier(.22,1,.36,1), background-color .2s, border-color .2s; }
+.press:active { transform: scale(.975); }
+.rise { animation: fade-up .55s cubic-bezier(.22,1,.36,1) both; }
+.stagger > * { animation: fade-up .55s cubic-bezier(.22,1,.36,1) both; }
+.stagger > *:nth-child(1) { animation-delay: .02s; } .stagger > *:nth-child(2) { animation-delay: .06s; }
+.stagger > *:nth-child(3) { animation-delay: .10s; } .stagger > *:nth-child(4) { animation-delay: .14s; }
+.stagger > *:nth-child(5) { animation-delay: .18s; } .stagger > *:nth-child(6) { animation-delay: .22s; }
+.stagger > *:nth-child(7) { animation-delay: .26s; } .stagger > *:nth-child(8) { animation-delay: .30s; }
+.stagger > *:nth-child(n+9) { animation-delay: .34s; }
+
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+.skeleton { background: linear-gradient(90deg, rgba(255,255,255,.04) 25%, rgba(255,255,255,.09) 50%, rgba(255,255,255,.04) 75%); background-size: 200% 100%; animation: shimmer 1.4s linear infinite; border-radius: 14px; }
+
+@keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes ring-sweep { from { stroke-dashoffset: var(--ring-c); } to { stroke-dashoffset: var(--ring-to); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .rise, .stagger > *, .skeleton { animation: none !important; }
+  .press { transition: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   MATCHLY — light, airy match-centre theme used by the redesigned Soccer page.
+   ═══════════════════════════════════════════════════════════════════════════════ */
+.matchly {
+  --m-bg: #eceef2;
+  --m-shell: #f6f7f9;
+  --m-card: #ffffff;
+  --m-ink: #14161b;
+  --m-ink-2: #4b515c;
+  --m-ink-3: #8a909b;
+  --m-line: #eceef2;
+  --m-blue: #1a73ff;
+  --m-yellow: #fbbf24;
+  --m-green: #15c43a;
+  --m-red: #ef3b4a;
+  --m-shadow: 0 1px 2px rgba(20,22,27,.04), 0 8px 24px rgba(20,22,27,.05);
+  color: var(--m-ink);
+  font-family: var(--font-spot-sans, 'Hanken Grotesk'), system-ui, sans-serif;
+  background: var(--m-bg);
+}
+.matchly .m-card { background: var(--m-card); border-radius: 22px; box-shadow: var(--m-shadow); }
+.matchly .m-pill { background: var(--m-card); border-radius: 14px; box-shadow: var(--m-shadow); }

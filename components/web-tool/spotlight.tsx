@@ -193,6 +193,9 @@ export function WnbaHeadshot({
   );
 }
 
+/** Alias — ESPN's NBA/NFL/WNBA headshots all share the same landscape transparent-cutout shape. */
+export const CutoutHeadshot = WnbaHeadshot;
+
 /* ── Blended player headshot — MLB wrapper over HeadshotPlate ─────────────────── */
 
 export function BlendedHeadshot({

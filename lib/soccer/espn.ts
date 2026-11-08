@@ -24,11 +24,11 @@ function teamFromComp(comp: any): SoccerTeamInfo {
   };
 }
 
-async function fetchLeague(key: SoccerLeagueKey): Promise<SoccerMatch[]> {
+async function fetchLeague(key: SoccerLeagueKey, dateStr?: string): Promise<SoccerMatch[]> {
   const def = LEAGUE_MAP[key];
   if (!def) return [];
   try {
-    const res = await fetch(`${BASE}/${def.slug}/scoreboard?limit=20`, {
+    const res = await fetch(`${BASE}/${def.slug}/scoreboard?limit=40${dateStr ? `&dates=${dateStr}` : ""}`, {
       next: { revalidate: 120 },
     });
     if (!res.ok) return [];
@@ -56,6 +56,14 @@ async function fetchLeague(key: SoccerLeagueKey): Promise<SoccerMatch[]> {
         homeScore: homeComp?.score != null ? parseInt(homeComp.score, 10) : undefined,
         awayScore: awayComp?.score != null ? parseInt(awayComp.score, 10) : undefined,
         venue: comp.venue?.fullName,
+        clock: comp.status?.displayClock,
+        statusDetail: comp.status?.type?.shortDetail,
+        odds: comp.odds?.[0] ? {
+          homeML: comp.odds[0].moneyline?.home?.close?.odds,
+          drawML: comp.odds[0].moneyline?.draw?.close?.odds,
+          awayML: comp.odds[0].moneyline?.away?.close?.odds,
+          overUnder: typeof comp.odds[0].overUnder === "number" ? comp.odds[0].overUnder : null,
+        } : undefined,
       } satisfies SoccerMatch;
     });
   } catch {
@@ -67,9 +75,9 @@ export async function fetchSoccerFixtures(league: SoccerLeagueKey): Promise<Socc
   return fetchLeague(league);
 }
 
-export async function fetchAllSoccerFixtures(): Promise<SoccerMatch[]> {
+export async function fetchAllSoccerFixtures(dateStr?: string): Promise<SoccerMatch[]> {
   const results = await Promise.allSettled(
-    SOCCER_LEAGUES.map((l) => fetchLeague(l.key))
+    SOCCER_LEAGUES.map((l) => fetchLeague(l.key, dateStr))
   );
   return results.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
 }

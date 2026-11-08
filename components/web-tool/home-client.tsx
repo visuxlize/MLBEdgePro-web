@@ -1,26 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useSubscription } from "@/lib/subscription";
-import { getScore, type Game } from "@/lib/mlb/api";
-import type { NflGame } from "@/lib/nfl/types";
-import { nflTeamHex, nflLogoUrl } from "@/lib/nfl/teams";
-import type { WnbaGame } from "@/lib/wnba/types";
-import { wnbaTeamHex } from "@/lib/wnba/teams";
-import {
-  SectionLabel, LogoBadge, GradePill, AIPredictionButton,
-  teamHex, teamCode, modelEdge,
-} from "@/components/web-tool/spotlight";
+import { LogoPlate, gradeColor } from "@/components/web-tool/spotlight";
 import { SavedSlipsPanel } from "@/components/web-tool/saved-slips-panel";
-import { SeasonTimeline, MLB_2026_PHASES, NFL_2026_PHASES, WNBA_2026_PHASES } from "@/components/web-tool/season-timeline";
-
-// KICKOFF_TARGET kept for reference only — card now shows live game count
-
-function gameTime(iso: string) {
-  return new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-}
+import { Chip, LiveBadge, Panel, useCountUp } from "@/components/web-tool/sport-ui";
+import { daysUntil, getSeasonInfo } from "@/lib/season";
+import { nbaLogoUrl, nbaTeamHex } from "@/lib/nba/teams";
+import { nflLogoUrl, nflTeamHex } from "@/lib/nfl/teams";
+import type { NbaGame, NbaStandingRow } from "@/lib/nba/types";
+import type { NflSeasonGame } from "@/lib/nfl/types";
+import type { SoccerMatch } from "@/lib/soccer/types";
+import { LEAGUE_MAP } from "@/lib/soccer/leagues";
 
 function useSyncedAgo() {
   const [minutes, setMinutes] = useState(0);
@@ -31,415 +22,261 @@ function useSyncedAgo() {
   return minutes === 0 ? "just now" : `${minutes}m ago`;
 }
 
-interface MarketChip {
-  key: string;
-  away: string;
-  home: string;
-  awayHex: string;
-  homeHex: string;
-  awayPct: number;
-  homePct: number;
-  tag: "MLB" | "NFL" | "WNBA";
-  status: string;
-  href: string;
+interface Row { key: string; href: string; away: ReactNode; home: ReactNode; awayCode: string; homeCode: string; mid: string; live: boolean; sub?: string }
+
+function SoccerCrest({ src, code }: { src: string; code: string }) {
+  const [bad, setBad] = useState(false);
+  if (bad) return <span className="w-8 h-8 rounded-full flex items-center justify-center text-[9px] font-black" style={{ background: "rgba(255,255,255,.08)", color: "var(--text-3)" }}>{code.slice(0, 3)}</span>;
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={src} alt={code} width={32} height={32} className="w-8 h-8 object-contain" onError={() => setBad(true)} />;
 }
+
+function SportCard({
+  accent, soft, title, icon, chip, headline, sub, rows, links, href, extra,
+}: {
+  accent: string; soft: string; title: string; icon: ReactNode; chip: string; headline: string; sub: string;
+  rows: Row[]; links: { href: string; label: string }[]; href: string; extra?: ReactNode;
+}) {
+  return (
+    <div className="relative overflow-hidden rounded-[24px] p-5 flex flex-col" style={{ background: `linear-gradient(145deg, ${accent}24, var(--panel) 62%)`, border: `1px solid ${accent}45`, boxShadow: `0 0 50px ${accent}0f` }}>
+      <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full pointer-events-none" style={{ background: `radial-gradient(circle, ${accent}26, transparent 70%)`, animation: "glow-breathe 5s ease-in-out infinite" }} />
+      <div className="relative flex items-center justify-between gap-2">
+        <span className="inline-flex items-center gap-2 font-spot-sans font-extrabold text-[11px] uppercase tracking-[.14em]" style={{ color: soft }}>
+          <span className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${accent}26`, color: soft }}>{icon}</span>{title}
+        </span>
+        <span className="rounded-full px-2.5 py-1 font-spot-sans font-extrabold text-[9px] uppercase tracking-[.12em]" style={{ color: soft, background: `${accent}1f`, border: `1px solid ${accent}55` }}>{chip}</span>
+      </div>
+      <Link href={href} className="relative mt-4 block">
+        <p className="font-spot-sans font-black text-[26px] leading-tight" style={{ color: "var(--text)" }}>{headline}</p>
+        <p className="mt-1 font-spot-sans text-[12px]" style={{ color: "var(--text-muted)" }}>{sub}</p>
+      </Link>
+
+      <div className="relative mt-4 flex flex-col gap-2 flex-1">
+        {rows.length === 0 && <p className="font-spot-sans text-xs py-3" style={{ color: "var(--text-muted)" }}>No games on the board right now.</p>}
+        {rows.map((r) => (
+          <Link key={r.key} href={r.href} className="press flex items-center gap-2.5 rounded-2xl px-3 py-2.5" style={{ background: "rgba(0,0,0,.28)", border: "1px solid var(--hairline)" }}>
+            {r.away}
+            <span className="flex-1 min-w-0 text-center">
+              <span className="block font-spot-sans font-extrabold text-[12px] truncate" style={{ color: "var(--text)" }}>{r.awayCode} <span style={{ color: "var(--text-ghost)" }}>@</span> {r.homeCode}</span>
+              {r.sub && <span className="block font-spot-sans text-[9.5px] truncate" style={{ color: "var(--text-faint)" }}>{r.sub}</span>}
+            </span>
+            {r.home}
+            <span className="font-spot-mono font-extrabold text-[11px] w-[58px] text-right shrink-0" style={{ color: r.live ? "var(--red-soft)" : "var(--text-3)" }}>
+              {r.live && <span className="spot-live-dot inline-block rounded-full mr-1" style={{ width: 5, height: 5, background: "var(--red)" }} />}{r.mid}
+            </span>
+          </Link>
+        ))}
+      </div>
+
+      {extra}
+      <div className="relative mt-4 flex gap-2 flex-wrap">
+        {links.map((l, i) => (
+          <Link key={l.href} href={l.href} className="press rounded-xl px-3 py-2 font-spot-sans font-extrabold text-[11px]"
+            style={i === 0 ? { background: accent, color: "#06070d" } : { color: soft, background: `${accent}14`, border: `1px solid ${accent}38` }}>{l.label}</Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const Ball = ({ s = 14 }: { s?: number }) => (
+  <svg viewBox="0 0 24 24" width={s} height={s} fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="8.5" /><path d="M12 3.5v17M3.5 12h17M5.2 5.2c2.4 2.2 3.8 4.4 3.8 6.8s-1.4 4.6-3.8 6.8M18.8 5.2c-2.4 2.2-3.8 4.4-3.8 6.8s1.4 4.6 3.8 6.8" /></svg>
+);
+const Foot = ({ s = 14 }: { s?: number }) => (
+  <svg viewBox="0 0 24 24" width={s} height={s} fill="none" stroke="currentColor" strokeWidth="1.8"><ellipse cx="12" cy="12" rx="9.2" ry="5.6" transform="rotate(-45 12 12)" /><path d="M9.2 14.8l5.6-5.6M10.5 11.7l1.2 1.2M12.3 9.9l1.2 1.2" /></svg>
+);
+const Soc = ({ s = 14 }: { s?: number }) => (
+  <svg viewBox="0 0 24 24" width={s} height={s} fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="8.5" /><path d="M12 3.5l2.5 3.5-2.5 1.5-2.5-1.5L12 3.5zM12 20.5l-2.5-3.5 2.5-1.5 2.5 1.5L12 20.5zM3.5 12l3.5-2.5L8.5 12l-1.5 2.5L3.5 12zM20.5 12l-3.5 2.5L15.5 12l1.5-2.5L20.5 12z" /></svg>
+);
 
 interface Props {
   userName: string;
   todayDate: string;
-  mlbGames: Game[];
-  nflGames: NflGame[];
-  wnbaGames: WnbaGame[];
+  nba: { games: NbaGame[]; standings: NbaStandingRow[] };
+  nfl: { weekLabel: string; weekNum: number; games: NflSeasonGame[] };
+  soccer: SoccerMatch[];
 }
 
-export function HomeClient({ userName, todayDate, mlbGames, nflGames, wnbaGames }: Props) {
-  const router = useRouter();
-  const { isSuperPro } = useSubscription();
+export function HomeClient({ userName, todayDate, nba, nfl, soccer }: Props) {
   const syncedAgo = useSyncedAgo();
+  const mlb = getSeasonInfo("mlb"), wnba = getSeasonInfo("wnba");
 
+  const nbaLive = nba.games.filter((g) => g.status === "live");
+  const nflLive = nfl.games.filter((g) => g.status === "live");
+  const socLive = soccer.filter((m) => m.status === "live");
 
-  const mlbLive = mlbGames.filter((g) => g.status.detailedState === "In Progress");
-  const nflLive = nflGames.filter((g) => g.status === "live");
-  const wnbaLive = wnbaGames.filter((g) => g.status === "live");
+  const sortLive = <T extends { status: string }>(list: T[]) => [...list].sort((a, b) => (a.status === "live" ? 0 : a.status === "pre" ? 1 : 2) - (b.status === "live" ? 0 : b.status === "pre" ? 1 : 2));
 
-  const wnbaTopPick = useMemo(() => {
-    if (!wnbaGames.length) return null;
-    const best = [...wnbaGames].sort((a, b) => b.edge - a.edge)[0];
-    return best.homeWinProb >= 50 ? best.home : best.away;
-  }, [wnbaGames]);
+  const nbaRows: Row[] = sortLive(nba.games).slice(0, 3).map((g) => ({
+    key: g.id, href: `/nba/game/${g.id}`, awayCode: g.away, homeCode: g.home,
+    away: <LogoPlate hex={nbaTeamHex(g.away)} src={nbaLogoUrl(g.away)} code={g.away} size={32} radius={10} variant="clean" />,
+    home: <LogoPlate hex={nbaTeamHex(g.home)} src={nbaLogoUrl(g.home)} code={g.home} size={32} radius={10} variant="clean" />,
+    mid: g.status === "pre" ? g.timeLabel : `${g.awayScore}-${g.homeScore}`, live: g.status === "live",
+    sub: g.status === "live" ? g.statusDetail : g.isCup ? "NBA Cup" : g.status === "final" ? "Final" : undefined,
+  }));
+  const nflRows: Row[] = sortLive(nfl.games).slice(0, 3).map((g) => ({
+    key: g.id, href: `/nfl/game/${g.id}`, awayCode: g.away, homeCode: g.home,
+    away: <LogoPlate hex={nflTeamHex(g.away)} src={nflLogoUrl(g.away)} code={g.away} size={32} radius={10} variant="clean" />,
+    home: <LogoPlate hex={nflTeamHex(g.home)} src={nflLogoUrl(g.home)} code={g.home} size={32} radius={10} variant="clean" />,
+    mid: g.status === "pre" ? g.timeLabel : `${g.awayScore}-${g.homeScore}`, live: g.status === "live",
+    sub: g.status === "live" ? g.statusDetail : g.status === "final" ? "Final" : g.dateLabel,
+  }));
+  const socRows: Row[] = soccer.slice(0, 3).map((m) => ({
+    key: m.id, href: "/soccer", awayCode: m.awayTeam.abbr, homeCode: m.homeTeam.abbr,
+    away: <SoccerCrest src={m.awayTeam.logo} code={m.awayTeam.abbr} />,
+    home: <SoccerCrest src={m.homeTeam.logo} code={m.homeTeam.abbr} />,
+    mid: m.status === "pre" ? new Date(m.date).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) : `${m.awayScore}-${m.homeScore}`,
+    live: m.status === "live", sub: LEAGUE_MAP[m.league]?.shortLabel,
+  }));
 
-  const mlbTopPick = useMemo(() => {
-    if (!mlbGames.length) return null;
-    const best = [...mlbGames].sort((a, b) => modelEdge(b).edge - modelEdge(a).edge)[0];
-    const { favId, favName } = (() => {
-      const m = modelEdge(best);
-      const name = m.favId === best.teams.home.team.id ? best.teams.home.team.name : best.teams.away.team.name;
-      return { favId: m.favId, favName: name };
-    })();
-    return teamCode(favId, favName);
-  }, [mlbGames]);
+  // Strongest model edges across NBA + NFL (upcoming/live only)
+  const edges = useMemo(() => {
+    const list = [
+      ...nba.games.filter((g) => g.status !== "final").map((g) => ({ key: `n${g.id}`, tag: "NBA", color: "#fb923c", href: `/nba/game/${g.id}`, matchup: `${g.away} @ ${g.home}`, pick: `${g.homeWinProb >= 50 ? g.home : g.away} ML`, edge: g.edge, grade: g.grade, prob: Math.max(g.homeWinProb, 100 - g.homeWinProb) })),
+      ...nfl.games.filter((g) => g.status !== "final").map((g) => ({ key: `f${g.id}`, tag: "NFL", color: "#a78bfa", href: `/nfl/game/${g.id}`, matchup: `${g.away} @ ${g.home}`, pick: `${g.homeWinProb >= 50 ? g.home : g.away} ML`, edge: g.edge, grade: g.grade, prob: Math.max(g.homeWinProb, 100 - g.homeWinProb) })),
+    ];
+    return list.sort((a, b) => b.edge - a.edge).slice(0, 5);
+  }, [nba.games, nfl.games]);
 
-  const marketChips: MarketChip[] = useMemo(() => {
-    const mlbChips: MarketChip[] = mlbGames.slice(0, 5).map((g) => {
-      const m = modelEdge(g);
-      const isLive = g.status.detailedState === "In Progress";
-      return {
-        key: `mlb-${g.gamePk}`,
-        away: teamCode(g.teams.away.team.id, g.teams.away.team.name),
-        home: teamCode(g.teams.home.team.id, g.teams.home.team.name),
-        awayHex: teamHex(g.teams.away.team.id),
-        homeHex: teamHex(g.teams.home.team.id),
-        awayPct: m.awayProb,
-        homePct: m.homeProb,
-        tag: "MLB",
-        status: isLive ? "LIVE" : gameTime(g.gameDate),
-        href: `/game/${g.gamePk}`,
-      };
-    });
-    const nflChips: MarketChip[] = nflGames.slice(0, 5).map((g) => ({
-      key: `nfl-${g.id}`,
-      away: g.away,
-      home: g.home,
-      awayHex: nflTeamHex(g.away),
-      homeHex: nflTeamHex(g.home),
-      awayPct: 100 - g.homeWinProb,
-      homePct: g.homeWinProb,
-      tag: "NFL",
-      status: g.status === "live" ? "LIVE" : g.timeLabel,
-      href: `/nfl/game/${g.id}`,
-    }));
-    const wnbaChips: MarketChip[] = wnbaGames.slice(0, 5).map((g) => ({
-      key: `wnba-${g.id}`,
-      away: g.away,
-      home: g.home,
-      awayHex: wnbaTeamHex(g.away),
-      homeHex: wnbaTeamHex(g.home),
-      awayPct: 100 - g.homeWinProb,
-      homePct: g.homeWinProb,
-      tag: "WNBA",
-      status: g.status === "live" ? "LIVE" : g.timeLabel,
-      href: `/wnba/game/${g.id}`,
-    }));
-    return [...mlbChips, ...nflChips, ...wnbaChips].slice(0, 15);
-  }, [mlbGames, nflGames, wnbaGames]);
+  const ticker = useMemo(() => [
+    ...nba.games.slice(0, 5).map((g) => ({ key: `n${g.id}`, tag: "NBA", color: "var(--orange-soft)", a: g.away, h: g.home, ap: 100 - g.homeWinProb, hp: g.homeWinProb, ah: nbaTeamHex(g.away), hh: nbaTeamHex(g.home), status: g.status === "live" ? "LIVE" : g.timeLabel, href: `/nba/game/${g.id}` })),
+    ...nfl.games.slice(0, 5).map((g) => ({ key: `f${g.id}`, tag: "NFL", color: "var(--purple-soft)", a: g.away, h: g.home, ap: 100 - g.homeWinProb, hp: g.homeWinProb, ah: nflTeamHex(g.away), hh: nflTeamHex(g.home), status: g.status === "live" ? "LIVE" : g.timeLabel, href: `/nfl/game/${g.id}` })),
+    ...soccer.filter((m) => m.model).slice(0, 5).map((m) => ({ key: `s${m.id}`, tag: "SOC", color: "#6ee7b7", a: m.awayTeam.abbr, h: m.homeTeam.abbr, ap: m.model!.away, hp: m.model!.home, ah: m.awayTeam.hex, hh: m.homeTeam.hex, status: m.status === "live" ? "LIVE" : new Date(m.date).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }), href: "/soccer" })),
+  ], [nba.games, nfl.games, soccer]);
+
+  const avgGp = nba.standings.length ? nba.standings.reduce((a, r) => a + r.gp, 0) / nba.standings.length : 0;
+  const nbaPct = Math.round((avgGp / 82) * 100);
+  const nflPct = Math.round((nfl.weekNum / 18) * 100);
+  const nbaShown = useCountUp(nbaPct), nflShown = useCountUp(nflPct);
 
   return (
     <div className="spotlight min-h-screen">
-      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-6">
+      <div className="max-w-screen-2xl mx-auto page-pad py-5 sm:py-6">
         {/* Header */}
-        <div className="flex items-end justify-between gap-4 flex-wrap mb-5">
-          <div>
+        <div className="flex items-end justify-between gap-x-4 gap-y-3 flex-wrap mb-5 rise">
+          <div className="min-w-0">
             <p className="spot-label" style={{ color: "var(--orange)" }}>{todayDate}</p>
-            <h1 className="font-spot-sans text-3xl sm:text-4xl font-black leading-tight mt-1" style={{ color: "var(--text)" }}>
-              Welcome back, {userName}
-            </h1>
-            <p className="mt-1.5 font-spot-sans text-[13px]" style={{ color: "var(--text-muted)" }}>
-              The model&rsquo;s already done the homework. Here&rsquo;s your slate &mdash; grades, picks, and edges ready to go.
+            <h1 className="font-spot-sans text-[28px] sm:text-4xl font-black leading-[1.05] mt-1.5" style={{ color: "var(--text)" }}>Welcome back, {userName}</h1>
+            <p className="mt-1.5 font-spot-sans text-[13px] max-w-xl" style={{ color: "var(--text-muted)" }}>
+              NBA, NFL and Soccer are live — the model has graded every game, line and prop.
             </p>
           </div>
-          <span
-            className="inline-flex items-center gap-2 rounded-full px-3.5 py-2 font-spot-sans text-[11px] font-bold"
-            style={{ color: "var(--green)", background: "var(--green-bg)", border: "1px solid rgba(52,211,153,.3)" }}
-          >
-            <span className="spot-live-dot inline-block rounded-full" style={{ width: 7, height: 7, background: "var(--green)" }} />
-            Model synced &middot; {syncedAgo}
+          <span className="inline-flex items-center gap-2 rounded-full px-3.5 py-2 font-spot-sans text-[11px] font-bold" style={{ color: "var(--green)", background: "var(--green-bg)", border: "1px solid rgba(52,211,153,.3)" }}>
+            <span className="spot-live-dot inline-block rounded-full" style={{ width: 7, height: 7, background: "var(--green)" }} />Model synced &middot; {syncedAgo}
           </span>
         </div>
 
-        {/* Sport switch cards */}
-        <div className="grid gap-3.5 mb-4" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))" }}>
-          <button
-            onClick={() => router.push("/games")}
-            className="relative overflow-hidden text-left rounded-[20px] p-5"
-            style={{
-              background: "linear-gradient(135deg, rgba(255,120,40,.16), #0b0d15 62%)",
-              border: "1px solid rgba(255,120,40,.35)", boxShadow: "0 0 44px rgba(255,120,40,.08)",
-            }}
-          >
-            <div className="flex items-center justify-between gap-2">
-              <span className="inline-flex items-center gap-1.5 font-spot-sans font-extrabold text-[11px] uppercase tracking-[.12em]" style={{ color: "var(--orange-soft)" }}>
-                ⚾ MLB &middot; In Season
-              </span>
-              {mlbLive.length > 0 && (
-                <span className="inline-flex items-center gap-1.5 font-spot-mono font-extrabold text-[10px]" style={{ color: "var(--red-soft)" }}>
-                  <span className="spot-live-dot inline-block rounded-full" style={{ width: 6, height: 6, background: "var(--red)" }} />
-                  {mlbLive.length} LIVE
-                </span>
-              )}
-            </div>
-            <p className="mt-3 font-spot-sans font-black text-2xl" style={{ color: "var(--text)" }}>{mlbGames.length} {mlbGames.length === 1 ? "game" : "games"} today</p>
-            <p className="mt-1 font-spot-sans text-xs font-medium" style={{ color: "var(--text-muted)" }}>
-              {mlbGames.length ? `All analyzed · ${mlbTopPick} is tonight's strongest edge` : "No games scheduled today"}
-            </p>
-            <p className="mt-3.5 font-spot-sans font-extrabold text-xs" style={{ color: "var(--orange)" }}>Open MLB dashboard &rarr;</p>
-          </button>
-
-          <button
-            onClick={() => router.push("/nfl")}
-            className="relative overflow-hidden text-left rounded-[20px] p-5"
-            style={{ background: "linear-gradient(135deg, rgba(124,92,250,.14), #0b0d15 62%)", border: "1px solid rgba(167,139,250,.32)" }}
-          >
-            <div className="flex items-center justify-between gap-2">
-              <span className="inline-flex items-center gap-1.5 font-spot-sans font-extrabold text-[11px] uppercase tracking-[.12em]" style={{ color: "var(--purple-soft)" }}>
-                🏈 NFL &middot; {isSuperPro ? "Early Access" : "Preview"}
-              </span>
-              <span className="rounded-full px-2.5 py-1 font-spot-sans font-extrabold text-[10px] tracking-[.1em]" style={{ color: "var(--purple-2)", background: "var(--purple-tint)", border: "1px solid var(--purple-line)" }}>
-                {isSuperPro ? "◆ PRO" : "SOON"}
-              </span>
-            </div>
-            <p className="mt-3 font-spot-sans font-black text-2xl" style={{ color: "var(--text)" }}>
-              {nflGames.length} {nflGames.length === 1 ? "game" : "games"} this week
-            </p>
-            <p className="mt-1 font-spot-sans text-xs font-medium" style={{ color: "var(--text-muted)" }}>
-              {nflGames.length ? "All graded · edge model live on every matchup" : "No NFL games this week"}
-            </p>
-            <p className="mt-3.5 font-spot-sans font-extrabold text-xs" style={{ color: "var(--purple-2)" }}>See the NFL slate &rarr;</p>
-          </button>
-
-          <button
-            onClick={() => router.push("/wnba")}
-            className="relative overflow-hidden text-left rounded-[20px] p-5"
-            style={{ background: "linear-gradient(135deg, rgba(45,212,191,.14), #0b0d15 62%)", border: "1px solid rgba(45,212,191,.32)" }}
-          >
-            <div className="flex items-center justify-between gap-2">
-              <span className="inline-flex items-center gap-1.5 font-spot-sans font-extrabold text-[11px] uppercase tracking-[.12em]" style={{ color: "#5eead4" }}>
-                🏀 WNBA &middot; In Season
-              </span>
-              {wnbaLive.length > 0 && (
-                <span className="inline-flex items-center gap-1.5 font-spot-mono font-extrabold text-[10px]" style={{ color: "var(--red-soft)" }}>
-                  <span className="spot-live-dot inline-block rounded-full" style={{ width: 6, height: 6, background: "var(--red)" }} />
-                  {wnbaLive.length} LIVE
-                </span>
-              )}
-            </div>
-            <p className="mt-3 font-spot-sans font-black text-2xl" style={{ color: "var(--text)" }}>{wnbaGames.length} {wnbaGames.length === 1 ? "game" : "games"} today</p>
-            <p className="mt-1 font-spot-sans text-xs font-medium" style={{ color: "var(--text-muted)" }}>
-              {wnbaGames.length ? `All analyzed · ${wnbaTopPick} is today's strongest edge` : "No games scheduled today"}
-            </p>
-            <p className="mt-3.5 font-spot-sans font-extrabold text-xs" style={{ color: "#2dd4bf" }}>Open WNBA dashboard &rarr;</p>
-          </button>
-
-          {/* Soccer — Pro Add-On */}
-          <button
-            onClick={() => router.push("/soccer")}
-            className="relative overflow-hidden text-left rounded-[20px] p-5"
-            style={{ background: "linear-gradient(135deg, rgba(52,211,153,.13), #0b0d15 62%)", border: "1px solid rgba(52,211,153,.28)" }}
-          >
-            {/* NEW badge */}
-            <div className="absolute top-3 right-3 flex items-center gap-1.5">
-              <span className="rounded-full px-2 py-0.5 font-spot-sans font-extrabold text-[9px] uppercase tracking-[.12em]"
-                style={{ color: "#34d399", background: "rgba(52,211,153,.15)", border: "1px solid rgba(52,211,153,.3)" }}>
-                NEW
-              </span>
-              <span className="rounded-full px-2 py-0.5 font-spot-sans font-extrabold text-[9px] uppercase tracking-[.12em]"
-                style={{ color: "#a78bfa", background: "var(--purple-tint)", border: "1px solid var(--purple-line)" }}>
-                PRO
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5 font-spot-sans font-extrabold text-[11px] uppercase tracking-[.12em]" style={{ color: "#34d399" }}>
-              <svg viewBox="0 0 24 24" width={12} height={12} fill="none" stroke="currentColor" strokeWidth="1.7">
-                <circle cx="12" cy="12" r="9" />
-                <path d="M12 3c0 0-2 3-2 9s2 9 2 9M12 3c0 0 2 3 2 9s-2 9-2 9M3 12h18" />
-              </svg>
-              Soccer &middot; New Sport
-            </div>
-            <p className="mt-3 font-spot-sans font-black text-2xl" style={{ color: "var(--text)" }}>10 leagues covered</p>
-            <p className="mt-1 font-spot-sans text-xs font-medium" style={{ color: "var(--text-muted)" }}>
-              EPL, La Liga, Serie A, Bundesliga, UCL &amp; more · xG + PPDA analytics
-            </p>
-            <p className="mt-3.5 font-spot-sans font-extrabold text-xs" style={{ color: "#34d399" }}>Explore Soccer &rarr;</p>
-          </button>
+        {/* In-season sports */}
+        <div className="grid gap-3.5 mb-4 sm:grid-cols-2 xl:grid-cols-3 stagger">
+          <SportCard
+            accent="#fb923c" soft="#fdba74" title="NBA" icon={<Ball />} chip={nbaLive.length ? `${nbaLive.length} live` : "Live season"}
+            headline={`${nba.games.length} ${nba.games.length === 1 ? "game" : "games"} today`}
+            sub="Emirates NBA Cup in progress · standings, props & lines" href="/nba" rows={nbaRows}
+            links={[{ href: "/nba", label: "Today's slate →" }, { href: "/nba/standings", label: "Standings" }, { href: "/nba/cup", label: "NBA Cup" }, { href: "/nba/props", label: "Props" }]}
+          />
+          <SportCard
+            accent="#a78bfa" soft="#c4b5fd" title="NFL" icon={<Foot />} chip={nflLive.length ? `${nflLive.length} live` : nfl.weekLabel}
+            headline={`${nfl.weekLabel} · ${nfl.games.length} games`}
+            sub="All 18 weeks, standings placement, players & game props" href="/nfl" rows={nflRows}
+            links={[{ href: "/nfl", label: "Every game →" }, { href: "/nfl/standings", label: "Standings" }, { href: "/nfl/players", label: "Players" }, { href: "/nfl/props", label: "Props" }]}
+          />
+          <div className="sm:col-span-2 xl:col-span-1">
+            <SportCard
+              accent="#34d399" soft="#6ee7b7" title="Soccer" icon={<Soc />} chip={socLive.length ? `${socLive.length} live` : "10 leagues"}
+              headline={`${soccer.length} matches today`}
+              sub="Match centre with momentum, lineups & AI insights" href="/soccer" rows={socRows}
+              links={[{ href: "/soccer", label: "Match centre →" }, { href: "/soccer/leagues", label: "Leagues" }, { href: "/soccer/props", label: "Props" }]}
+            />
+          </div>
         </div>
 
-        {/* AI Live Market ticker */}
-        {marketChips.length > 0 && (
+        {/* Ticker */}
+        {ticker.length > 0 && (
           <div className="relative rounded-[20px] overflow-hidden mb-4" style={{ background: "var(--panel)", border: "1px solid var(--hairline)" }}>
-            <div className="flex items-center justify-between gap-3 flex-wrap px-5 pt-4 pb-2">
+            <div className="px-5 pt-4 pb-2">
               <span className="inline-flex items-center gap-2 font-spot-sans font-bold text-[11px] uppercase tracking-[.14em]" style={{ color: "var(--purple-2)" }}>
-                <span className="spot-live-dot inline-block rounded-full" style={{ width: 7, height: 7, background: "var(--purple-2)" }} />
-                AI Live Market &middot; win probability, updating
+                <span className="spot-live-dot inline-block rounded-full" style={{ width: 7, height: 7, background: "var(--purple-2)" }} />AI Live Market &middot; win probability across NBA · NFL · Soccer
               </span>
             </div>
             <div className="overflow-hidden py-2 pb-4">
-              <div className="flex gap-3 w-max" style={{ animation: "ticker-scroll 44s linear infinite" }}>
-                {[...marketChips, ...marketChips].map((m, i) => (
-                  <Link
-                    key={`${m.key}-${i}`}
-                    href={m.href}
-                    className="flex flex-col gap-2 rounded-[14px] px-3.5 py-3 text-left"
-                    style={{ width: 212, background: "var(--panel-2)", border: "1px solid var(--hairline)" }}
-                  >
+              <div className="flex gap-3 w-max" style={{ animation: "ticker-scroll 60s linear infinite" }}>
+                {[...ticker, ...ticker].map((m, i) => (
+                  <Link key={`${m.key}-${i}`} href={m.href} className="press flex flex-col gap-2 rounded-[14px] px-3.5 py-3" style={{ width: 212, background: "var(--panel-2)", border: "1px solid var(--hairline)" }}>
                     <div className="flex items-center justify-between">
-                      <span className="font-spot-sans font-extrabold text-[9px] tracking-[.12em]" style={{ color: m.tag === "MLB" ? "var(--orange-soft)" : m.tag === "NFL" ? "var(--purple-soft)" : "#5eead4" }}>{m.tag}</span>
-                      <span className="font-spot-mono font-bold text-[9px]" style={{ color: "var(--text-muted)" }}>{m.status}</span>
+                      <span className="font-spot-sans font-extrabold text-[9px] tracking-[.12em]" style={{ color: m.color }}>{m.tag}</span>
+                      <span className="font-spot-mono font-bold text-[9px]" style={{ color: m.status === "LIVE" ? "var(--red-soft)" : "var(--text-muted)" }}>{m.status}</span>
                     </div>
                     <div className="flex items-center justify-between font-spot-sans font-extrabold text-xs">
-                      <span>{m.away} <span className="font-spot-mono" style={{ color: "var(--text-3)" }}>{m.awayPct}%</span></span>
+                      <span>{m.a} <span className="font-spot-mono" style={{ color: "var(--text-3)" }}>{m.ap}%</span></span>
                       <span style={{ color: "var(--text-ghost)" }}>@</span>
-                      <span><span className="font-spot-mono" style={{ color: "var(--text-3)" }}>{m.homePct}%</span> {m.home}</span>
+                      <span><span className="font-spot-mono" style={{ color: "var(--text-3)" }}>{m.hp}%</span> {m.h}</span>
                     </div>
                     <div className="flex h-1.5 rounded overflow-hidden" style={{ background: "rgba(255,255,255,.10)" }}>
-                      <div style={{ width: `${m.awayPct}%`, background: m.awayHex }} />
-                      <div style={{ flex: 1, background: m.homeHex }} />
+                      <div style={{ width: `${m.ap}%`, background: m.ah }} /><div style={{ flex: 1, background: m.hh }} />
                     </div>
                   </Link>
-
                 ))}
               </div>
             </div>
           </div>
         )}
 
-        {/* Soccer feature strip */}
-        <div className="relative overflow-hidden rounded-[20px] mb-4 p-5"
-          style={{ background: "linear-gradient(105deg, rgba(52,211,153,.10) 0%, rgba(110,231,183,.06) 40%, rgba(11,13,21,0) 70%)", border: "1px solid rgba(52,211,153,.22)" }}>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0"
-                style={{ background: "rgba(52,211,153,.15)", border: "1px solid rgba(52,211,153,.3)" }}>
-                <svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="#34d399" strokeWidth="1.7">
-                  <circle cx="12" cy="12" r="9" />
-                  <path d="M12 3c0 0-2 3-2 9s2 9 2 9M12 3c0 0 2 3 2 9s-2 9-2 9M3 12h18" />
-                </svg>
-              </div>
-              <div>
-                <div className="flex items-center gap-2 mb-0.5">
-                  <p className="font-spot-sans font-black text-sm" style={{ color: "var(--text)" }}>Soccer / Football is live</p>
-                  <span className="rounded-full px-2 py-0.5 font-spot-sans font-extrabold text-[9px] uppercase tracking-[.1em]"
-                    style={{ color: "#34d399", background: "rgba(52,211,153,.14)", border: "1px solid rgba(52,211,153,.28)" }}>NEW</span>
-                </div>
-                <p className="font-spot-sans text-xs" style={{ color: "var(--text-muted)" }}>
-                  10 leagues · xG model · PPDA · Player props &middot; EPL, La Liga, UCL, MLS &amp; more
-                </p>
-              </div>
+        {/* Edges + season progress */}
+        <div className="grid gap-3.5 mb-4 lg:grid-cols-[1.4fr_1fr]">
+          <Panel className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <p className="spot-label" style={{ color: "var(--green)" }}>Strongest model edges</p>
+              <span className="font-spot-sans text-[10px]" style={{ color: "var(--text-faint)" }}>NBA · NFL · vs. DraftKings</span>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <button onClick={() => router.push("/soccer/leagues")}
-                className="rounded-xl px-3.5 py-2 font-spot-sans font-extrabold text-[11px] transition-all hover:opacity-80"
-                style={{ background: "rgba(52,211,153,.12)", color: "#34d399", border: "1px solid rgba(52,211,153,.28)" }}>
-                Browse Leagues
-              </button>
-              <button onClick={() => router.push("/soccer")}
-                className="rounded-xl px-3.5 py-2 font-spot-sans font-extrabold text-[11px] transition-all hover:opacity-80"
-                style={{ background: "rgba(52,211,153,.22)", color: "#06070d", border: "1px solid rgba(52,211,153,.4)" }}>
-                Today&rsquo;s Fixtures &rarr;
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Season timelines */}
-        <div className="grid gap-3.5 mb-4" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))" }}>
-          <SeasonTimeline title="MLB 2026" subtitle="Regular Season · Ends Sep 27" phases={MLB_2026_PHASES} sport="mlb" />
-          <SeasonTimeline title="NFL 2026" subtitle="Preseason through Super Bowl Feb 9, 2027" phases={NFL_2026_PHASES} sport="nfl" />
-          <SeasonTimeline title="WNBA 2026" subtitle="Regular Season · Finals Oct 13" phases={WNBA_2026_PHASES} sport="wnba" />
-        </div>
-
-        {/* Slate + concierge */}
-        <div className="grid gap-3.5" style={{ gridTemplateColumns: "1.5fr 1fr" }}>
-          <div>
-            <div className="flex items-center justify-between mb-2.5">
-              <SectionLabel style={{ color: "var(--text-faint)" }}>Today&rsquo;s Slate &middot; MLB</SectionLabel>
-              <Link href="/games" className="font-spot-sans font-bold text-[11px]" style={{ color: "var(--orange)" }}>All games &rarr;</Link>
-            </div>
-            {mlbGames.length === 0 ? (
-              <div className="rounded-[15px] py-10 text-center" style={{ background: "var(--panel)", border: "1px solid var(--hairline)" }}>
-                <p className="font-spot-sans text-sm" style={{ color: "var(--text-muted)" }}>No MLB games scheduled today</p>
-              </div>
-            ) : (
-              <div className="grid gap-2.5" style={{ gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))" }}>
-                {mlbGames.slice(0, 6).map((g) => {
-                  const m = modelEdge(g);
-                  const isLive = g.status.detailedState === "In Progress";
-                  const isFinal = ["Final", "Game Over"].includes(g.status.detailedState);
-                  const awayScore = getScore(g.teams.away, g.linescore, "away");
-                  const homeScore = getScore(g.teams.home, g.linescore, "home");
-                  return (
-                    <Link
-                      key={g.gamePk}
-                      href={`/game/${g.gamePk}`}
-                      className="text-left rounded-[15px] p-3.5 flex flex-col gap-2.5"
-                      style={{ background: "var(--panel)", border: "1px solid var(--hairline)" }}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-spot-mono font-bold text-[10px]" style={{ color: isLive ? "var(--red-soft)" : "var(--text-muted)" }}>
-                          {isLive ? "LIVE" : isFinal ? "FINAL" : gameTime(g.gameDate)}
-                        </span>
-                        <GradePill grade={m.grade} />
-                      </div>
-                      {[{ side: g.teams.away, pct: m.awayProb, score: awayScore }, { side: g.teams.home, pct: m.homeProb, score: homeScore }].map(({ side, pct, score }, i) => (
-                        <div key={i} className="flex items-center gap-2">
-                          <LogoBadge teamId={side.team.id} name={side.team.name} size={24} />
-                          <span className="flex-1 font-spot-sans font-extrabold text-[13px]" style={{ color: "var(--text)" }}>{teamCode(side.team.id, side.team.name)}</span>
-                          <span className="font-spot-mono font-bold text-[11px]" style={{ color: "var(--text-3)" }}>
-                            {isLive || isFinal ? score ?? "—" : `${pct}%`}
-                          </span>
-                        </div>
-                      ))}
-                      <div className="flex h-1.5 rounded overflow-hidden" style={{ background: "rgba(255,255,255,.10)" }}>
-                        <div style={{ width: `${m.awayProb}%`, background: teamHex(g.teams.away.team.id) }} />
-                        <div style={{ flex: 1, background: teamHex(g.teams.home.team.id) }} />
-                      </div>
-                      <AIPredictionButton pick={`${m.favCode} ML`} teamId={m.favId} />
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Concierge column */}
-          <div className="flex flex-col gap-3.5">
-            <div className="rounded-[20px] p-5" style={{ background: "linear-gradient(160deg, rgba(249,115,22,.08), #0b0d15 60%)", border: "1px solid rgba(249,115,22,.22)" }}>
-              <p className="spot-label" style={{ color: "var(--orange-soft)" }}>We&rsquo;ve got you</p>
-              <div className="flex flex-col gap-2.5 mt-3.5">
-                <div className="flex items-start gap-2.5 rounded-[13px] px-3 py-2.5" style={{ background: "rgba(52,211,153,.08)", border: "1px solid rgba(52,211,153,.22)" }}>
-                  <span style={{ color: "var(--green)", fontWeight: 900 }}>&#10003;</span>
-                  <span className="font-spot-sans text-xs" style={{ color: "var(--text-2)" }}>
-                    Today&rsquo;s top edge: <span className="font-black" style={{ color: "var(--green)" }}>
-                      {mlbGames.length ? `${teamCode(mlbGames[0].teams.away.team.id, mlbGames[0].teams.away.team.name)} @ ${teamCode(mlbGames[0].teams.home.team.id, mlbGames[0].teams.home.team.name)} · ${modelEdge(mlbGames[0]).grade}` : "—"}
+            {edges.length === 0 ? <p className="font-spot-sans text-xs" style={{ color: "var(--text-muted)" }}>Edges appear once lines post.</p> : (
+              <div className="flex flex-col">
+                {edges.map((e, i) => (
+                  <Link key={e.key} href={e.href} className="press flex items-center gap-3 py-2.5" style={{ borderTop: i ? "1px solid var(--hairline)" : undefined }}>
+                    <Chip color={e.color}>{e.tag}</Chip>
+                    <span className="flex-1 min-w-0">
+                      <span className="block font-spot-sans font-extrabold text-[13px] truncate" style={{ color: "var(--text)" }}>{e.pick}</span>
+                      <span className="block font-spot-mono text-[10px]" style={{ color: "var(--text-faint)" }}>{e.matchup} · {e.prob}% win prob</span>
                     </span>
-                  </span>
-                </div>
-                <div className="flex items-start gap-2.5 rounded-[13px] px-3 py-2.5" style={{ background: "var(--purple-tint)", border: "1px solid var(--purple-line)" }}>
-                  <span style={{ color: "var(--purple-2)" }}>&#9670;</span>
-                  <span className="font-spot-sans text-xs" style={{ color: "var(--text-2)" }}>A 3-leg parlay draft is waiting in your slip builder</span>
-                </div>
-                <div className="flex items-start gap-2.5 rounded-[13px] px-3 py-2.5" style={{ background: "var(--orange-tint)", border: "1px solid var(--orange-line)" }}>
-                  <span style={{ color: "var(--orange)" }}>&#8635;</span>
-                  <span className="font-spot-sans text-xs" style={{ color: "var(--text-2)" }}>Lines, injuries &amp; weather refreshed {syncedAgo}</span>
-                </div>
-              </div>
-              <p className="mt-3.5 font-spot-sans text-[11px] leading-relaxed" style={{ color: "var(--text-faint)" }}>
-                No spreadsheets, no homework. Open a game &mdash; the analysis is already done.
-              </p>
-            </div>
-
-            <div className="rounded-[20px] p-5" style={{ background: "var(--panel)", border: "1px solid var(--hairline)" }}>
-              <p className="spot-label mb-3" style={{ color: "var(--text-faint)" }}>How it works</p>
-              <div className="flex flex-col gap-3">
-                {[
-                  { n: "1", c: "var(--orange)", bg: "var(--orange-tint)", bd: "var(--orange-line)", title: "We watch every line", body: "Odds, injuries, weather, lineups — auto-refreshed all day." },
-                  { n: "2", c: "var(--purple-2)", bg: "var(--purple-tint)", bd: "var(--purple-line)", title: "The model grades it", body: "A+ to C. Green means the numbers are on your side." },
-                  { n: "3", c: "var(--green)", bg: "var(--green-bg)", bd: "rgba(52,211,153,.3)", title: "You get the pick", body: "Tap a game for the full deep dive, or build a slip in two clicks." },
-                ].map((s) => (
-                  <div key={s.n} className="flex gap-2.5 items-start">
-                    <span className="w-[26px] h-[26px] rounded-lg flex items-center justify-center shrink-0 font-spot-mono font-black text-[11px]" style={{ color: s.c, background: s.bg, border: `1px solid ${s.bd}` }}>{s.n}</span>
-                    <div>
-                      <p className="font-spot-sans font-extrabold text-xs" style={{ color: "var(--text)" }}>{s.title}</p>
-                      <p className="mt-0.5 font-spot-sans text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>{s.body}</p>
-                    </div>
-                  </div>
+                    <span className="font-spot-mono font-extrabold text-[12px]" style={{ color: "var(--text-3)" }}>{e.edge}</span>
+                    <span className="rounded-lg px-2 py-1 font-spot-sans font-black text-xs" style={{ color: gradeColor(e.grade), background: `color-mix(in srgb, ${gradeColor(e.grade)} 16%, transparent)` }}>{e.grade}</span>
+                  </Link>
                 ))}
               </div>
-            </div>
-          </div>
+            )}
+          </Panel>
+
+          <Panel className="p-5">
+            <p className="spot-label mb-4" style={{ color: "var(--text-faint)" }}>Season progress</p>
+            {[{ l: "NFL · Regular season", s: `Week ${nfl.weekNum} of 18`, p: nflShown, c: "#a78bfa" }, { l: "NBA · Regular season", s: `~${Math.round(avgGp)} of 82 games`, p: nbaShown, c: "#fb923c" }].map((r) => (
+              <div key={r.l} className="mb-4 last:mb-0">
+                <div className="flex items-baseline justify-between mb-1.5">
+                  <span className="font-spot-sans font-extrabold text-[12px]" style={{ color: "var(--text-2)" }}>{r.l}</span>
+                  <span className="font-spot-mono font-bold text-[11px]" style={{ color: "var(--text-muted)" }}>{r.s} · {r.p}%</span>
+                </div>
+                <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,.07)" }}>
+                  <div className="h-full rounded-full" style={{ width: `${r.p}%`, background: `linear-gradient(90deg, ${r.c}88, ${r.c})`, transition: "width .3s" }} />
+                </div>
+              </div>
+            ))}
+          </Panel>
         </div>
 
-        {/* Saved Slips */}
-        <div className="mt-4">
-          <SavedSlipsPanel />
+        {/* Offseason */}
+        <p className="spot-label mb-2.5" style={{ color: "var(--text-faint)" }}>Offseason</p>
+        <div className="grid gap-3 sm:grid-cols-2 mb-4">
+          {[{ info: mlb, href: "/games", label: "MLB", color: "#f97316", note: "2026 World Series is complete" }, { info: wnba, href: "/wnba", label: "WNBA", color: "#2dd4bf", note: "2026 Finals are complete" }].map((o) => (
+            <Link key={o.label} href={o.href} className="press flex items-center gap-4 rounded-[18px] px-4 py-3.5" style={{ background: "rgba(255,255,255,.025)", border: "1px dashed rgba(255,255,255,.12)" }}>
+              <span className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${o.color}1a`, color: o.color, filter: "saturate(.55)" }}>{o.label === "MLB" ? <svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="8.5" /><path d="M6 6c2 2.5 2 9.5 0 12M18 6c-2 2.5-2 9.5 0 12" /></svg> : <Ball s={18} />}</span>
+              <span className="flex-1 min-w-0">
+                <span className="block font-spot-sans font-extrabold text-[14px]" style={{ color: "var(--text-2)" }}>{o.label} <span className="font-semibold text-[11px]" style={{ color: "var(--text-faint)" }}>· Offseason</span></span>
+                <span className="block font-spot-sans text-[11px]" style={{ color: "var(--text-faint)" }}>{o.note} · {o.info.returns ? `${daysUntil(o.info.returns)} days to ${o.info.returnsLabel?.split("·")[0]?.trim()}` : ""}</span>
+              </span>
+              <span className="font-spot-sans font-bold text-[11px]" style={{ color: "var(--text-muted)" }}>Season recap →</span>
+            </Link>
+          ))}
         </div>
+
+        <SavedSlipsPanel />
       </div>
     </div>
   );

@@ -54,3 +54,7 @@ export function nflTeamName(abbr: string): string {
 export function nflLogoUrl(abbr: string): string {
   return `https://a.espncdn.com/i/teamlogos/nfl/500-dark/${abbr.toLowerCase()}.png`;
 }
+
+export function nflHeadshotUrl(espnId: string): string {
+  return `https://a.espncdn.com/i/headshots/nfl/players/full/${espnId}.png`;
+}

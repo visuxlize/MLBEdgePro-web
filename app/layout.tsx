@@ -9,6 +9,9 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
+  // Edge-to-edge on notched / foldable displays — content respects env(safe-area-inset-*) in globals.css
+  viewportFit: "cover",
+  themeColor: "#06070d",
 };
 
 export const metadata: Metadata = {

@@ -35,46 +35,10 @@ export interface SoccerMatch {
   homeScore?: number;
   awayScore?: number;
   venue?: string;
-}
-
-export interface SoccerMatchEdge {
-  homeXg: number;
-  awayXg: number;
-  homeWinProb: number;
-  drawProb: number;
-  awayWinProb: number;
-  homePpda: number;
-  awayPpda: number;
-  possession: number;
-  edge: number;
-  grade: string;
-  pick: string;
-  pickReason: string;
-}
-
-export type SoccerPropType = "goals" | "shots" | "assists" | "cards";
-export type SoccerPosition = "All" | "ST" | "MF" | "DF" | "GK";
-
-export interface SoccerPlayerProp {
-  id: string;
-  playerName: string;
-  espnPlayerId: string;
-  teamId: string;
-  teamAbbr: string;
-  teamHex: string;
-  teamLogo: string;
-  opponent: string;
-  matchDate: string;
-  position: SoccerPosition;
-  league: SoccerLeagueKey;
-  matchup: string;
-  market: string;
-  propType: SoccerPropType;
-  line: number;
-  modelProj: number;
-  probability: number;
-  side: "OVER" | "YES" | "UNDER";
-  odds: string;
-  grade: string;
-  edge: number;
+  /** Live clock text e.g. "67'" and ESPN's short status ("FT", "HT", "67'") */
+  clock?: string;
+  statusDetail?: string;
+  odds?: { homeML?: string; drawML?: string; awayML?: string; overUnder?: number | null };
+  /** Model win/draw/loss % (from league tables) — filled by getSoccerFixtures */
+  model?: { home: number; draw: number; away: number; xgHome: number; xgAway: number };
 }
