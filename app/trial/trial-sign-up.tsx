@@ -7,22 +7,22 @@ import { setPendingTrial } from "@/components/PendingTrialRedirect";
 
 const CLERK_APPEARANCE = {
   variables: {
-    colorPrimary:         "#FF7828",
-    colorBackground:      "#111622",
-    colorInputBackground: "#191C22",
+    colorPrimary:         "#1a73ff",
+    colorBackground:      "#ffffff",
+    colorInputBackground: "#f3f4f7",
     colorInputText:       "#ffffff",
     colorText:            "#ffffff",
-    colorTextSecondary:   "rgba(255,255,255,0.45)",
+    colorTextSecondary:   "rgba(20,22,27,.6)",
     colorDanger:          "#eb505a",
     borderRadius:         "0.875rem",
   },
   elements: {
-    card:            "shadow-[0_32px_80px_rgba(0,0,0,0.6)] border border-white/[0.07]",
-    headerTitle:     "text-white font-black",
-    headerSubtitle:  "text-white/45",
+    card:            "shadow-[0_32px_80px_rgba(0,0,0,0.6)] border border-[#14161b]/[.09]",
+    headerTitle:     "text-[#14161b] font-black",
+    headerSubtitle:  "text-[#14161b]/56",
     formButtonPrimary:
-      "bg-[#FF7828] hover:bg-[#FFA550] shadow-[0_6px_20px_rgba(255,120,40,0.40)]",
-    footerActionLink: "text-[#FF7828] hover:text-[#FFA550]",
+      "bg-[#1a73ff] hover:bg-[#5a9bff] shadow-[0_6px_20px_rgba(26,115,255,0.40)]",
+    footerActionLink: "text-[#1a73ff] hover:text-[#5a9bff]",
   },
 };
 
@@ -32,9 +32,9 @@ const TIER_META = {
     trial:   "14-day free trial",
     price:   "$4.99/mo after",
     tagline: "Props, Edge Report & matchup analysis",
-    color:   "#FF7828",
-    bg:      "rgba(255,120,40,0.08)",
-    border:  "rgba(255,120,40,0.25)",
+    color:   "#1a73ff",
+    bg:      "rgba(26,115,255,0.08)",
+    border:  "rgba(26,115,255,0.25)",
     Icon:    Zap,
   },
   pro: {
@@ -42,7 +42,7 @@ const TIER_META = {
     trial:   "3-day free trial",
     price:   "$14.99/mo after",
     tagline: "Spray charts, barrel rate & daily picks",
-    color:   "#818CF8",
+    color:   "#6d4fe0",
     bg:      "rgba(129,140,248,0.08)",
     border:  "rgba(129,140,248,0.25)",
     Icon:    Star,
@@ -87,12 +87,12 @@ export function TrialSignUp({ tier }: { tier: "fan" | "pro" }) {
             {meta.label} — {meta.trial}
           </span>
         </div>
-        <h1 className="text-2xl font-black text-white mb-1">Create your account</h1>
-        <p className="text-sm text-white/40">
+        <h1 className="text-2xl font-black text-[#14161b] mb-1">Create your account</h1>
+        <p className="text-sm text-[#14161b]/56">
           {meta.tagline}
-          <span className="mx-2 text-white/20">·</span>
+          <span className="mx-2 text-[#14161b]/38">·</span>
           {meta.price}
-          <span className="mx-2 text-white/20">·</span>
+          <span className="mx-2 text-[#14161b]/38">·</span>
           Card required
         </p>
       </div>
@@ -108,7 +108,7 @@ export function TrialSignUp({ tier }: { tier: "fan" | "pro" }) {
         </ClerkLoaded>
       </div>
 
-      <p className="relative z-10 mt-6 text-xs text-white/20 text-center">
+      <p className="relative z-10 mt-6 text-xs text-[#14161b]/38 text-center">
         Already have an account?{" "}
         <a href="/sign-in" className="transition-colors" style={{ color: meta.color }}>
           Sign in

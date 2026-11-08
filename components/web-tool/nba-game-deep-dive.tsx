@@ -5,12 +5,13 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { LogoPlate, WnbaHeadshot, gradeColor, alpha } from "@/components/web-tool/spotlight";
 import { PaywallGate } from "@/components/web-tool/paywall-gate";
+import { LiveStrip, NbaLiveTracker, type StripItem } from "@/components/web-tool/live-tracker";
 import { Chip, CompareBar, EmptyState, Gauge, LiveBadge, OddsStrip, Panel, ProbSplit, Segmented } from "@/components/web-tool/sport-ui";
 import { nbaHeadshotUrl, nbaLogoUrl, nbaTeamHex, nbaTeamName } from "@/lib/nba/teams";
 import type { NbaBoxPlayer, NbaGameDetail, NbaPlayerProp } from "@/lib/nba/types";
 import type { GameModel } from "@/lib/nba/analytics";
 
-const ACCENT = "#fb923c";
+const ACCENT = "#1a73ff";
 type Tab = "analysis" | "box" | "props";
 
 function WinProbChart({ series, homeHex, home }: { series: number[]; homeHex: string; home: string }) {
@@ -26,7 +27,7 @@ function WinProbChart({ series, homeHex, home }: { series: number[]; homeHex: st
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ width: "100%", height: 120, display: "block" }}>
         <defs><linearGradient id="nbawp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={homeHex} stopOpacity=".35" /><stop offset="1" stopColor={homeHex} stopOpacity="0" /></linearGradient></defs>
-        <line x1="0" y1={H / 2} x2={W} y2={H / 2} stroke="rgba(255,255,255,.14)" strokeDasharray="3 4" />
+        <line x1="0" y1={H / 2} x2={W} y2={H / 2} stroke="var(--wash-3)" strokeDasharray="3 4" />
         <path d={`${path} L${W},${H} L0,${H} Z`} fill="url(#nbawp)" />
         <path d={path} fill="none" stroke={homeHex} strokeWidth="2.4" strokeLinejoin="round" style={{ strokeDasharray: 1200, strokeDashoffset: 1200, animation: "draw 1.8s ease .1s forwards" }} />
       </svg>
@@ -93,8 +94,8 @@ function PropsList({ props }: { props: NbaPlayerProp[] }) {
 }
 
 export function NbaGameDeepDive({
-  detail, model, props, awayRank, homeRank,
-}: { detail: NbaGameDetail; model: GameModel; props: NbaPlayerProp[]; awayRank?: number; homeRank?: number }) {
+  detail, model, props, awayRank, homeRank, strip = [],
+}: { detail: NbaGameDetail; model: GameModel; props: NbaPlayerProp[]; awayRank?: number; homeRank?: number; strip?: StripItem[] }) {
   const { game: g } = detail;
   const [tab, setTab] = useState<Tab>("analysis");
   const awayHex = nbaTeamHex(g.away), homeHex = nbaTeamHex(g.home);
@@ -111,15 +112,17 @@ export function NbaGameDeepDive({
       <div className="max-w-screen-xl mx-auto page-pad py-5 sm:py-6">
         <Link href="/nba" className="press inline-flex items-center gap-1.5 mb-4 font-spot-sans font-bold text-xs" style={{ color: "var(--text-muted)" }}>← Back to NBA</Link>
 
+        <LiveStrip items={strip} activeId={g.id} title="Live in the NBA" />
+
         {/* Hero */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="relative rounded-[24px] overflow-hidden mb-4"
           style={{ border: "1px solid var(--hairline)", boxShadow: "var(--shadow-panel)", background: `linear-gradient(120deg, ${alpha(awayHex, "38")}, var(--panel) 52%, ${alpha(homeHex, "38")})` }}>
           <div className="relative p-5 sm:p-7">
             <div className="flex items-center justify-between gap-2 flex-wrap mb-5">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-spot-mono font-extrabold text-[10px] tracking-[.08em]" style={{ color: "#fdba74" }}>{g.dateLabel} · {g.timeLabel} ET</span>
+                <span className="font-spot-mono font-extrabold text-[10px] tracking-[.08em]" style={{ color: "#c2540a" }}>{g.dateLabel} · {g.timeLabel} ET</span>
                 <span className="font-spot-sans text-[10px]" style={{ color: "var(--text-3)" }}>{g.venue}</span>
-                {g.isCup && <Chip color="#fbbf24">NBA Cup</Chip>}
+                {g.isCup && <Chip color="#d49a06">NBA Cup</Chip>}
               </div>
               {live ? <LiveBadge label={g.statusDetail} /> : final && <Chip color="#94a3b8">Final</Chip>}
             </div>
@@ -159,13 +162,15 @@ export function NbaGameDeepDive({
               <div className="flex flex-col gap-3">
                 <ProbSplit awayLabel={g.away} homeLabel={g.home} homePct={model.homeWinProb} awayHex={awayHex} homeHex={homeHex} />
                 <div className="hidden sm:flex items-center justify-between rounded-xl px-3.5 py-2.5" style={{ background: "var(--purple-tint)", border: "1px solid var(--purple-line)" }}>
-                  <span className="font-spot-sans font-extrabold text-[10px] uppercase tracking-[.12em]" style={{ color: "var(--purple-2)" }}>◆ AI Prediction</span>
+                  <span className="font-spot-sans font-extrabold text-[10px] uppercase tracking-[.12em]" style={{ color: "var(--purple-2)" }}>◆ Model Pick</span>
                   <span className="font-spot-sans font-black text-[13px]" style={{ color: "var(--purple-soft)" }}>{fav} ML · {modelFavText}</span>
                 </div>
               </div>
             </div>
           </div>
         </motion.div>
+
+        {detail.live && g.status !== "pre" && <NbaLiveTracker detail={detail} awayHex={awayHex} homeHex={homeHex} />}
 
         <div className="mb-4"><Segmented id="nba-game-tab" accent={ACCENT} value={tab} onChange={setTab} options={[{ key: "analysis", label: "Analysis" }, { key: "box", label: "Box score" }, { key: "props", label: "Player props", badge: String(props.length) }]} /></div>
 
@@ -181,7 +186,7 @@ export function NbaGameDeepDive({
                     { label: "Total", value: g.odds.overUnder ? `O/U ${g.odds.overUnder}` : "—" },
                     { label: "Moneyline", value: `${g.away} ${g.odds.awayML ?? "—"}`, sub: `${g.home} ${g.odds.homeML ?? "—"}` },
                   ]} />
-                  <div className="mt-3 rounded-xl p-3.5" style={{ background: "rgba(255,255,255,.03)", border: "1px solid var(--hairline)" }}>
+                  <div className="mt-3 rounded-xl p-3.5" style={{ background: "var(--wash-1)", border: "1px solid var(--hairline)" }}>
                     <div className="grid grid-cols-3 gap-2 text-center">
                       <div><p className="font-spot-mono font-black text-[17px]" style={{ color: "var(--text)" }}>{modelFavText.replace(" by ", " -")}</p><p className="font-spot-sans text-[9px] uppercase tracking-[.1em]" style={{ color: "var(--text-faint)" }}>Model spread</p></div>
                       <div><p className="font-spot-mono font-black text-[17px]" style={{ color: "var(--text)" }}>{model.projTotal}</p><p className="font-spot-sans text-[9px] uppercase tracking-[.1em]" style={{ color: "var(--text-faint)" }}>Proj. total</p></div>
@@ -190,7 +195,7 @@ export function NbaGameDeepDive({
                     {g.odds.overUnder && (
                       <p className="mt-3 font-spot-sans text-[12px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
                         Model total of <b style={{ color: "var(--text-2)" }}>{model.projTotal}</b> sits {Math.abs(model.projTotal - g.odds.overUnder).toFixed(1)} pts {model.projTotal >= g.odds.overUnder ? "above" : "below"} the market —
-                        a lean to the <b style={{ color: model.projTotal >= g.odds.overUnder ? "var(--green)" : "#fda4a4" }}>{model.projTotal >= g.odds.overUnder ? "over" : "under"}</b>.
+                        a lean to the <b style={{ color: model.projTotal >= g.odds.overUnder ? "var(--green)" : "#d6303d" }}>{model.projTotal >= g.odds.overUnder ? "over" : "under"}</b>.
                       </p>
                     )}
                   </div>
@@ -219,7 +224,7 @@ export function NbaGameDeepDive({
                 <p className="spot-label mb-3" style={{ color: "var(--text-faint)" }}>Top performers</p>
                 <div className="grid gap-2.5 sm:grid-cols-2">
                   {detail.leaders.map((l) => (
-                    <div key={l.team + l.category} className="flex items-center gap-3 rounded-xl px-3 py-2.5" style={{ background: "rgba(255,255,255,.03)", border: "1px solid var(--hairline)" }}>
+                    <div key={l.team + l.category} className="flex items-center gap-3 rounded-xl px-3 py-2.5" style={{ background: "var(--wash-1)", border: "1px solid var(--hairline)" }}>
                       <WnbaHeadshot hex={nbaTeamHex(l.team)} src={nbaHeadshotUrl(l.espnId)} name={l.player} size={50} radius={14} />
                       <div className="min-w-0">
                         <p className="font-spot-sans font-extrabold text-[9px] uppercase tracking-[.1em]" style={{ color: nbaTeamHex(l.team) }}>{l.team} · {l.category}</p>
@@ -242,7 +247,7 @@ export function NbaGameDeepDive({
                       <div key={i} className="flex items-center gap-2.5">
                         <LogoPlate hex={nbaTeamHex(x.team)} src={nbaLogoUrl(x.team)} code={x.team} size={22} radius={6} variant="clean" />
                         <span className="flex-1 font-spot-sans font-bold text-[12px] truncate" style={{ color: "var(--text-2)" }}>{x.player}</span>
-                        <Chip color={/out/i.test(x.status) ? "#f87171" : "#fbbf24"}>{x.status}</Chip>
+                        <Chip color={/out/i.test(x.status) ? "#e5484d" : "#d49a06"}>{x.status}</Chip>
                       </div>
                     ))}
                   </div>

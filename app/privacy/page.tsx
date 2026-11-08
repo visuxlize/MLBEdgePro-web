@@ -7,7 +7,7 @@ const VERSION = "1.2";
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="mb-8">
-      <h2 className="text-[#FF7828] text-xs font-bold tracking-[0.08em] uppercase mb-3">{title}</h2>
+      <h2 className="text-[#1a73ff] text-xs font-bold tracking-[0.08em] uppercase mb-3">{title}</h2>
       {children}
     </div>
   );
@@ -15,50 +15,50 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function Body({ children }: { children: string }) {
   return (
-    <p className="text-white/55 text-sm leading-relaxed whitespace-pre-line">{children}</p>
+    <p className="text-[#14161b]/64 text-sm leading-relaxed whitespace-pre-line">{children}</p>
   );
 }
 
 function Bullet({ children }: { children: string }) {
   return (
     <div className="flex gap-3 mb-2">
-      <span className="text-[#FF7828] text-sm mt-px shrink-0">•</span>
-      <p className="text-white/55 text-sm leading-relaxed">{children}</p>
+      <span className="text-[#1a73ff] text-sm mt-px shrink-0">•</span>
+      <p className="text-[#14161b]/64 text-sm leading-relaxed">{children}</p>
     </div>
   );
 }
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-[#0A0E14]">
+    <div className="min-h-screen bg-[#eceef2]">
       {/* Ambient glow */}
-      <div className="pointer-events-none fixed top-0 right-0 w-[400px] h-[400px] rounded-full bg-[#FF7828]/[0.05] blur-[120px]" />
+      <div className="pointer-events-none fixed top-0 right-0 w-[400px] h-[400px] rounded-full bg-[#1a73ff]/[0.05] blur-[120px]" />
 
       {/* Header */}
-      <div className="sticky top-0 z-20 border-b border-white/[0.06] bg-[#0A0E14]/90 backdrop-blur-md">
+      <div className="sticky top-0 z-20 border-b border-[#14161b]/[.09] bg-[#eceef2]/90 backdrop-blur-md">
         <div className="max-w-2xl mx-auto px-5 py-4 flex items-center gap-4">
           <Link
             href="/"
-            className="flex items-center justify-center w-9 h-9 rounded-xl bg-white/[0.06] hover:bg-white/[0.10] transition-colors shrink-0"
+            className="flex items-center justify-center w-9 h-9 rounded-xl bg-[#14161b]/[0.06] hover:bg-[#14161b]/[0.10] transition-colors shrink-0"
           >
-            <ArrowLeft size={16} className="text-white/60" />
+            <ArrowLeft size={16} className="text-[#14161b]/74" />
           </Link>
           <div>
-            <p className="text-[10px] font-bold text-white/30 tracking-[0.12em] uppercase">Legal</p>
-            <h1 className="text-lg font-black text-white tracking-tight leading-tight">Privacy Policy</h1>
+            <p className="text-[10px] font-bold text-[#14161b]/46 tracking-[0.12em] uppercase">Legal</p>
+            <h1 className="text-lg font-black text-[#14161b] tracking-tight leading-tight">Privacy Policy</h1>
           </div>
         </div>
       </div>
 
       <div className="max-w-2xl mx-auto px-5 py-10 relative z-10">
         {/* Badge */}
-        <div className="inline-flex items-center gap-2 rounded-full border border-[#FF7828]/20 bg-[#FF7828]/[0.08] px-4 py-1.5 mb-8">
-          <Zap size={11} className="text-[#FF7828]" strokeWidth={2.5} />
-          <span className="text-xs font-bold text-[#FF7828] tracking-wider uppercase">MLB Edge Pro</span>
+        <div className="inline-flex items-center gap-2 rounded-full border border-[#1a73ff]/20 bg-[#1a73ff]/[0.08] px-4 py-1.5 mb-8">
+          <Zap size={11} className="text-[#1a73ff]" strokeWidth={2.5} />
+          <span className="text-xs font-bold text-[#1a73ff] tracking-wider uppercase">MLB Edge Pro</span>
         </div>
 
         {/* Effective date */}
-        <div className="rounded-xl border border-[#FF7828]/15 bg-[#FF7828]/[0.06] px-4 py-3 mb-10 text-sm text-white/45">
+        <div className="rounded-xl border border-[#1a73ff]/15 bg-[#1a73ff]/[0.06] px-4 py-3 mb-10 text-sm text-[#14161b]/56">
           Last updated: {LAST_UPDATED}
         </div>
 
@@ -146,15 +146,15 @@ export default function PrivacyPage() {
         </Section>
 
         {/* Footer */}
-        <div className="mt-8 pt-6 border-t border-white/[0.06] text-center">
-          <p className="text-white/20 text-xs font-semibold">MLB Edge Pro — Privacy Policy</p>
-          <p className="text-white/15 text-xs mt-1">Version {VERSION}</p>
+        <div className="mt-8 pt-6 border-t border-[#14161b]/[.09] text-center">
+          <p className="text-[#14161b]/38 text-xs font-semibold">MLB Edge Pro — Privacy Policy</p>
+          <p className="text-[#14161b]/38 text-xs mt-1">Version {VERSION}</p>
           <div className="flex items-center justify-center gap-4 mt-4">
-            <Link href="/terms" className="text-xs text-white/30 hover:text-white transition-colors">Terms of Service</Link>
-            <span className="text-white/15">·</span>
-            <Link href="/responsible-gambling" className="text-xs text-white/30 hover:text-white transition-colors">Responsible Gambling</Link>
-            <span className="text-white/15">·</span>
-            <Link href="/" className="text-xs text-white/30 hover:text-white transition-colors">Back to Home</Link>
+            <Link href="/terms" className="text-xs text-[#14161b]/46 hover:text-[#14161b] transition-colors">Terms of Service</Link>
+            <span className="text-[#14161b]/38">·</span>
+            <Link href="/responsible-gambling" className="text-xs text-[#14161b]/46 hover:text-[#14161b] transition-colors">Responsible Gambling</Link>
+            <span className="text-[#14161b]/38">·</span>
+            <Link href="/" className="text-xs text-[#14161b]/46 hover:text-[#14161b] transition-colors">Back to Home</Link>
           </div>
         </div>
       </div>

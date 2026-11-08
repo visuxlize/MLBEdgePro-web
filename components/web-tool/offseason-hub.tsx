@@ -10,14 +10,14 @@ interface RecapRow { abbr: string; name: string; logo: string | null; wins: numb
 interface RecapGroup { name: string; rows: RecapRow[] }
 
 const THEME: Record<"mlb" | "wnba", { accent: string; soft: string; title: string; phases: typeof MLB_2026_PHASES; subtitle: string; returnWord: string; emoji: string }> = {
-  mlb:  { accent: "#f97316", soft: "#fdba74", title: "MLB 2026", phases: MLB_2026_PHASES,  subtitle: "Regular season through the World Series", returnWord: "Opening Day", emoji: "⚾" },
-  wnba: { accent: "#2dd4bf", soft: "#5eead4", title: "WNBA 2026", phases: WNBA_2026_PHASES, subtitle: "Regular season through the Finals", returnWord: "Tip-off", emoji: "🏀" },
+  mlb:  { accent: "#ea6a0a", soft: "#c2540a", title: "MLB 2026", phases: MLB_2026_PHASES,  subtitle: "Regular season through the World Series", returnWord: "Opening Day", emoji: "⚾" },
+  wnba: { accent: "#0f9d8e", soft: "#0f8f80", title: "WNBA 2026", phases: WNBA_2026_PHASES, subtitle: "Regular season through the Finals", returnWord: "Tip-off", emoji: "🏀" },
 };
 
 const ACTIVE = [
-  { href: "/nba", label: "NBA", color: "#fb923c", body: "Live scores, standings, Emirates NBA Cup & props" },
-  { href: "/nfl", label: "NFL", color: "#a78bfa", body: "All 18 weeks, standings, players & game props" },
-  { href: "/soccer", label: "Soccer", color: "#34d399", body: "10 leagues — match centre with AI insights" },
+  { href: "/nba", label: "NBA", color: "#ea6a0a", body: "Live scores, standings, Emirates NBA Cup & props" },
+  { href: "/nfl", label: "NFL", color: "#6d4fe0", body: "All 18 weeks, standings, players & game props" },
+  { href: "/soccer", label: "Soccer", color: "#12a150", body: "10 leagues — match centre with AI insights" },
 ];
 
 export function OffseasonHub({ sport }: { sport: "mlb" | "wnba" }) {

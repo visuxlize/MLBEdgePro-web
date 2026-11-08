@@ -81,3 +81,20 @@ export function poissonModel(home: TableRow | undefined, away: TableRow | undefi
     scorelines: grid.sort((x, y) => y.p - x.p).slice(0, 4).map((g) => ({ score: g.score, p: Math.round((g.p / tot) * 1000) / 10 })),
   };
 }
+
+/** In-play outcome probabilities: remaining expected goals scale with the time left. */
+export function liveOutcome(xgHome: number, xgAway: number, homeGoals: number, awayGoals: number, minute: number) {
+  const r = Math.max(0.03, (90 - Math.min(90, minute)) / 90);
+  const lh = xgHome * r, la = xgAway * r;
+  let h = 0, d = 0, a = 0;
+  for (let i = 0; i <= 8; i++) {
+    for (let j = 0; j <= 8; j++) {
+      const p = pmf(i, lh) * pmf(j, la);
+      const diff = homeGoals + i - (awayGoals + j);
+      if (diff > 0) h += p; else if (diff === 0) d += p; else a += p;
+    }
+  }
+  const t = h + d + a;
+  const hp = Math.round((h / t) * 100), dp = Math.round((d / t) * 100);
+  return { home: hp, draw: dp, away: 100 - hp - dp };
+}

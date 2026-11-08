@@ -8,7 +8,7 @@ import { Chip, EmptyState, Gauge, Segmented, SportHeader } from "@/components/we
 import { nbaHeadshotUrl, nbaLogoUrl, nbaShortName, nbaTeamHex } from "@/lib/nba/teams";
 import type { NbaGame, NbaPlayerProp, NbaPropMarket } from "@/lib/nba/types";
 
-const ACCENT = "#fb923c";
+const ACCENT = "#1a73ff";
 type MarketFilter = "All" | NbaPropMarket;
 type SideFilter = "all" | "over" | "under";
 
@@ -20,16 +20,16 @@ function NumberLine({ p }: { p: NbaPlayerProp }) {
   const width = Math.max(4, Math.abs(projPct - linePct));
   const green = p.proj >= p.line;
   return (
-    <div className="relative h-10 rounded-xl" style={{ background: "rgba(255,255,255,.05)", border: "1px solid var(--hairline)" }}>
-      <div className="absolute top-0 bottom-0 z-[2]" style={{ left: `${linePct}%`, width: 2, background: "rgba(255,255,255,.55)" }} />
+    <div className="relative h-10 rounded-xl" style={{ background: "var(--wash-2)", border: "1px solid var(--hairline)" }}>
+      <div className="absolute top-0 bottom-0 z-[2]" style={{ left: `${linePct}%`, width: 2, background: "rgba(20,22,27,.6)" }} />
       <div className="absolute z-[3] whitespace-nowrap rounded px-1.5 py-0.5 font-spot-mono font-extrabold text-[9px]"
-        style={{ top: -9, left: `${linePct}%`, transform: "translateX(-50%)", color: "var(--text-2)", background: "var(--panel)", border: "1px solid rgba(255,255,255,.12)" }}>
+        style={{ top: -9, left: `${linePct}%`, transform: "translateX(-50%)", color: "var(--text-2)", background: "var(--panel)", border: "1px solid var(--wash-3)" }}>
         Line {p.line}
       </div>
       <div className="absolute flex items-center justify-end rounded-lg overflow-hidden"
         style={{
           top: 6, bottom: 6, left: `${left}%`, width: `${width}%`, minWidth: 34,
-          background: green ? "var(--green)" : "#f87171",
+          background: green ? "var(--green)" : "#e5484d",
           boxShadow: `0 0 16px ${green ? "rgba(52,211,153,.4)" : "rgba(248,113,113,.4)"}`,
           paddingRight: 7,
           ["--bar-target-width" as string]: `${width}%`,
@@ -37,7 +37,7 @@ function NumberLine({ p }: { p: NbaPlayerProp }) {
         }}>
         <span className="font-spot-mono font-extrabold text-[10.5px]" style={{ color: "#06070d" }}>{p.proj}</span>
       </div>
-      <span className="absolute font-spot-sans font-extrabold text-[8px] uppercase tracking-[.1em]" style={{ bottom: 4, left: 8, color: "rgba(255,255,255,.3)" }}>Model proj.</span>
+      <span className="absolute font-spot-sans font-extrabold text-[8px] uppercase tracking-[.1em]" style={{ bottom: 4, left: 8, color: "rgba(20,22,27,.38)" }}>Model proj.</span>
     </div>
   );
 }
@@ -58,9 +58,9 @@ function PropCard({ p, inSlip, onToggle }: { p: NbaPlayerProp; inSlip: boolean; 
           <p className="font-spot-sans font-black text-[16.5px] leading-tight truncate" style={{ color: "var(--text)" }}>{p.player}</p>
           <p className="mt-1 font-spot-sans font-semibold text-[11px]" style={{ color: "var(--text-3)" }}>{p.team} {p.home ? "vs" : "@"} {p.opp} · {p.tipLabel}</p>
           <div className="mt-1.5 flex gap-1.5 flex-wrap">
-            {p.source === "draftkings" ? <Chip color="#34d399">DraftKings line</Chip> : <Chip color="#94a3b8">Reference line</Chip>}
-            {p.openLine != null && p.openLine !== p.line && <Chip color={p.line > p.openLine ? "#fbbf24" : "#60a5fa"}>{p.line > p.openLine ? "▲" : "▼"} {p.openLine} → {p.line}</Chip>}
-            <Chip color={p.oppFactor >= 1.02 ? "#34d399" : p.oppFactor <= 0.98 ? "#f87171" : "#94a3b8"}>
+            {p.source === "draftkings" ? <Chip color="#12a150">DraftKings line</Chip> : <Chip color="#94a3b8">Reference line</Chip>}
+            {p.openLine != null && p.openLine !== p.line && <Chip color={p.line > p.openLine ? "#d49a06" : "#60a5fa"}>{p.line > p.openLine ? "▲" : "▼"} {p.openLine} → {p.line}</Chip>}
+            <Chip color={p.oppFactor >= 1.02 ? "#12a150" : p.oppFactor <= 0.98 ? "#e5484d" : "#94a3b8"}>
               {p.oppFactor >= 1.02 ? "Boosted spot" : p.oppFactor <= 0.98 ? "Tough spot" : "Neutral spot"} ×{p.oppFactor.toFixed(2)}
             </Chip>
           </div>
@@ -78,7 +78,7 @@ function PropCard({ p, inSlip, onToggle }: { p: NbaPlayerProp; inSlip: boolean; 
         <div className="flex items-center justify-between gap-2.5">
           <div className="flex items-center gap-2">
             <span className="rounded-lg px-2.5 py-1 font-spot-sans font-extrabold text-[11px]"
-              style={p.over ? { color: "var(--green)", background: "var(--green-bg)", border: "1px solid rgba(52,211,153,.3)" } : { color: "#fda4a4", background: "var(--red-bg)", border: "1px solid rgba(239,68,68,.3)" }}>
+              style={p.over ? { color: "var(--green)", background: "var(--green-bg)", border: "1px solid rgba(52,211,153,.3)" } : { color: "#d6303d", background: "var(--red-bg)", border: "1px solid rgba(239,68,68,.3)" }}>
               {p.over ? "OVER" : "UNDER"} {p.line}
             </span>
             <span className="font-spot-mono font-bold text-[11px]" style={{ color: "var(--text-muted)" }}>{p.prob}% <span style={{ color: p.prob >= p.baseProb ? "var(--green)" : "var(--red-soft)" }}>{p.prob - p.baseProb >= 0 ? "+" : ""}{p.prob - p.baseProb}</span> {p.source === "draftkings" ? "vs fair" : "vs base"}{p.price != null ? ` · DK ${p.price > 0 ? "+" : ""}${p.price}` : ""}</span>
@@ -102,12 +102,12 @@ function FeaturedStrip({ top }: { top: NbaPlayerProp[] }) {
           <motion.div key={p.id} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.06 }}
             className="relative overflow-hidden rounded-[22px] p-4 w-[268px] sm:w-[300px] flex items-center gap-3"
             style={{ background: `linear-gradient(135deg, ${alpha(hex, "30")}, var(--panel) 72%)`, border: `1px solid ${alpha(hex, "55")}` }}>
-            <span className="absolute top-2.5 right-3 font-spot-mono font-black text-[11px]" style={{ color: "rgba(255,255,255,.25)" }}>#{i + 1}</span>
+            <span className="absolute top-2.5 right-3 font-spot-mono font-black text-[11px]" style={{ color: "rgba(20,22,27,.38)" }}>#{i + 1}</span>
             <WnbaHeadshot hex={hex} src={nbaHeadshotUrl(p.espnId)} name={p.player} size={84} radius={20} />
             <div className="min-w-0">
               <p className="font-spot-sans font-black text-[15px] leading-tight truncate" style={{ color: "var(--text)" }}>{p.player}</p>
               <p className="font-spot-sans text-[10.5px]" style={{ color: "var(--text-muted)" }}>{p.team} {p.home ? "vs" : "@"} {p.opp}</p>
-              <p className="mt-1.5 font-spot-sans font-black text-[14px]" style={{ color: p.over ? "var(--green)" : "#fda4a4" }}>{p.over ? "Over" : "Under"} {p.line} {({ Points: "PTS", Rebounds: "REB", Assists: "AST", "3-Pointers": "3PM" } as Record<string, string>)[p.market] ?? p.market}</p>
+              <p className="mt-1.5 font-spot-sans font-black text-[14px]" style={{ color: p.over ? "var(--green)" : "#d6303d" }}>{p.over ? "Over" : "Under"} {p.line} {({ Points: "PTS", Rebounds: "REB", Assists: "AST", "3-Pointers": "3PM" } as Record<string, string>)[p.market] ?? p.market}</p>
               <p className="font-spot-mono font-bold text-[10.5px]" style={{ color: "var(--text-3)" }}>proj {p.proj} · {p.prob}% ({p.prob - p.baseProb >= 0 ? "+" : ""}{p.prob - p.baseProb}) · <span style={{ color: gradeColor(p.grade) }}>{p.grade}</span></p>
             </div>
           </motion.div>
@@ -160,7 +160,7 @@ export function NbaPropsTool({ props, games, dayLabel, liveLines }: { props: Nba
               <div className="flex gap-3 flex-wrap items-center">
                 <Segmented id="nba-market" accent={ACCENT} value={market} onChange={setMarket}
                   options={[{ key: "All", label: "All" }, { key: "Points", label: "Points" }, { key: "Rebounds", label: "Rebounds" }, { key: "Assists", label: "Assists" }, { key: "3-Pointers", label: "3-Pointers" }]} />
-                <Segmented id="nba-side" accent="#a78bfa" value={side} onChange={setSide}
+                <Segmented id="nba-side" accent="#6d4fe0" value={side} onChange={setSide}
                   options={[{ key: "all", label: "Any side" }, { key: "over", label: "Over" }, { key: "under", label: "Under" }]} />
               </div>
               <div className="snap-row -mx-4 px-4 sm:mx-0 sm:px-0">
@@ -184,7 +184,7 @@ export function NbaPropsTool({ props, games, dayLabel, liveLines }: { props: Nba
             {filtered.length > limit && (
               <div className="mt-5 flex justify-center">
                 <button onClick={() => setLimit((l) => l + 18)} className="press rounded-xl px-5 py-2.5 font-spot-sans font-extrabold text-[12px]"
-                  style={{ color: ACCENT, background: "rgba(251,146,60,.1)", border: "1px solid rgba(251,146,60,.28)" }}>Show more ({filtered.length - limit})</button>
+                  style={{ color: ACCENT, background: "rgba(26,115,255,.1)", border: "1px solid rgba(26,115,255,.28)" }}>Show more ({filtered.length - limit})</button>
               </div>
             )}
           </>

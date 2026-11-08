@@ -3,7 +3,7 @@ import { gradeFromEdge, modelNflGame, nflPower, buildNflProps } from "./analytic
 import { NFL_TEAMS } from "./teams";
 import { getEventPropLines } from "@/lib/props/dk-lines";
 import type {
-  NflGameDetail, NflLeaderLine, NflOdds, NflPlayerSeason, NflPropPlay, NflSeasonGame, NflStandingRow, NflTeamStatRow,
+  NflGameDetail, NflLeaderLine, NflLive, NflOdds, NflPlayLine, NflPlayerSeason, NflPropPlay, NflSeasonGame, NflStandingRow, NflTeamStatRow,
 } from "./types";
 
 const SITE = "https://site.api.espn.com/apis/site/v2/sports/football/nfl";
@@ -270,6 +270,61 @@ const TEAM_ROWS: { label: string; match: RegExp; invert?: boolean }[] = [
   { label: "Yards allowed", match: /^Yards Allowed$/i, invert: true },
 ];
 
+function buildNflLive(data: any, game: NflSeasonGame): NflLive | undefined {
+  const comp = data.header?.competitions?.[0];
+  const idToAbbr = new Map<string, string>(
+    (comp?.competitors ?? []).map((c: any) => [String(c.team?.id), c.team?.abbreviation as string]),
+  );
+  const cur = data.drives?.current;
+  const prev: any[] = data.drives?.previous ?? [];
+  const toLine = (p: any, team?: string): NflPlayLine => ({
+    id: String(p.id), period: p.period?.number ?? 0, clock: p.clock?.displayValue ?? "", text: p.text ?? p.shortText ?? "",
+    type: p.type?.text ?? "", scoring: !!p.scoringPlay, yards: typeof p.statYardage === "number" ? p.statYardage : undefined,
+    team: p.start?.team?.id ? idToAbbr.get(String(p.start.team.id)) : team,
+  });
+  const allPlays: NflPlayLine[] = [];
+  for (const d of [...prev.slice(-2), ...(cur ? [cur] : [])]) {
+    const abbr = d.team?.abbreviation as string | undefined;
+    for (const p of d.plays ?? []) allPlays.push(toLine(p, abbr));
+  }
+  const curPlays: any[] = cur?.plays ?? [];
+  const lastRaw = curPlays[curPlays.length - 1] ?? prev[prev.length - 1]?.plays?.slice(-1)[0];
+  const possession: string | null = cur?.team?.abbreviation ?? null;
+
+  let ballX = 50, yte: number | undefined, downText = "", distance: number | undefined, redZone = false;
+  const end = lastRaw?.end;
+  if (end && typeof end.yardsToEndzone === "number") {
+    const y: number = end.yardsToEndzone;
+    yte = y;
+    downText = end.downDistanceText ?? "";
+    distance = end.distance;
+    ballX = possession === game.away ? 100 - y : y;
+    redZone = y <= 20;
+  }
+  let driveStartX: number | undefined;
+  const start = curPlays[0]?.start;
+  if (start && typeof start.yardsToEndzone === "number") driveStartX = possession === game.away ? 100 - start.yardsToEndzone : start.yardsToEndzone;
+
+  const comps: any[] = comp?.competitors ?? [];
+  const lines = (side: string) => (comps.find((c) => c.homeAway === side)?.linescores ?? []).map((l: any) => String(l.displayValue ?? "0"));
+  const scoring = (data.scoringPlays ?? []).map((sp: any) => ({
+    period: sp.period?.number ?? 0, clock: sp.clock?.displayValue ?? "", team: sp.team?.abbreviation ?? idToAbbr.get(String(sp.team?.id)) ?? "",
+    text: sp.text ?? sp.shortText ?? "", away: sp.awayScore ?? 0, home: sp.homeScore ?? 0,
+  }));
+  const dm = typeof cur?.description === "string" ? cur.description.match(/(\d+) plays?, (-?\d+) yards?, ([\d:]+)/) : null;
+
+  return {
+    period: comp?.status?.period ?? 0, clock: comp?.status?.displayClock ?? "",
+    possession, downText, distance, yardsToEndzone: yte, ballX, driveStartX,
+    drive: cur ? { team: possession ?? "", plays: dm ? +dm[1] : cur.offensivePlays ?? 0, yards: dm ? +dm[2] : cur.yards ?? 0, time: dm ? dm[3] : cur.timeElapsed?.displayValue ?? "", description: cur.description ?? "" } : undefined,
+    redZone,
+    lastPlay: allPlays[allPlays.length - 1],
+    recent: allPlays.slice(-10).reverse(),
+    quarters: { away: lines("away"), home: lines("home") },
+    scoring,
+  };
+}
+
 export async function getNflGameDetail(eventId: string): Promise<NflGameDetail | null> {
   const [data, standings] = await Promise.all([getJson(`${SITE}/summary?event=${eventId}`, 120), getNflStandings()]);
   if (!data) return null;
@@ -314,6 +369,7 @@ export async function getNflGameDetail(eventId: string): Promise<NflGameDetail |
   const pred = data.predictor?.homeTeam?.gameProjection;
 
   return {
+    live: game.status !== "pre" ? buildNflLive(data, game) : undefined,
     game, teamStats, injuries, winProbSeries,
     predictorHome: pred != null ? Math.round(parseFloat(pred)) : undefined,
     venueImage: data.gameInfo?.venue?.images?.[0]?.href,

@@ -158,6 +158,23 @@ export interface NbaBoxPlayer {
   pm: string;
 }
 
+export interface NbaShot { x: number; y: number; made: boolean; side: "away" | "home"; pts: number; player: string; period: number; clock: string }
+export interface NbaPlayLine { id: string; period: number; clock: string; text: string; scoring: boolean; side?: "away" | "home"; score?: string }
+
+export interface NbaLive {
+  period: number;
+  clock: string;
+  quarters: { away: string[]; home: string[] };
+  recent: NbaPlayLine[];
+  shots: NbaShot[];
+  /** Current scoring run (unanswered points) */
+  run?: { side: "away" | "home"; pts: number; since: string };
+  /** Score margin (away − home) after each scoring play */
+  margin: number[];
+  leadChanges: number;
+  largestLead: { away: number; home: number };
+}
+
 export interface NbaGameDetail {
   game: NbaGame;
   teamStats: NbaTeamStatRow[];
@@ -166,4 +183,5 @@ export interface NbaGameDetail {
   winProbSeries: number[];
   injuries: { team: string; player: string; status: string }[];
   recap?: string;
+  live?: NbaLive;
 }

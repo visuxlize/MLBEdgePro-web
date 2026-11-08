@@ -2,481 +2,178 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { CircleDot, Flame, Zap, TrendingUp, Cloud, BarChart3, Lock, Target, Activity, Radio, ClipboardList, Sparkles, ArrowRight } from "lucide-react";
+import { Activity, ArrowRight, BarChart3, CircleDot, LineChart, ListOrdered, Radio, Target, Trophy, Zap } from "lucide-react";
+import { useState } from "react";
 import { Container } from "./container";
+import { NbaDemo, NflDemo, PropsDemo, SoccerDemo, StandingsDemo } from "./demos";
 
-const features = [
+const SPORTS = [
   {
-    icon: CircleDot,
-    title: "Today's Games",
-    description: "Full MLB schedule with live scores, game status, starting pitchers, and venue information at a glance.",
-    tier: "free",
-    size: "sm",
+    key: "NBA", color: "#ea6a0a", tint: "rgba(234,106,10,.09)", icon: CircleDot,
+    title: "NBA", blurb: "Live shot charts, standings and the Emirates NBA Cup.",
+    points: ["Live shot chart, scoring runs & lead tracker", "Standings, East/West & Edge Power rankings", "Emirates NBA Cup groups and who's advancing", "Real DraftKings points, rebounds, assists & threes"],
   },
   {
-    icon: TrendingUp,
-    title: "Win Predictions",
-    description: "Machine-learning win probability for every game — home vs away, updated as lineups are confirmed.",
-    tier: "free",
-    size: "sm",
+    key: "NFL", color: "#6d4fe0", tint: "rgba(109,79,224,.09)", icon: Activity,
+    title: "NFL", blurb: "All 18 weeks, scores, placement and game props.",
+    points: ["Live drive tracker with field position & first-down line", "Every week, every score, with seeding on each card", "Player leaders with this week's matchup grade", "DraftKings game props with open-to-current movement"],
   },
   {
-    icon: Cloud,
-    title: "Weather Impact",
-    description: "Real-time stadium weather affecting fly balls, pitching, and run totals for every outdoor park.",
-    tier: "free",
-    size: "sm",
-  },
-  {
-    icon: Flame,
-    title: "Prop Builder",
-    description: "HR, 1+ Hit, 2+ Hits, and K props for every confirmed starter matchup. Build multi-leg slips, set wager amounts, and track results.",
-    tier: "fan",
-    size: "lg",
-  },
-  {
-    icon: Zap,
-    title: "Edge Report",
-    description: "AI-ranked value bets across the full slate. Identifies line discrepancies and pitcher-batter edges — updated as lineups confirm.",
-    tier: "fan",
-    size: "lg",
-  },
-  {
-    icon: BarChart3,
-    title: "Full Matchup Analysis",
-    description: "Pitcher ERA, WHIP, K/9 vs opposing lineup OPS and hot/cold streaks. Every edge surfaced.",
-    tier: "fan",
-    size: "sm",
-  },
-  {
-    icon: Target,
-    title: "HR Deep Dive",
-    description: "Spray charts, wall clearance, barrel rate, and exit velocity — know why a ball leaves the park, not just if it might.",
-    tier: "superPro",
-    size: "lg",
-  },
-  {
-    icon: Activity,
-    title: "Daily Picks",
-    description: "Confident model picks with edge scores and reasoning. The plays our model grades highest each day.",
-    tier: "superPro",
-    size: "lg",
+    key: "SOC", color: "#12a150", tint: "rgba(18,161,80,.09)", icon: Trophy,
+    title: "Soccer", blurb: "Ten leagues in a match centre built for analysis.",
+    points: ["Live timeline, momentum and win probability", "Lineups on the pitch, best player and xG", "Match insights: scorelines, over 2.5, value vs market", "DraftKings goalscorer, shots, cards & assists"],
   },
 ];
 
-const nflFeatures = [
-  {
-    icon: CircleDot,
-    title: "This Week Dashboard",
-    description: "Every HOF, preseason, and Week 1 matchup graded — week pills, stat strip, and an editorial top-edge hero, refreshed automatically.",
-  },
-  {
-    icon: Radio,
-    title: "Live Drive Tracker",
-    description: "Possession, down & distance, and win probability that moves with the ball — not just a score, the whole drive.",
-  },
-  {
-    icon: ClipboardList,
-    title: "Prop Builder & Parlay Slip",
-    description: "QB, RB, WR, and TE projections vs. the book's line, with one tap to build a slip and see live edge & payout.",
-  },
-  {
-    icon: Sparkles,
-    title: "Edge AI Breakdowns",
-    description: "Ask the model why it likes a side. Full game narratives, head-to-head splits, and the factors driving every grade.",
-  },
+const FEATURES = [
+  { icon: Radio, title: "Live game trackers", body: "Every live game gets a tracker that updates on its own — drive map, shot chart or match timeline with live win probability.", tier: "Free" },
+  { icon: ListOrdered, title: "Standings & power rankings", body: "Division races, playoff seeding and an Edge Power ranking that weighs point differential.", tier: "Free" },
+  { icon: LineChart, title: "Real prop lines", body: "DraftKings player props for the NBA, NFL and soccer with a model projection against each line.", tier: "Fan" },
+  { icon: Target, title: "Line movement", body: "See where every prop opened and where it sits now, so you know when the market has moved.", tier: "Fan" },
+  { icon: BarChart3, title: "Lines vs the model", body: "Spread, total and moneyline next to the model's number, with the points of value called out.", tier: "Fan" },
+  { icon: Zap, title: "Match insights", body: "Expected goals, likeliest scorelines and where the model disagrees with the market.", tier: "Free" },
 ];
 
-const soccerFeatures = [
-  {
-    icon: CircleDot,
-    title: "Fixtures by League",
-    description: "EPL, La Liga, Serie A, Bundesliga, Ligue 1, UCL, Europa League, MLS, Liga MX, and Brasileirão — every match organized by competition, live results front and center.",
-  },
-  {
-    icon: TrendingUp,
-    title: "xG & PPDA Analytics",
-    description: "Expected goals, PPDA (passes allowed per defensive action), possession, and 3-way win probability on every fixture — derived from a Poisson model seeded per match.",
-  },
-  {
-    icon: ClipboardList,
-    title: "Player Prop Builder",
-    description: "Goals, shots on target, assists, and cards for elite players vs their opponent. Model projection vs the book's line — build a parlay slip and save it.",
-  },
-  {
-    icon: Sparkles,
-    title: "10 Leagues · Leagues Browser",
-    description: "Navigate every competition by continent — Europe, UEFA tournaments, and Americas. Each league card shows format, club count, and links to live fixtures.",
-  },
-];
+const TIER_COLOR: Record<string, string> = { Free: "#12a150", Fan: "#1a73ff", Pro: "#6d4fe0" };
 
-const wnbaFeatures = [
-  {
-    icon: CircleDot,
-    title: "Today's Slate & Live Win Prob",
-    description: "Every WNBA game graded daily — live scores, a top-edge editorial hero, and win probability that updates as the game moves.",
-  },
-  {
-    icon: Sparkles,
-    title: "Edge AI Breakdown",
-    description: "Pace, rebounding margin, and bench-scoring depth — the model explains why it likes a side in plain English.",
-  },
-  {
-    icon: ClipboardList,
-    title: "Prop Builder & Parlay Slip",
-    description: "Points, rebounds, assists, and 3-pointers made vs. the book's line, with one tap to build a slip and see live edge & payout.",
-  },
-  {
-    icon: Target,
-    title: "Player Impact Deep Dive",
-    description: "Usage rate, true shooting, plus-minus, and shot-zone splits — know exactly why a star is moving the number.",
-  },
-];
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.5, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
-  }),
-};
-
-function FeatureCard({ feature, index }: { feature: typeof features[0]; index: number }) {
-  const Icon = feature.icon;
-  const isFan = feature.tier === "fan";
-  const isSuperPro = feature.tier === "superPro";
-
-  const borderCls = isSuperPro
-    ? "border-[#818cf8]/20 bg-[#818cf8]/[0.04]"
-    : isFan
-    ? "border-[#FF7828]/20 bg-[#FF7828]/[0.04]"
-    : "border-white/[0.07] bg-[#111622]";
-
-  const iconBgCls = isSuperPro
-    ? "bg-[#818cf8]/15"
-    : isFan
-    ? "bg-[#FF7828]/15"
-    : "bg-white/[0.06]";
-
-  const iconColor = isSuperPro ? "#818cf8" : isFan ? "#FF7828" : undefined;
-
+function Proof() {
+  const items = [["3", "sports in full swing"], ["10", "soccer leagues"], ["18", "NFL weeks, every score"], ["1,000+", "markets on a typical game"]];
   return (
-    <motion.div
-      custom={index}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: "-50px" }}
-      variants={fadeUp}
-      className={`relative flex flex-col rounded-2xl border p-6 overflow-hidden ${borderCls} ${
-        feature.size === "lg" ? "min-h-[220px]" : "min-h-[180px]"
-      }`}
-    >
-      {/* Tier badge */}
-      {isFan && (
-        <div className="absolute top-4 right-4 flex items-center gap-1.5 rounded-full border border-[#FF7828]/30 bg-[#FF7828]/10 px-2.5 py-1">
-          <Zap size={9} className="text-[#FF7828]" strokeWidth={2.5} />
-          <span className="text-[9px] font-black text-[#FF7828] tracking-widest uppercase">Fan</span>
+    <section className="py-10">
+      <Container>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {items.map(([n, l], i) => (
+            <motion.div key={l} initial={{ opacity: 0, y: 14 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.06 }} className="rounded-[22px] bg-white px-5 py-4 text-center" style={{ boxShadow: "0 1px 2px rgba(20,22,27,.04), 0 8px 24px rgba(20,22,27,.05)" }}>
+              <p className="text-3xl sm:text-4xl font-black tracking-tight text-[#14161b]">{n}</p>
+              <p className="text-[12px] text-[#14161b]/55 mt-1">{l}</p>
+            </motion.div>
+          ))}
         </div>
-      )}
-      {isSuperPro && (
-        <div className="absolute top-4 right-4 flex items-center gap-1.5 rounded-full border border-[#818cf8]/30 bg-[#818cf8]/10 px-2.5 py-1">
-          <span className="text-[9px] font-black text-[#818cf8] tracking-widest uppercase">Pro</span>
-        </div>
-      )}
+      </Container>
+    </section>
+  );
+}
 
-      <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-4 ${iconBgCls}`}>
-        <Icon
-          size={18}
-          strokeWidth={1.7}
-          style={iconColor ? { color: iconColor } : undefined}
-          className={!iconColor ? "text-white/55" : undefined}
-        />
+function LiveToggle() {
+  const [s, setS] = useState<"nfl" | "nba">("nfl");
+  return (
+    <div>
+      <div className="inline-flex p-1 rounded-2xl bg-white mb-3" style={{ boxShadow: "0 1px 2px rgba(20,22,27,.04), 0 6px 18px rgba(20,22,27,.05)" }}>
+        {(["nfl", "nba"] as const).map((k) => (
+          <button key={k} onClick={() => setS(k)} className="px-4 py-1.5 rounded-xl text-[12px] font-bold transition-colors" style={s === k ? { background: "#1a73ff", color: "#fff" } : { color: "#8a909b" }}>{k === "nfl" ? "NFL drive tracker" : "NBA shot chart"}</button>
+        ))}
       </div>
+      {s === "nfl" ? <NflDemo /> : <NbaDemo />}
+    </div>
+  );
+}
 
-      <h3 className="text-base font-bold text-white mb-2">{feature.title}</h3>
-      <p className="text-sm text-white/45 leading-relaxed">{feature.description}</p>
-    </motion.div>
+const TOUR = [
+  { id: "live", eyebrow: "Live analysis", title: "Watch every game like a pro", body: "Every live game gets its own tracker that refreshes by itself — the NFL drive map with first-down line, the NBA shot chart with scoring runs, and a win probability that moves with every play.", points: ["Field position, down & distance, red-zone flags", "Shot chart, runs and lead tracker", "Win probability and play-by-play, live"], visual: <LiveToggle /> },
+  { id: "props", eyebrow: "Real prop lines", title: "DraftKings lines, graded by the model", body: "Real player-prop lines for the NBA, NFL and soccer with a matchup-adjusted projection against each one — plus how far the number has moved since it opened.", points: ["Hit probability and grade on every prop", "Line movement: open → current", "Reasons: defense, game total, game script"], visual: <PropsDemo /> },
+  { id: "soccer", eyebrow: "Soccer match centre", title: "Ten leagues, one match centre", body: "Timeline, momentum, lineups on the pitch, best player and expected goals — with a live win probability and the model's read on value versus the market.", points: ["Live timeline with goals and cards", "xG, likeliest scorelines, over 2.5, both score", "Goalscorer, shots, cards and assists markets"], visual: <SoccerDemo /> },
+  { id: "rank", eyebrow: "Standings & rankings", title: "Know who's actually good", body: "Division races, playoff seeding, the Emirates NBA Cup groups and an Edge Power ranking that weighs point differential — so you see through the win-loss record.", points: ["East/West, divisions and seeding lines", "Emirates NBA Cup: who's advancing", "Power rankings across the league"], visual: <StandingsDemo /> },
+];
+
+function Tour() {
+  return (
+    <section id="tour" className="py-16 sm:py-24">
+      <Container>
+        <div className="text-center max-w-2xl mx-auto mb-14">
+          <span className="inline-flex items-center rounded-full bg-white px-4 py-1.5 text-xs font-bold text-[#14161b]/64 tracking-wider uppercase" style={{ boxShadow: "0 8px 24px rgba(20,22,27,.05)" }}>Live tour</span>
+          <h2 className="mt-5 text-3xl sm:text-5xl font-black tracking-tight text-[#14161b] leading-[1.05]">See what you get <span className="gradient-orange-text">inside.</span></h2>
+          <p className="mt-4 text-base text-[#14161b]/60">These are the real tools — shown here with sample data.</p>
+        </div>
+        <div className="flex flex-col gap-20 sm:gap-28">
+          {TOUR.map((t, i) => (
+            <div key={t.id} className={`grid gap-8 lg:gap-14 lg:grid-cols-2 items-center ${i % 2 ? "lg:[&>*:first-child]:order-2" : ""}`}>
+              <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-60px" }} transition={{ duration: 0.55 }}>
+                <p className="text-[12px] font-extrabold uppercase tracking-[.16em] text-[#1a73ff]">{t.eyebrow}</p>
+                <h3 className="mt-3 text-2xl sm:text-4xl font-black tracking-tight text-[#14161b] leading-[1.1]">{t.title}</h3>
+                <p className="mt-4 text-[15px] text-[#14161b]/62 leading-relaxed max-w-lg">{t.body}</p>
+                <ul className="mt-5 flex flex-col gap-2.5">
+                  {t.points.map((pt) => <li key={pt} className="flex gap-2.5 text-[14.5px] text-[#14161b]/75"><span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-[#1a73ff] shrink-0" />{pt}</li>)}
+                </ul>
+              </motion.div>
+              <motion.div initial={{ opacity: 0, y: 30, scale: 0.98 }} whileInView={{ opacity: 1, y: 0, scale: 1 }} viewport={{ once: true, margin: "-60px" }} transition={{ duration: 0.6, delay: 0.1 }} className="rounded-[28px] p-4 sm:p-6" style={{ background: "linear-gradient(145deg,#e4ecfb,#f1f3f8)" }}>
+                {t.visual}
+              </motion.div>
+            </div>
+          ))}
+        </div>
+      </Container>
+    </section>
   );
 }
 
 export function LandingFeatures() {
   return (
+    <>
+    <Proof />
+    <Tour />
     <section id="features" className="py-20 sm:py-28">
       <Container>
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.5 }}
-          className="flex justify-center"
-        >
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.04] px-4 py-1.5 text-xs font-semibold text-white/50 tracking-wider uppercase">
-            Features
-          </span>
+        <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-60px" }} transition={{ duration: 0.5 }} className="text-center max-w-2xl mx-auto">
+          <span className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-xs font-bold text-[#14161b]/64 tracking-wider uppercase" style={{ boxShadow: "var(--shadow-card, 0 8px 24px rgba(20,22,27,.05))" }}>Features</span>
+          <h2 className="mt-5 text-3xl sm:text-5xl font-black tracking-tight text-[#14161b] leading-[1.05]">Built for game day, <span className="gradient-orange-text">every sport.</span></h2>
+          <p className="mt-4 text-base text-[#14161b]/60 leading-relaxed">Three sports in full swing, one clean workspace. Live analysis when the game is on, real prop lines when you&rsquo;re building a slip.</p>
         </motion.div>
 
-        <motion.h2
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="mt-5 text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-center text-white leading-tight"
-        >
-          Free to start.{" "}
-          <span className="gradient-orange-text">Lethal when Pro.</span>
-        </motion.h2>
-
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.5, delay: 0.18 }}
-          className="mt-4 text-center text-white/45 max-w-xl mx-auto leading-relaxed"
-        >
-          Every game, score, and prediction free. Fan unlocks props and edge reports. Pro goes all the way.
-        </motion.p>
-
-        {/* Free tier */}
-        <div className="mt-12 mb-3 flex items-center gap-3">
-          <span className="text-xs font-bold text-white/30 tracking-widest uppercase">Free Plan</span>
-          <div className="flex-1 h-px bg-white/[0.06]" />
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {features.filter((f) => f.tier === "free").map((f, i) => (
-            <FeatureCard key={f.title} feature={f} index={i} />
-          ))}
-        </div>
-
-        {/* Fan tier */}
-        <div className="mt-6 mb-3 flex items-center gap-3">
-          <span className="text-xs font-bold text-[#FF7828] tracking-widest uppercase">Fan — $4.99/mo · 14-Day Free Trial</span>
-          <div className="flex-1 h-px bg-[#FF7828]/15" />
-          <Lock size={11} className="text-[#FF7828]/50" strokeWidth={2} />
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {features.filter((f) => f.tier === "fan").map((f, i) => (
-            <FeatureCard key={f.title} feature={f} index={i + 3} />
-          ))}
-        </div>
-
-        {/* Pro tier */}
-        <div className="mt-6 mb-3 flex items-center gap-3">
-          <span className="text-xs font-bold text-[#818cf8] tracking-widest uppercase">Pro — $14.99/mo · 3-Day Free Trial</span>
-          <div className="flex-1 h-px bg-[#818cf8]/15" />
-          <Lock size={11} className="text-[#818cf8]/50" strokeWidth={2} />
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {features.filter((f) => f.tier === "superPro").map((f, i) => (
-            <FeatureCard key={f.title} feature={f} index={i + 6} />
-          ))}
-        </div>
-
-        {/* NFL Edge Pro — new sport, early access */}
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-50px" }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="relative mt-16 rounded-3xl border border-[#818cf8]/25 overflow-hidden p-7 sm:p-10"
-          style={{ background: "linear-gradient(135deg, rgba(255,120,40,0.08), rgba(129,140,248,0.08))" }}
-        >
-          <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-[#818cf8]/10 blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-[#FF7828]/10 blur-3xl pointer-events-none" />
-
-          <div className="relative flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-9">
-            <div>
-              <span className="inline-flex items-center gap-2 rounded-full border border-[#818cf8]/30 bg-[#818cf8]/10 px-3.5 py-1.5 text-xs font-black text-[#818cf8] tracking-widest uppercase">
-                <Zap size={11} strokeWidth={2.5} />
-                New Sport &middot; Pro Early Access
-              </span>
-              <h3 className="mt-4 text-2xl sm:text-3xl font-black tracking-tight text-white">
-                Now expanding: <span className="gradient-orange-text">NFL Edge Pro</span>
-              </h3>
-              <p className="mt-3 text-sm sm:text-base text-white/50 leading-relaxed max-w-xl">
-                After the success of our World Cup analysis this summer, we&rsquo;re taking the same model
-                beyond MLB. NFL Edge Pro is live in early access for Pro members now, covering the Hall of
-                Fame Game and full preseason ahead of a Week 1 kickoff.
-              </p>
-            </div>
-            <Link href="/trial?tier=pro" className="shrink-0">
-              <span className="inline-flex items-center gap-2 rounded-full bg-[#818cf8] hover:bg-[#9CA5FF] transition-colors text-white font-bold text-sm px-5 py-2.5 group">
-                Try Pro Free &mdash; 3 Days
-                <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" strokeWidth={2.5} />
-              </span>
-            </Link>
-          </div>
-
-          <div className="relative grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {nflFeatures.map((f, i) => {
-              const Icon = f.icon;
-              return (
-                <motion.div
-                  key={f.title}
-                  custom={i}
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true, margin: "-40px" }}
-                  variants={fadeUp}
-                  className="flex flex-col rounded-2xl border border-white/[0.08] bg-[#0D1117]/60 p-5"
-                >
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-4 bg-[#818cf8]/15">
-                    <Icon size={18} strokeWidth={1.7} style={{ color: "#818cf8" }} />
+        {/* Sports */}
+        <div className="mt-14 grid gap-4 md:grid-cols-3">
+          {SPORTS.map((s, i) => {
+            const Icon = s.icon;
+            return (
+              <motion.div key={s.key} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-40px" }} transition={{ duration: 0.5, delay: i * 0.08 }}
+                className="rounded-[26px] bg-white p-6 flex flex-col" style={{ boxShadow: "0 1px 2px rgba(20,22,27,.04), 0 12px 36px rgba(20,22,27,.07)" }}>
+                <div className="flex items-center gap-3">
+                  <span className="w-11 h-11 rounded-2xl flex items-center justify-center" style={{ background: s.tint, color: s.color }}><Icon size={20} strokeWidth={1.9} /></span>
+                  <div>
+                    <h3 className="text-xl font-black text-[#14161b] leading-none">{s.title}</h3>
+                    <p className="text-[12px] text-[#14161b]/50 mt-1">{s.blurb}</p>
                   </div>
-                  <h4 className="text-base font-bold text-white mb-1.5">{f.title}</h4>
-                  <p className="text-sm text-white/45 leading-relaxed">{f.description}</p>
-                </motion.div>
-              );
-            })}
-          </div>
+                </div>
+                <ul className="mt-5 flex flex-col gap-2.5">
+                  {s.points.map((pt) => (
+                    <li key={pt} className="flex gap-2.5 text-[14px] text-[#14161b]/72 leading-snug">
+                      <span className="mt-[7px] w-1.5 h-1.5 rounded-full shrink-0" style={{ background: s.color }} />{pt}
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+            );
+          })}
+        </div>
 
-          <p className="relative mt-7 text-xs text-white/30 leading-relaxed">
-            More sports are joining the model every season &mdash; NFL was first. Next up: WNBA, live now below.
-          </p>
-        </motion.div>
+        {/* Feature grid */}
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {FEATURES.map((f, i) => {
+            const Icon = f.icon;
+            return (
+              <motion.div key={f.title} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-30px" }} transition={{ duration: 0.45, delay: i * 0.05 }}
+                className="rounded-[22px] bg-white p-5" style={{ boxShadow: "0 1px 2px rgba(20,22,27,.04), 0 8px 24px rgba(20,22,27,.05)" }}>
+                <div className="flex items-center justify-between">
+                  <span className="w-10 h-10 rounded-xl bg-[#f3f4f7] flex items-center justify-center text-[#14161b]"><Icon size={18} strokeWidth={1.8} /></span>
+                  <span className="text-[10px] font-black tracking-widest uppercase rounded-full px-2.5 py-1" style={{ color: TIER_COLOR[f.tier], background: `${TIER_COLOR[f.tier]}14` }}>{f.tier}</span>
+                </div>
+                <h3 className="mt-4 text-[16px] font-bold text-[#14161b]">{f.title}</h3>
+                <p className="mt-1.5 text-[13.5px] text-[#14161b]/58 leading-relaxed">{f.body}</p>
+              </motion.div>
+            );
+          })}
+        </div>
 
-        {/* WNBA Edge Pro — new sport, in-season now */}
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-50px" }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="relative mt-6 rounded-3xl border border-[#2dd4bf]/25 overflow-hidden p-7 sm:p-10"
-          style={{ background: "linear-gradient(135deg, rgba(45,212,191,0.08), rgba(255,120,40,0.06))" }}
-        >
-          <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-[#2dd4bf]/10 blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-[#FF7828]/10 blur-3xl pointer-events-none" />
-
-          <div className="relative flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-9">
-            <div>
-              <span className="inline-flex items-center gap-2 rounded-full border border-[#2dd4bf]/30 bg-[#2dd4bf]/10 px-3.5 py-1.5 text-xs font-black text-[#2dd4bf] tracking-widest uppercase">
-                <Zap size={11} strokeWidth={2.5} />
-                New Sport &middot; Live Now
-              </span>
-              <h3 className="mt-4 text-2xl sm:text-3xl font-black tracking-tight text-white">
-                Now live: <span style={{ background: "linear-gradient(135deg,#2dd4bf,#5eead4)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" }}>WNBA Edge Pro</span>
-              </h3>
-              <p className="mt-3 text-sm sm:text-base text-white/50 leading-relaxed max-w-xl">
-                The WNBA season is in full swing, and the model is already on it — full daily slate for
-                everyone, with Fan and Pro unlocking the same edge-report depth you get for MLB.
-              </p>
-            </div>
-            <Link href="/trial?tier=fan" className="shrink-0">
-              <span className="inline-flex items-center gap-2 rounded-full text-[#06070d] font-bold text-sm px-5 py-2.5 group" style={{ background: "linear-gradient(135deg,#2dd4bf,#5eead4)" }}>
-                Try Fan Free &mdash; 14 Days
-                <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" strokeWidth={2.5} />
-              </span>
-            </Link>
-          </div>
-
-          <div className="relative grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {wnbaFeatures.map((f, i) => {
-              const Icon = f.icon;
-              return (
-                <motion.div
-                  key={f.title}
-                  custom={i}
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true, margin: "-40px" }}
-                  variants={fadeUp}
-                  className="flex flex-col rounded-2xl border border-white/[0.08] bg-[#0D1117]/60 p-5"
-                >
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-4 bg-[#2dd4bf]/15">
-                    <Icon size={18} strokeWidth={1.7} style={{ color: "#2dd4bf" }} />
-                  </div>
-                  <h4 className="text-base font-bold text-white mb-1.5">{f.title}</h4>
-                  <p className="text-sm text-white/45 leading-relaxed">{f.description}</p>
-                </motion.div>
-              );
-            })}
-          </div>
-
-          <p className="relative mt-7 text-xs text-white/30 leading-relaxed">
-            After the success of our World Cup analysis, we&rsquo;re adding a new sport every season &mdash; NFL and WNBA are live now, with Soccer joining below.
-          </p>
-        </motion.div>
-
-        {/* Soccer Edge Pro — new sport, live now */}
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-50px" }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="relative mt-6 rounded-3xl border border-[#34d399]/25 overflow-hidden p-7 sm:p-10"
-          style={{ background: "linear-gradient(135deg, rgba(52,211,153,0.09), rgba(11,13,21,0) 65%)" }}
-        >
-          <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-[#34d399]/08 blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-24 -left-24 w-56 h-56 rounded-full bg-[#34d399]/06 blur-3xl pointer-events-none" />
-
-          <div className="relative flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-9">
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="inline-flex items-center gap-2 rounded-full border border-[#34d399]/30 bg-[#34d399]/10 px-3.5 py-1.5 text-xs font-black text-[#34d399] tracking-widest uppercase">
-                  <Zap size={11} strokeWidth={2.5} />
-                  New Sport &middot; Live Now
-                </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-[#818cf8]/30 bg-[#818cf8]/10 px-3 py-1.5 text-xs font-black text-[#818cf8] tracking-widest uppercase">
-                  Pro Add-On
-                </span>
-              </div>
-              <h3 className="mt-4 text-2xl sm:text-3xl font-black tracking-tight text-white">
-                Now live:{" "}
-                <span style={{ background: "linear-gradient(135deg,#34d399,#6ee7b7)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                  Soccer / Football Edge Pro
-                </span>
-              </h3>
-              <p className="mt-3 text-sm sm:text-base text-white/50 leading-relaxed max-w-xl">
-                10 of the world&rsquo;s top competitions — from the Premier League to the Champions League
-                to MLS — now fully covered with xG analytics, PPDA, win probability, player props, and a
-                leagues browser organized by continent. The same edge-model depth you trust for MLB, built for the beautiful game.
-              </p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {["EPL", "La Liga", "Serie A", "Bundesliga", "Ligue 1", "UCL", "Europa", "MLS", "Liga MX", "Brasileirão"].map((l) => (
-                  <span key={l} className="rounded-full px-2.5 py-1 text-[10px] font-bold text-[#34d399] tracking-wider"
-                    style={{ background: "rgba(52,211,153,.08)", border: "1px solid rgba(52,211,153,.2)" }}>
-                    {l}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <Link href="/trial?tier=pro" className="shrink-0">
-              <span className="inline-flex items-center gap-2 rounded-full font-bold text-sm px-5 py-2.5 group transition-opacity hover:opacity-85"
-                style={{ background: "linear-gradient(135deg,#34d399,#6ee7b7)", color: "#06070d" }}>
-                Try Pro Free &mdash; 3 Days
-                <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" strokeWidth={2.5} />
-              </span>
-            </Link>
-          </div>
-
-          <div className="relative grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {soccerFeatures.map((f, i) => {
-              const Icon = f.icon;
-              return (
-                <motion.div
-                  key={f.title}
-                  custom={i}
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true, margin: "-40px" }}
-                  variants={fadeUp}
-                  className="flex flex-col rounded-2xl border border-white/[0.08] bg-[#0D1117]/60 p-5"
-                >
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-4 bg-[#34d399]/12">
-                    <Icon size={18} strokeWidth={1.7} style={{ color: "#34d399" }} />
-                  </div>
-                  <h4 className="text-base font-bold text-white mb-1.5">{f.title}</h4>
-                  <p className="text-sm text-white/45 leading-relaxed">{f.description}</p>
-                </motion.div>
-              );
-            })}
-          </div>
-
-          <p className="relative mt-7 text-xs text-white/30 leading-relaxed">
-            Soccer is a Pro add-on &mdash; unlock it alongside NFL, WNBA, and the full MLB suite with a single Pro plan. More sports and competitions will be added each season.
-          </p>
-        </motion.div>
+        {/* Offseason note */}
+        <div className="mt-6 rounded-[22px] border border-dashed border-[#14161b]/15 bg-white/60 px-6 py-5 flex flex-wrap items-center justify-between gap-4">
+          <p className="text-[14px] text-[#14161b]/60 max-w-2xl"><b className="text-[#14161b]">MLB and WNBA are in their offseason.</b> Their season recaps are live now and the full tools switch back on automatically when games return.</p>
+          <Link href="/trial?tier=fan" className="shrink-0">
+            <span className="inline-flex items-center gap-2 rounded-full bg-[#1a73ff] text-white font-bold text-sm px-5 py-2.5 group" style={{ boxShadow: "0 8px 22px rgba(26,115,255,.35)" }}>
+              Try Fan Free — 14 Days <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" strokeWidth={2.5} />
+            </span>
+          </Link>
+        </div>
       </Container>
     </section>
+    </>
   );
 }

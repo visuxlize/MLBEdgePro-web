@@ -10,9 +10,9 @@ const TIER_META = {
     label:   "Fan",
     price:   "$4.99 / month",
     tagline: "Props, Edge Report & matchup analysis — every game, every day.",
-    color:   "#FF7828",
-    bg:      "rgba(255,120,40,0.08)",
-    border:  "rgba(255,120,40,0.25)",
+    color:   "#1a73ff",
+    bg:      "rgba(26,115,255,0.08)",
+    border:  "rgba(26,115,255,0.25)",
     Icon:    Zap,
     features: [
       "AI-ranked value bets (Edge Report)",
@@ -26,7 +26,7 @@ const TIER_META = {
     label:   "Pro",
     price:   "$14.99 / month",
     tagline: "Full edge — spray charts, barrel rate, exit velocity & daily picks.",
-    color:   "#818CF8",
+    color:   "#6d4fe0",
     bg:      "rgba(129,140,248,0.08)",
     border:  "rgba(129,140,248,0.25)",
     Icon:    Star,
@@ -72,19 +72,19 @@ function PlanCard({
             <p className="text-xs font-black tracking-widest uppercase" style={{ color: meta.color }}>
               {meta.label}
             </p>
-            <p className="text-white font-black text-lg leading-tight">{meta.price}</p>
+            <p className="text-[#14161b] font-black text-lg leading-tight">{meta.price}</p>
           </div>
         </div>
-        <p className="text-xs text-white/30 font-medium">Cancel anytime</p>
+        <p className="text-xs text-[#14161b]/46 font-medium">Cancel anytime</p>
       </div>
 
       {/* Tagline */}
-      <p className="text-sm text-white/50 leading-relaxed">{meta.tagline}</p>
+      <p className="text-sm text-[#14161b]/64 leading-relaxed">{meta.tagline}</p>
 
       {/* Features */}
       <ul className="space-y-2">
         {meta.features.map((f) => (
-          <li key={f} className="flex items-center gap-2.5 text-sm text-white/65">
+          <li key={f} className="flex items-center gap-2.5 text-sm text-[#14161b]/74">
             <CheckCircle size={13} strokeWidth={2.5} style={{ color: meta.color, flexShrink: 0 }} />
             {f}
           </li>
@@ -95,7 +95,7 @@ function PlanCard({
       <button
         onClick={() => onSubscribe(tierKey)}
         disabled={loading !== null}
-        className="mt-auto flex items-center justify-center gap-2 h-11 rounded-full font-bold text-sm text-white transition-opacity disabled:opacity-50"
+        className="mt-auto flex items-center justify-center gap-2 h-11 rounded-full font-bold text-sm text-[#14161b] transition-opacity disabled:opacity-50"
         style={{
           background: meta.color,
           boxShadow: `0 6px 24px ${meta.color}40`,
@@ -140,32 +140,32 @@ export function TrialAlreadyUsed({ tier }: { tier: "fan" | "pro" }) {
   }
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center px-4 py-16 bg-[#0A0E14] overflow-hidden">
+    <div className="relative min-h-screen flex flex-col items-center justify-center px-4 py-16 bg-[#eceef2] overflow-hidden">
       {/* Ambient glow */}
-      <div className="pointer-events-none absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[400px] rounded-full bg-[#FF7828]/[0.06] blur-[100px]" />
+      <div className="pointer-events-none absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[400px] rounded-full bg-[#1a73ff]/[0.06] blur-[100px]" />
 
       <div className="relative z-10 w-full max-w-xl">
         {/* Badge */}
         <div className="flex justify-center mb-8">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#FF7828]/25 bg-[#FF7828]/[0.08] px-4 py-1.5">
-            <Zap size={11} className="text-[#FF7828]" strokeWidth={2.5} />
-            <span className="text-xs font-bold text-[#FF7828] tracking-widest uppercase">MLB Edge Pro</span>
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#1a73ff]/25 bg-[#1a73ff]/[0.08] px-4 py-1.5">
+            <Zap size={11} className="text-[#1a73ff]" strokeWidth={2.5} />
+            <span className="text-xs font-bold text-[#1a73ff] tracking-widest uppercase">MLB Edge Pro</span>
           </div>
         </div>
 
         {/* Heading */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-black text-white tracking-tight mb-3">
+          <h1 className="text-3xl font-black text-[#14161b] tracking-tight mb-3">
             You've already used your free trial
           </h1>
-          <p className="text-white/45 text-base leading-relaxed max-w-md mx-auto">
+          <p className="text-[#14161b]/56 text-base leading-relaxed max-w-md mx-auto">
             Your trial has ended. Subscribe now to keep every edge — or stay on the free plan.
           </p>
         </div>
 
         {/* Error */}
         {error && (
-          <div className="mb-5 rounded-xl border border-[#EB505A]/25 bg-[#EB505A]/[0.06] px-4 py-3 text-sm text-[#EB505A]">
+          <div className="mb-5 rounded-xl border border-[#ef3b4a]/25 bg-[#ef3b4a]/[0.06] px-4 py-3 text-sm text-[#ef3b4a]">
             {error}
           </div>
         )}
@@ -180,7 +180,7 @@ export function TrialAlreadyUsed({ tier }: { tier: "fan" | "pro" }) {
         <div className="text-center">
           <Link
             href="/games"
-            className="text-sm text-white/30 hover:text-white/60 transition-colors"
+            className="text-sm text-[#14161b]/46 hover:text-[#14161b]/74 transition-colors"
           >
             Continue on Free plan →
           </Link>

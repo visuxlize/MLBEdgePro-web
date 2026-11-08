@@ -194,6 +194,36 @@ export interface NflPropPlay {
 
 export interface NflTeamStatRow { label: string; away: string; home: string; awayPct: number; homePct: number }
 
+export interface NflPlayLine {
+  id: string;
+  period: number;
+  clock: string;
+  text: string;
+  type: string;
+  scoring: boolean;
+  yards?: number;
+  team?: string;
+}
+
+/** Live drive / field state for an in-progress (or just-finished) game. */
+export interface NflLive {
+  period: number;
+  clock: string;
+  possession: string | null;
+  downText: string;
+  distance?: number;
+  yardsToEndzone?: number;
+  /** Ball position 0–100 from the left end zone (away attacks right, home attacks left) */
+  ballX: number;
+  driveStartX?: number;
+  drive?: { team: string; plays: number; yards: number; time: string; description: string };
+  redZone: boolean;
+  lastPlay?: NflPlayLine;
+  recent: NflPlayLine[];
+  quarters: { away: string[]; home: string[] };
+  scoring: { period: number; clock: string; team: string; text: string; away: number; home: number }[];
+}
+
 export interface NflGameDetail {
   game: NflSeasonGame;
   teamStats: NflTeamStatRow[];
@@ -201,6 +231,7 @@ export interface NflGameDetail {
   winProbSeries: number[];
   /** ESPN's matchup predictor — home win % */
   predictorHome?: number;
+  live?: NflLive;
   venueImage?: string;
   recap?: string;
 }

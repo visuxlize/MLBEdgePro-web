@@ -7,7 +7,7 @@ import { Chip, EmptyState, Segmented, SportHeader } from "@/components/web-tool/
 import { soccerHeadshotUrl } from "@/lib/soccer/leagues";
 import type { SoccerPropsPayload, SoccerRealProp, SoccerMarket } from "@/lib/soccer/props";
 
-const ACCENT = "#34d399";
+const ACCENT = "#1a73ff";
 type MarketFilter = "all" | SoccerMarket;
 const fmt = (p: number) => (p > 0 ? `+${p}` : String(p));
 const tm = (iso: string) => new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
@@ -18,7 +18,7 @@ function Crest({ src, name, size }: { src: string; name: string; size: number })
 }
 
 function PropCard({ p, i }: { p: SoccerRealProp; i: number }) {
-  const hex = p.teamHex.length >= 7 ? p.teamHex : "#34d399";
+  const hex = p.teamHex.length >= 7 ? p.teamHex : "#12a150";
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i, 10) * 0.03 }}
       className="rounded-[20px] overflow-hidden" style={{ background: "var(--panel)", border: "1px solid var(--hairline)" }}>
@@ -26,14 +26,14 @@ function PropCard({ p, i }: { p: SoccerRealProp; i: number }) {
         <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: `linear-gradient(90deg, ${hex}, transparent)` }} />
         <div className="relative shrink-0">
           <WnbaHeadshot hex={hex} src={soccerHeadshotUrl(p.athleteId)} name={p.player} size={68} />
-          <div className="absolute -bottom-1.5 -right-1.5 w-[26px] h-[26px] rounded-lg flex items-center justify-center" style={{ background: "#12141c", boxShadow: `inset 0 0 0 1.5px ${alpha(hex, "66")}` }}><Crest src={p.teamLogo} name={p.teamAbbr} size={18} /></div>
+          <div className="absolute -bottom-1.5 -right-1.5 w-[26px] h-[26px] rounded-lg flex items-center justify-center" style={{ background: "#ffffff", boxShadow: `inset 0 0 0 1.5px ${alpha(hex, "66")}` }}><Crest src={p.teamLogo} name={p.teamAbbr} size={18} /></div>
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-spot-sans font-black text-[16px] leading-tight truncate" style={{ color: "var(--text)" }}>{p.player}</p>
           <p className="mt-0.5 font-spot-sans font-semibold text-[11px]" style={{ color: "var(--text-3)" }}>{p.teamAbbr}{p.pos ? ` · ${p.pos}` : ""}{p.jersey ? ` · #${p.jersey}` : ""} · vs {p.opp}</p>
           <div className="mt-1.5 flex gap-1.5 flex-wrap">
-            <Chip color="#34d399">DraftKings</Chip>
-            {p.movement && <Chip color={p.movement === "shorter" ? "#fbbf24" : "#60a5fa"}>{p.movement === "shorter" ? "▲ backed" : "▼ drifting"} {p.openPrice != null ? `${fmt(p.openPrice)} → ${fmt(p.price)}` : ""}</Chip>}
+            <Chip color="#12a150">DraftKings</Chip>
+            {p.movement && <Chip color={p.movement === "shorter" ? "#d49a06" : "#60a5fa"}>{p.movement === "shorter" ? "▲ backed" : "▼ drifting"} {p.openPrice != null ? `${fmt(p.openPrice)} → ${fmt(p.price)}` : ""}</Chip>}
           </div>
         </div>
         <div className="text-right shrink-0">
@@ -46,7 +46,7 @@ function PropCard({ p, i }: { p: SoccerRealProp; i: number }) {
           <p className="font-spot-sans font-extrabold text-[13.5px]" style={{ color: "var(--text)" }}>{p.market} <span style={{ color: ACCENT }}>{p.target}</span></p>
           <p className="font-spot-mono font-bold text-[11px]" style={{ color: "var(--text-3)" }}>{p.implied}% implied</p>
         </div>
-        <div className="mt-2 h-[7px] rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,.07)" }}>
+        <div className="mt-2 h-[7px] rounded-full overflow-hidden" style={{ background: "var(--wash-2)" }}>
           <div className="h-full rounded-full" style={{ width: `${Math.min(100, p.implied)}%`, background: `linear-gradient(90deg, ${alpha(hex, "99")}, ${ACCENT})`, transformOrigin: "left", animation: "bar-grow .8s cubic-bezier(.22,1,.36,1) both" }} />
         </div>
       </div>
@@ -75,7 +75,7 @@ export function SoccerPropsBoard({ data }: { data: SoccerPropsPayload }) {
           title="Player Props Board"
           subtitle="Live DraftKings player markets — anytime goalscorer, shots, shots on target, cards and assists — with the price, the chance it implies, and how the number has moved since it opened."
           accent={ACCENT}
-          right={<Chip color="#34d399">{data.withLines} of {data.matches.length} matches posted</Chip>}
+          right={<Chip color="#12a150">{data.withLines} of {data.matches.length} matches posted</Chip>}
         />
 
         {data.props.length === 0 ? (
@@ -97,7 +97,7 @@ export function SoccerPropsBoard({ data }: { data: SoccerPropsPayload }) {
               {groups.map((g) => (
                 <section key={g[0].matchId}>
                   <div className="flex items-center gap-2.5 mb-2.5 flex-wrap">
-                    <Chip color="#34d399">{g[0].leagueLabel}</Chip>
+                    <Chip color="#12a150">{g[0].leagueLabel}</Chip>
                     <p className="font-spot-sans font-black text-[16px]" style={{ color: "var(--text)" }}>{g[0].matchup}</p>
                     <span className="font-spot-mono text-[11px]" style={{ color: "var(--text-faint)" }}>{tm(g[0].kickoff)}{g[0].status === "live" ? " · LIVE" : ""}</span>
                   </div>

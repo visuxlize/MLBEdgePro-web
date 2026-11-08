@@ -24,8 +24,8 @@ export function GameTimeBadge({
         isLive
           ? "bg-red-500/20 border-red-500/30 text-red-400"
           : isFinal
-          ? "bg-white/10 border-white/15 text-white/50"
-          : "bg-[#FF7828]/20 border-[#FF7828]/30 text-[#FF7828]"
+          ? "bg-[#14161b]/[0.1] border-[#14161b]/[.09] text-white/50"
+          : "bg-[#1a73ff]/20 border-[#1a73ff]/30 text-[#1a73ff]"
       }`}
     >
       {isLive && (

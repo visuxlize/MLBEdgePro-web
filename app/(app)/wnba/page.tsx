@@ -48,7 +48,7 @@ function DateStrip({ date, onChange }: { date: string; onChange: (d: string) => 
           const dt = new Date(d + "T12:00:00");
           return (
             <button key={d} onClick={() => onChange(d)} className="flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-xl shrink-0 transition-all"
-              style={active ? { background: "linear-gradient(135deg,#2dd4bf,#5eead4)", color: "#06070d" } : { color: "var(--text-muted)" }}>
+              style={active ? { background: "linear-gradient(135deg,#0f9d8e,#0f8f80)", color: "#06070d" } : { color: "var(--text-muted)" }}>
               <span className="spot-label-sm" style={{ fontSize: 9 }}>{dt.toLocaleDateString("en-US", { weekday: "short" })}</span>
               <span className="font-spot-mono text-sm font-extrabold">{dt.getDate()}</span>
             </button>
@@ -59,7 +59,7 @@ function DateStrip({ date, onChange }: { date: string; onChange: (d: string) => 
         <ChevronRight size={16} />
       </button>
       {date !== todayStr() && (
-        <button onClick={() => onChange(todayStr())} className="font-spot-sans text-xs font-bold shrink-0 ml-1 whitespace-nowrap" style={{ color: "#2dd4bf" }}>Today</button>
+        <button onClick={() => onChange(todayStr())} className="font-spot-sans text-xs font-bold shrink-0 ml-1 whitespace-nowrap" style={{ color: "#0f9d8e" }}>Today</button>
       )}
     </div>
   );
@@ -70,7 +70,7 @@ function LiveTile({ game, onClick }: { game: WnbaGame; onClick: () => void }) {
   return (
     <button onClick={onClick} className="spot-lift relative overflow-hidden text-left rounded-[var(--r-card)] p-4 shrink-0 w-[240px]"
       style={{ background: `linear-gradient(120deg, ${alpha(awayHex, "26")}, var(--panel) 52%, ${alpha(homeHex, "2e")})`, border: "1px solid rgba(239,68,68,.3)", animation: "live-glow 2.4s ease-in-out infinite" }}>
-      <div className="absolute top-0 bottom-0 left-0 w-1/3 pointer-events-none" style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,.06), transparent)", animation: "scan 4s linear infinite" }} />
+      <div className="absolute top-0 bottom-0 left-0 w-1/3 pointer-events-none" style={{ background: "linear-gradient(90deg, transparent, var(--wash-2), transparent)", animation: "scan 4s linear infinite" }} />
       <div className="relative flex items-center justify-between mb-3">
         <LivePill label={game.statusDetail} />
         <ArrowRight size={14} style={{ color: "var(--text-ghost)" }} />
@@ -151,7 +151,7 @@ function GameCard({ game, onClick }: { game: WnbaGame; onClick: () => void }) {
       <div className="relative z-10 w-full p-4 flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
           <span className="font-spot-sans text-[11px] font-bold inline-flex items-center gap-1.5"
-            style={{ color: isLive ? "var(--red-soft)" : isFinal ? "var(--text-muted)" : "#2dd4bf" }}>
+            style={{ color: isLive ? "var(--red-soft)" : isFinal ? "var(--text-muted)" : "#0f9d8e" }}>
             {isLive && <span className="spot-live-dot inline-block rounded-full" style={{ width: 6, height: 6, background: "var(--red)" }} />}
             {isLive ? game.statusDetail : isFinal ? "FINAL" : game.timeLabel}
           </span>
@@ -200,7 +200,7 @@ export default function WnbaPage() {
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-6">
         <div className="flex items-baseline justify-between mb-5">
           <div>
-            <SectionLabel style={{ color: "#2dd4bf" }}>Schedule</SectionLabel>
+            <SectionLabel style={{ color: "#0f9d8e" }}>Schedule</SectionLabel>
             <h1 className="font-spot-sans text-3xl sm:text-4xl font-black leading-tight mt-1" style={{ color: "var(--text)" }}>{labelFor(date)}</h1>
           </div>
           {!loading && games.length > 0 && (
@@ -228,13 +228,13 @@ export default function WnbaPage() {
 
         {loading ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {[1, 2, 3, 4].map((i) => <div key={i} className="rounded-[var(--r-card)] animate-pulse" style={{ background: "rgba(255,255,255,.03)", minHeight: 188 }} />)}
+            {[1, 2, 3, 4].map((i) => <div key={i} className="rounded-[var(--r-card)] animate-pulse" style={{ background: "var(--wash-1)", minHeight: 188 }} />)}
           </div>
         ) : games.length === 0 ? (
           <div className="flex flex-col items-center py-20 text-center">
             <CircleDot size={44} style={{ color: "var(--text-ghost)" }} className="mb-4" strokeWidth={1.2} />
             <p className="font-spot-sans text-sm" style={{ color: "var(--text-muted)" }}>No games scheduled for {labelFor(date)}</p>
-            <button onClick={() => setDate(todayStr())} className="mt-4 font-spot-sans text-xs font-bold" style={{ color: "#2dd4bf" }}>Go to today</button>
+            <button onClick={() => setDate(todayStr())} className="mt-4 font-spot-sans text-xs font-bold" style={{ color: "#0f9d8e" }}>Go to today</button>
           </div>
         ) : (
           <div className="space-y-8">

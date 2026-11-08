@@ -22,9 +22,9 @@ const fadeUp = {
 // ── Shared helpers ────────────────────────────────────────────────────────────
 
 function pctColor(pct: number) {
-  if (pct >= 65) return "#50C882";
-  if (pct >= 40) return "#FF7828";
-  return "#EB505A";
+  if (pct >= 65) return "#12a150";
+  if (pct >= 40) return "#1a73ff";
+  return "#ef3b4a";
 }
 
 // Masked headshot — fades the grey MLB image background to transparent
@@ -79,10 +79,10 @@ function UpsellBanner({
       >
         <Lock size={17} style={{ color }} strokeWidth={1.8} />
       </div>
-      <p className="text-xs text-white/40">{message}</p>
+      <p className="text-xs text-[#14161b]/56">{message}</p>
       <Link
         href={href}
-        className="inline-flex items-center gap-1.5 rounded-full text-white text-xs font-black px-5 py-2.5 hover:opacity-90 transition-opacity shadow-lg"
+        className="inline-flex items-center gap-1.5 rounded-full text-[#14161b] text-xs font-black px-5 py-2.5 hover:opacity-90 transition-opacity shadow-lg"
         style={{ background: color, boxShadow: `0 6px 20px ${color}40` }}
       >
         <Zap size={12} strokeWidth={2.5} />
@@ -118,17 +118,17 @@ function PropCardLarge({ row, index }: { row: PropRowData; index: number }) {
       initial="hidden"
       animate="visible"
       variants={fadeUp}
-      className="relative rounded-2xl border border-white/[0.07] bg-[#0D1320] overflow-hidden group hover:border-white/[0.12] transition-colors"
+      className="relative rounded-2xl border border-[#14161b]/[.09] bg-[#ffffff] overflow-hidden group hover:border-[#14161b]/[.09] transition-colors"
     >
       {/* Badges — top-right corner */}
       <div className="absolute top-2.5 right-2.5 flex flex-col items-end gap-1 z-10">
         {row.isHot && (
-          <div className="flex items-center gap-1 rounded-full bg-[#FF4500] px-2 py-0.5 shadow-sm">
-            <span className="text-[9px] font-black text-white tracking-widest">🔥 HOT</span>
+          <div className="flex items-center gap-1 rounded-full bg-[#ef3b4a] px-2 py-0.5 shadow-sm">
+            <span className="text-[9px] font-black text-[#14161b] tracking-widest">🔥 HOT</span>
           </div>
         )}
         {row.isDue && !row.isHot && (
-          <div className="flex items-center gap-1 rounded-full bg-[#FBBF24] px-2 py-0.5 shadow-sm">
+          <div className="flex items-center gap-1 rounded-full bg-[#d49a06] px-2 py-0.5 shadow-sm">
             <span className="text-[9px] font-black text-black tracking-widest">⚡ DUE</span>
           </div>
         )}
@@ -142,7 +142,7 @@ function PropCardLarge({ row, index }: { row: PropRowData; index: number }) {
       <div className="px-3 pb-4 flex flex-col items-center gap-2 text-center -mt-2">
         {/* Pct badge — solid background, bold white text */}
         <div
-          className="rounded-full px-3 py-1 text-[12px] font-black text-white"
+          className="rounded-full px-3 py-1 text-[12px] font-black text-[#14161b]"
           style={{ background: c, boxShadow: `0 2px 10px ${c}50` }}
         >
           {row.pct}%
@@ -150,15 +150,15 @@ function PropCardLarge({ row, index }: { row: PropRowData; index: number }) {
 
         {/* Name + info */}
         <div>
-          <p className="text-sm font-black text-white leading-tight">{row.batterName}</p>
-          <p className="text-[10px] text-white/30 mt-0.5">
+          <p className="text-sm font-black text-[#14161b] leading-tight">{row.batterName}</p>
+          <p className="text-[10px] text-[#14161b]/46 mt-0.5">
             {row.batterAvg} AVG · {row.batterHr} HR · vs {row.pitcherName.split(" ").pop()}
           </p>
         </div>
 
         {/* Probability bar */}
         <div className="w-full">
-          <div className="h-1 rounded-full bg-white/[0.06] overflow-hidden">
+          <div className="h-1 rounded-full bg-[#14161b]/[0.06] overflow-hidden">
             <motion.div
               className="h-full rounded-full"
               style={{ background: c }}
@@ -182,7 +182,7 @@ function PropRowSmall({ row, index }: { row: PropRowData; index: number }) {
       initial="hidden"
       animate="visible"
       variants={fadeUp}
-      className="flex items-center gap-3 py-2.5 border-b border-white/[0.04] last:border-0"
+      className="flex items-center gap-3 py-2.5 border-b border-[#14161b]/[.09] last:border-0"
     >
       {/* Headshot — no circle, masked */}
       <div className="w-11 h-11 shrink-0 flex items-center justify-center">
@@ -195,21 +195,21 @@ function PropRowSmall({ row, index }: { row: PropRowData; index: number }) {
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 mb-0.5">
-          <p className="text-sm font-bold text-white truncate">{row.batterName}</p>
+          <p className="text-sm font-bold text-[#14161b] truncate">{row.batterName}</p>
           {row.isHot && (
-            <span className="shrink-0 text-[8px] font-black text-white bg-[#FF4500] rounded-full px-1.5 py-0.5">🔥</span>
+            <span className="shrink-0 text-[8px] font-black text-white bg-[#ef3b4a] rounded-full px-1.5 py-0.5">🔥</span>
           )}
           {row.isDue && !row.isHot && (
-            <span className="shrink-0 text-[8px] font-black text-black bg-[#FBBF24] rounded-full px-1.5 py-0.5">⚡</span>
+            <span className="shrink-0 text-[8px] font-black text-black bg-[#d49a06] rounded-full px-1.5 py-0.5">⚡</span>
           )}
         </div>
-        <p className="text-[10px] text-white/30 truncate">
+        <p className="text-[10px] text-[#14161b]/46 truncate">
           {row.batterAvg} AVG · {row.batterHr} HR · vs {row.pitcherName.split(" ").pop()}
         </p>
       </div>
       <div className="text-right shrink-0">
         <div
-          className="inline-block rounded-full px-2.5 py-0.5 text-[13px] font-black text-white tabular-nums"
+          className="inline-block rounded-full px-2.5 py-0.5 text-[13px] font-black text-[#14161b] tabular-nums"
           style={{ background: c }}
         >
           {row.pct}%
@@ -242,15 +242,15 @@ export function GatedPropList({ title, subtitle, rows, variant = "list", freeCou
   if (filtered.length === 0) return null;
 
   return (
-    <div className="rounded-2xl border border-white/[0.07] bg-[#0D1320] overflow-hidden">
-      <div className="px-5 pt-5 pb-3 border-b border-white/[0.05] flex items-start justify-between">
+    <div className="rounded-2xl border border-[#14161b]/[.09] bg-[#ffffff] overflow-hidden">
+      <div className="px-5 pt-5 pb-3 border-b border-[#14161b]/[.09] flex items-start justify-between">
         <div>
-          <p className="text-[10px] font-bold text-white/25 tracking-widest uppercase mb-1">Prop Signals</p>
-          <p className="text-sm font-black text-white">{title}</p>
-          {subtitle && <p className="text-[10px] text-white/30 mt-0.5">{subtitle}</p>}
+          <p className="text-[10px] font-bold text-[#14161b]/46 tracking-widest uppercase mb-1">Prop Signals</p>
+          <p className="text-sm font-black text-[#14161b]">{title}</p>
+          {subtitle && <p className="text-[10px] text-[#14161b]/46 mt-0.5">{subtitle}</p>}
         </div>
         {threshold && (
-          <span className="text-[9px] font-black text-[#FF7828] bg-[#FF7828]/10 border border-[#FF7828]/20 rounded-full px-2 py-0.5">
+          <span className="text-[9px] font-black text-[#1a73ff] bg-[#1a73ff]/10 border border-[#1a73ff]/20 rounded-full px-2 py-0.5">
             ≥{threshold}% only
           </span>
         )}
@@ -262,12 +262,12 @@ export function GatedPropList({ title, subtitle, rows, variant = "list", freeCou
             {free.map((r, i) => <PropCardLarge key={r.batterId} row={r} index={i} />)}
           </div>
           {locked.length > 0 && !isPro && (
-            <div className="mt-3 rounded-xl border border-[#FF7828]/20 bg-[#FF7828]/[0.03]">
+            <div className="mt-3 rounded-xl border border-[#1a73ff]/20 bg-[#1a73ff]/[0.03]">
               <UpsellBanner
                 tier="Fan — $4.99/mo"
                 message={`+${locked.length} more players locked behind Fan plan`}
                 href="/upgrade?tier=fan"
-                color="#FF7828"
+                color="#1a73ff"
               />
             </div>
           )}
@@ -288,12 +288,12 @@ export function GatedPropList({ title, subtitle, rows, variant = "list", freeCou
                 <div className="pointer-events-none select-none" style={{ filter: "blur(5px)", opacity: 0.3 }}>
                   {locked.slice(0, 3).map((r, i) => <PropRowSmall key={r.batterId} row={r} index={i} />)}
                 </div>
-                <div className="absolute inset-0 flex items-center justify-center bg-[#0D1320]/80 backdrop-blur-[2px]">
+                <div className="absolute inset-0 flex items-center justify-center bg-[#ffffff]/80 backdrop-blur-[2px]">
                   <UpsellBanner
                     tier="Fan — $4.99/mo"
                     message={`+${locked.length} more players locked`}
                     href="/upgrade?tier=fan"
-                    color="#FF7828"
+                    color="#1a73ff"
                   />
                 </div>
               </div>
@@ -318,19 +318,19 @@ interface WinProbProps {
 export function GatedWinProb({ homeProb, awayTeam, homeTeam, awayTeamId, homeTeamId }: WinProbProps) {
   const { isPro, isLoaded } = useSubscription();
   const awayProb = 100 - homeProb;
-  const awayColor = TEAM_COLORS[awayTeamId] ?? "#818cf8";
-  const homeColor = TEAM_COLORS[homeTeamId] ?? "#FF7828";
+  const awayColor = TEAM_COLORS[awayTeamId] ?? "#6d4fe0";
+  const homeColor = TEAM_COLORS[homeTeamId] ?? "#1a73ff";
 
   if (!isLoaded) return null;
 
   if (!isPro) {
     return (
-      <div className="rounded-2xl border border-[#FF7828]/20 bg-[#0D1320] overflow-hidden h-full">
-        <div className="px-5 py-4 border-b border-white/[0.04] flex items-center justify-between">
-          <p className="text-sm font-black text-white">Win Probability</p>
-          <div className="flex items-center gap-1.5 rounded-full border border-[#FF7828]/30 bg-[#FF7828]/10 px-2.5 py-1">
-            <Lock size={10} className="text-[#FF7828]" strokeWidth={2.5} />
-            <span className="text-[10px] font-black text-[#FF7828]">FAN</span>
+      <div className="rounded-2xl border border-[#1a73ff]/20 bg-[#ffffff] overflow-hidden h-full">
+        <div className="px-5 py-4 border-b border-[#14161b]/[.09] flex items-center justify-between">
+          <p className="text-sm font-black text-[#14161b]">Win Probability</p>
+          <div className="flex items-center gap-1.5 rounded-full border border-[#1a73ff]/30 bg-[#1a73ff]/10 px-2.5 py-1">
+            <Lock size={10} className="text-[#1a73ff]" strokeWidth={2.5} />
+            <span className="text-[10px] font-black text-[#1a73ff]">FAN</span>
           </div>
         </div>
         <div className="px-5 py-5 flex flex-col items-center gap-4">
@@ -344,7 +344,7 @@ export function GatedWinProb({ homeProb, awayTeam, homeTeam, awayTeamId, homeTea
               <p className="text-xl font-black" style={{ color: homeColor }}>{homeProb}%</p>
             </div>
           </div>
-          <UpsellBanner tier="Fan — $4.99/mo" message="Win probability is a Fan feature" href="/upgrade?tier=fan" color="#FF7828" />
+          <UpsellBanner tier="Fan — $4.99/mo" message="Win probability is a Fan feature" href="/upgrade?tier=fan" color="#1a73ff" />
         </div>
       </div>
     );
@@ -356,15 +356,15 @@ export function GatedWinProb({ homeProb, awayTeam, homeTeam, awayTeamId, homeTea
   const leaderPct = Math.max(awayProb, homeProb);
 
   return (
-    <div className="rounded-2xl border border-white/[0.07] bg-[#0D1320] p-5 h-full">
-      <p className="text-[10px] font-bold text-white/25 tracking-widest uppercase mb-4">Win Probability</p>
+    <div className="rounded-2xl border border-[#14161b]/[.09] bg-[#ffffff] p-5 h-full">
+      <p className="text-[10px] font-bold text-[#14161b]/46 tracking-widest uppercase mb-4">Win Probability</p>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <PlayerImg src={teamLogoUrl(awayTeamId)} alt={awayAbbr} className="w-5 h-5 object-contain" />
-          <span className="text-xs font-bold text-white/70">{awayAbbr}</span>
+          <span className="text-xs font-bold text-[#14161b]/74">{awayAbbr}</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-white/70">{homeAbbr}</span>
+          <span className="text-xs font-bold text-[#14161b]/74">{homeAbbr}</span>
           <PlayerImg src={teamLogoUrl(homeTeamId)} alt={homeAbbr} className="w-5 h-5 object-contain" />
         </div>
       </div>
@@ -389,20 +389,20 @@ export function GatedWinProb({ homeProb, awayTeam, homeTeam, awayTeamId, homeTea
       <div className="flex items-center justify-between mb-4">
         <div className="text-center">
           <p className="text-2xl font-black tabular-nums" style={{ color: awayColor }}>{awayProb}%</p>
-          <p className="text-[9px] text-white/25">Away</p>
+          <p className="text-[9px] text-[#14161b]/46">Away</p>
         </div>
         <div className="text-center">
-          <p className="text-[10px] text-white/20">Model estimate</p>
+          <p className="text-[10px] text-[#14161b]/38">Model estimate</p>
         </div>
         <div className="text-center">
           <p className="text-2xl font-black tabular-nums" style={{ color: homeColor }}>{homeProb}%</p>
-          <p className="text-[9px] text-white/25">Home</p>
+          <p className="text-[9px] text-[#14161b]/46">Home</p>
         </div>
       </div>
 
-      <div className="rounded-xl bg-white/[0.03] border border-white/[0.05] px-3 py-2 text-center">
-        <p className="text-[11px] text-white/45">
-          Model leans <span className="text-white font-black">{leader}</span> ({leaderPct}% confidence)
+      <div className="rounded-xl bg-[#14161b]/[0.03] border border-[#14161b]/[.09] px-3 py-2 text-center">
+        <p className="text-[11px] text-[#14161b]/56">
+          Model leans <span className="text-[#14161b] font-black">{leader}</span> ({leaderPct}% confidence)
         </p>
       </div>
     </div>
@@ -425,29 +425,29 @@ export function NRFICard({ nrfi, isFinal, firstInningScore, awayAbbr, homeAbbr }
 
   if (!isPro) {
     return (
-      <div className="rounded-2xl border border-[#FF7828]/20 bg-[#0D1320] overflow-hidden">
-        <div className="px-5 py-4 border-b border-white/[0.04] flex items-center justify-between">
+      <div className="rounded-2xl border border-[#1a73ff]/20 bg-[#ffffff] overflow-hidden">
+        <div className="px-5 py-4 border-b border-[#14161b]/[.09] flex items-center justify-between">
           <div>
-            <p className="text-[10px] font-bold text-white/25 tracking-widest uppercase mb-1">1st Inning</p>
-            <p className="text-sm font-black text-white">NRFI Prediction</p>
+            <p className="text-[10px] font-bold text-[#14161b]/46 tracking-widest uppercase mb-1">1st Inning</p>
+            <p className="text-sm font-black text-[#14161b]">NRFI Prediction</p>
           </div>
-          <div className="flex items-center gap-1.5 rounded-full border border-[#FF7828]/30 bg-[#FF7828]/10 px-2.5 py-1">
-            <Lock size={10} className="text-[#FF7828]" strokeWidth={2.5} />
-            <span className="text-[10px] font-black text-[#FF7828]">FAN</span>
+          <div className="flex items-center gap-1.5 rounded-full border border-[#1a73ff]/30 bg-[#1a73ff]/10 px-2.5 py-1">
+            <Lock size={10} className="text-[#1a73ff]" strokeWidth={2.5} />
+            <span className="text-[10px] font-black text-[#1a73ff]">FAN</span>
           </div>
         </div>
-        <UpsellBanner tier="Fan — $4.99/mo" message="NRFI prediction unlocks with Fan plan" href="/upgrade?tier=fan" color="#FF7828" />
+        <UpsellBanner tier="Fan — $4.99/mo" message="NRFI prediction unlocks with Fan plan" href="/upgrade?tier=fan" color="#1a73ff" />
       </div>
     );
   }
 
   const verdictColor =
-    nrfi.verdict === "YES" ? "#50C882" :
-    nrfi.verdict === "NO"  ? "#EB505A" : "#FBBF24";
+    nrfi.verdict === "YES" ? "#12a150" :
+    nrfi.verdict === "NO"  ? "#ef3b4a" : "#d49a06";
 
   const verdictBg =
-    nrfi.verdict === "YES" ? "#50C88215" :
-    nrfi.verdict === "NO"  ? "#EB505A15" : "#FBBF2415";
+    nrfi.verdict === "YES" ? "#12a15015" :
+    nrfi.verdict === "NO"  ? "#ef3b4a15" : "#d49a0615";
 
   const VerdictIcon = nrfi.verdict === "YES" ? TrendingDown : nrfi.verdict === "NO" ? TrendingUp : Minus;
 
@@ -465,13 +465,13 @@ export function NRFICard({ nrfi, isFinal, firstInningScore, awayAbbr, homeAbbr }
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, delay: 0.15 }}
-      className="rounded-2xl border bg-[#0D1320] overflow-hidden"
+      className="rounded-2xl border bg-[#ffffff] overflow-hidden"
       style={{ borderColor: `${verdictColor}30` }}
     >
-      <div className="px-5 py-4 border-b border-white/[0.05] flex items-center justify-between">
+      <div className="px-5 py-4 border-b border-[#14161b]/[.09] flex items-center justify-between">
         <div>
-          <p className="text-[10px] font-bold text-white/25 tracking-widest uppercase mb-1">1st Inning Analysis</p>
-          <p className="text-sm font-black text-white">NRFI Prediction</p>
+          <p className="text-[10px] font-bold text-[#14161b]/46 tracking-widest uppercase mb-1">1st Inning Analysis</p>
+          <p className="text-sm font-black text-[#14161b]">NRFI Prediction</p>
         </div>
 
         {/* Post-game result badge */}
@@ -479,9 +479,9 @@ export function NRFICard({ nrfi, isFinal, firstInningScore, awayAbbr, homeAbbr }
           <div
             className="flex items-center gap-1.5 rounded-full px-3 py-1 border text-xs font-black"
             style={{
-              background: wasCorrect ? "#50C88215" : "#EB505A15",
-              borderColor: wasCorrect ? "#50C88230" : "#EB505A30",
-              color: wasCorrect ? "#50C882" : "#EB505A",
+              background: wasCorrect ? "#12a15015" : "#ef3b4a15",
+              borderColor: wasCorrect ? "#12a15030" : "#ef3b4a30",
+              color: wasCorrect ? "#12a150" : "#ef3b4a",
             }}
           >
             {wasCorrect ? <Check size={11} strokeWidth={3} /> : <Minus size={11} strokeWidth={2} />}
@@ -505,7 +505,7 @@ export function NRFICard({ nrfi, isFinal, firstInningScore, awayAbbr, homeAbbr }
 
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <p className="text-base font-black text-white">
+              <p className="text-base font-black text-[#14161b]">
                 {nrfi.verdict === "YES"
                   ? "No Run First Inning — Likely"
                   : nrfi.verdict === "NO"
@@ -513,11 +513,11 @@ export function NRFICard({ nrfi, isFinal, firstInningScore, awayAbbr, homeAbbr }
                   : "First Inning — Coin Flip"}
               </p>
             </div>
-            <p className="text-xs text-white/40 mb-3">{nrfi.reason}</p>
+            <p className="text-xs text-[#14161b]/56 mb-3">{nrfi.reason}</p>
 
             {/* Confidence */}
             <div className="flex items-center gap-3">
-              <div className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+              <div className="flex-1 h-1.5 rounded-full bg-[#14161b]/[0.06] overflow-hidden">
                 <motion.div
                   className="h-full rounded-full"
                   style={{ background: verdictColor }}
@@ -535,16 +535,16 @@ export function NRFICard({ nrfi, isFinal, firstInningScore, awayAbbr, homeAbbr }
 
         {/* Post-game first inning score */}
         {firstInningScore && (
-          <div className="mt-4 rounded-xl bg-white/[0.03] border border-white/[0.06] px-4 py-3">
-            <p className="text-[10px] text-white/30 tracking-widest uppercase mb-2">Actual 1st Inning</p>
+          <div className="mt-4 rounded-xl bg-[#14161b]/[0.03] border border-[#14161b]/[.09] px-4 py-3">
+            <p className="text-[10px] text-[#14161b]/46 tracking-widest uppercase mb-2">Actual 1st Inning</p>
             <div className="flex items-center justify-between">
-              <span className="text-sm font-bold text-white">{awayAbbr}</span>
+              <span className="text-sm font-bold text-[#14161b]">{awayAbbr}</span>
               <div className="flex items-center gap-3">
-                <span className="text-xl font-black text-white tabular-nums">{firstInningScore.away}</span>
-                <span className="text-white/20">—</span>
-                <span className="text-xl font-black text-white tabular-nums">{firstInningScore.home}</span>
+                <span className="text-xl font-black text-[#14161b] tabular-nums">{firstInningScore.away}</span>
+                <span className="text-[#14161b]/38">—</span>
+                <span className="text-xl font-black text-[#14161b] tabular-nums">{firstInningScore.home}</span>
               </div>
-              <span className="text-sm font-bold text-white">{homeAbbr}</span>
+              <span className="text-sm font-bold text-[#14161b]">{homeAbbr}</span>
             </div>
           </div>
         )}
@@ -567,26 +567,26 @@ export function GatedH2HHistory({ games, currentAwayTeamId, currentHomeTeamId }:
 
   if (!isPro) {
     return (
-      <div className="rounded-2xl border border-[#FF7828]/20 bg-[#0D1320] overflow-hidden">
-        <div className="px-5 py-4 border-b border-white/[0.04] flex items-center justify-between">
+      <div className="rounded-2xl border border-[#1a73ff]/20 bg-[#ffffff] overflow-hidden">
+        <div className="px-5 py-4 border-b border-[#14161b]/[.09] flex items-center justify-between">
           <div>
-            <p className="text-[10px] font-bold text-white/25 tracking-widest uppercase mb-1">History</p>
-            <p className="text-sm font-black text-white">Head-to-Head</p>
+            <p className="text-[10px] font-bold text-[#14161b]/46 tracking-widest uppercase mb-1">History</p>
+            <p className="text-sm font-black text-[#14161b]">Head-to-Head</p>
           </div>
-          <div className="flex items-center gap-1.5 rounded-full border border-[#FF7828]/30 bg-[#FF7828]/10 px-2.5 py-1">
-            <Lock size={10} className="text-[#FF7828]" strokeWidth={2.5} />
-            <span className="text-[10px] font-black text-[#FF7828]">FAN</span>
+          <div className="flex items-center gap-1.5 rounded-full border border-[#1a73ff]/30 bg-[#1a73ff]/10 px-2.5 py-1">
+            <Lock size={10} className="text-[#1a73ff]" strokeWidth={2.5} />
+            <span className="text-[10px] font-black text-[#1a73ff]">FAN</span>
           </div>
         </div>
-        <UpsellBanner tier="Fan — $4.99/mo" message="H2H history unlocks with Fan plan" href="/upgrade?tier=fan" color="#FF7828" />
+        <UpsellBanner tier="Fan — $4.99/mo" message="H2H history unlocks with Fan plan" href="/upgrade?tier=fan" color="#1a73ff" />
       </div>
     );
   }
 
   const awayAbbr = TEAM_ABBR[currentAwayTeamId] ?? "Away";
   const homeAbbr = TEAM_ABBR[currentHomeTeamId] ?? "Home";
-  const awayColor = TEAM_COLORS[currentAwayTeamId] ?? "#818cf8";
-  const homeColor = TEAM_COLORS[currentHomeTeamId] ?? "#FF7828";
+  const awayColor = TEAM_COLORS[currentAwayTeamId] ?? "#6d4fe0";
+  const homeColor = TEAM_COLORS[currentHomeTeamId] ?? "#1a73ff";
 
   // Filter out 0-0 ghost games (incomplete data)
   const validGames = games.filter((g) => !(g.awayScore === 0 && g.homeScore === 0));
@@ -597,8 +597,8 @@ export function GatedH2HHistory({ games, currentAwayTeamId, currentHomeTeamId }:
 
   if (validGames.length === 0) {
     return (
-      <div className="rounded-2xl border border-white/[0.07] bg-[#0D1320] p-6 text-center">
-        <p className="text-white/30 text-sm">No recent H2H history found</p>
+      <div className="rounded-2xl border border-[#14161b]/[.09] bg-[#ffffff] p-6 text-center">
+        <p className="text-[#14161b]/46 text-sm">No recent H2H history found</p>
       </div>
     );
   }
@@ -608,19 +608,19 @@ export function GatedH2HHistory({ games, currentAwayTeamId, currentHomeTeamId }:
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, delay: 0.2 }}
-      className="rounded-2xl border border-white/[0.07] bg-[#0D1320] overflow-hidden"
+      className="rounded-2xl border border-[#14161b]/[.09] bg-[#ffffff] overflow-hidden"
     >
       {/* Header */}
-      <div className="px-5 py-4 border-b border-white/[0.05]">
-        <p className="text-[10px] font-bold text-white/25 tracking-widest uppercase mb-2">History</p>
+      <div className="px-5 py-4 border-b border-[#14161b]/[.09]">
+        <p className="text-[10px] font-bold text-[#14161b]/46 tracking-widest uppercase mb-2">History</p>
         <div className="flex items-center justify-between gap-3">
-          <p className="text-sm font-black text-white">Head-to-Head</p>
+          <p className="text-sm font-black text-[#14161b]">Head-to-Head</p>
           {/* Series record pill */}
           <div className="flex items-center gap-1 shrink-0">
             <span className="text-sm font-black tabular-nums" style={{ color: awayColor }}>{awayWins}</span>
-            <span className="text-white/30 text-xs font-bold mx-0.5">–</span>
+            <span className="text-[#14161b]/46 text-xs font-bold mx-0.5">–</span>
             <span className="text-sm font-black tabular-nums" style={{ color: homeColor }}>{homeWins}</span>
-            <span className="text-[10px] text-white/30 ml-1">({validGames.length}g)</span>
+            <span className="text-[10px] text-[#14161b]/46 ml-1">({validGames.length}g)</span>
           </div>
         </div>
         {/* Team labels under record */}
@@ -636,7 +636,7 @@ export function GatedH2HHistory({ games, currentAwayTeamId, currentHomeTeamId }:
         </div>
       </div>
 
-      <div className="divide-y divide-white/[0.04]">
+      <div className="divide-y divide-[#14161b]/[.09]">
         {validGames.map((g, i) => {
           const isAwayGame = g.awayTeamId === currentAwayTeamId;
           const awayScore = isAwayGame ? g.awayScore : g.homeScore;
@@ -657,13 +657,13 @@ export function GatedH2HHistory({ games, currentAwayTeamId, currentHomeTeamId }:
               className="px-4 py-3 flex items-center gap-3"
             >
               {/* Date */}
-              <p className="text-[10px] text-white/35 font-medium w-12 shrink-0">{dateStr}</p>
+              <p className="text-[10px] text-[#14161b]/56 font-medium w-12 shrink-0">{dateStr}</p>
 
               {/* Score block — always visible on mobile */}
               <div className="flex-1 flex items-center justify-center gap-0">
                 {/* Away */}
                 <div className={`flex items-center gap-1.5 flex-1 justify-end ${awayWon ? "" : "opacity-40"}`}>
-                  <span className="text-xs font-black text-white">{awayAbbr}</span>
+                  <span className="text-xs font-black text-[#14161b]">{awayAbbr}</span>
                   <span
                     className="text-xl font-black tabular-nums min-w-[1.5rem] text-center"
                     style={{ color: awayWon ? awayColor : "white" }}
@@ -672,7 +672,7 @@ export function GatedH2HHistory({ games, currentAwayTeamId, currentHomeTeamId }:
                   </span>
                 </div>
 
-                <span className="text-white/20 text-xs font-bold mx-2">:</span>
+                <span className="text-[#14161b]/38 text-xs font-bold mx-2">:</span>
 
                 {/* Home */}
                 <div className={`flex items-center gap-1.5 flex-1 ${!awayWon ? "" : "opacity-40"}`}>
@@ -682,7 +682,7 @@ export function GatedH2HHistory({ games, currentAwayTeamId, currentHomeTeamId }:
                   >
                     {homeScore}
                   </span>
-                  <span className="text-xs font-black text-white">{homeAbbr}</span>
+                  <span className="text-xs font-black text-[#14161b]">{homeAbbr}</span>
                 </div>
               </div>
 
@@ -718,23 +718,23 @@ export function GatedLineups({ awayBatters, homeBatters, awayTeamId, homeTeamId 
 
   const awayAbbr = TEAM_ABBR[awayTeamId] ?? "Away";
   const homeAbbr = TEAM_ABBR[homeTeamId] ?? "Home";
-  const awayColor = TEAM_COLORS[awayTeamId] ?? "#818cf8";
-  const homeColor = TEAM_COLORS[homeTeamId] ?? "#FF7828";
+  const awayColor = TEAM_COLORS[awayTeamId] ?? "#6d4fe0";
+  const homeColor = TEAM_COLORS[homeTeamId] ?? "#1a73ff";
 
   if (!isSuperPro) {
     return (
-      <div className="rounded-2xl border border-[#818cf8]/20 bg-[#0D1320] overflow-hidden">
-        <div className="px-5 py-4 border-b border-white/[0.04] flex items-center justify-between">
+      <div className="rounded-2xl border border-[#6d4fe0]/20 bg-[#ffffff] overflow-hidden">
+        <div className="px-5 py-4 border-b border-[#14161b]/[.09] flex items-center justify-between">
           <div>
-            <p className="text-[10px] font-bold text-white/25 tracking-widest uppercase mb-1">Roster</p>
-            <p className="text-sm font-black text-white">Team Lineups</p>
+            <p className="text-[10px] font-bold text-[#14161b]/46 tracking-widest uppercase mb-1">Roster</p>
+            <p className="text-sm font-black text-[#14161b]">Team Lineups</p>
           </div>
-          <div className="flex items-center gap-1.5 rounded-full border border-[#818cf8]/30 bg-[#818cf8]/10 px-2.5 py-1">
-            <Star size={10} className="text-[#818cf8]" strokeWidth={2.5} />
-            <span className="text-[10px] font-black text-[#818cf8]">PRO</span>
+          <div className="flex items-center gap-1.5 rounded-full border border-[#6d4fe0]/30 bg-[#6d4fe0]/10 px-2.5 py-1">
+            <Star size={10} className="text-[#6d4fe0]" strokeWidth={2.5} />
+            <span className="text-[10px] font-black text-[#6d4fe0]">PRO</span>
           </div>
         </div>
-        <UpsellBanner tier="Pro — $14.99/mo" message="Full team lineups with stats unlock with Pro" href="/upgrade?tier=pro" color="#818cf8" />
+        <UpsellBanner tier="Pro — $14.99/mo" message="Full team lineups with stats unlock with Pro" href="/upgrade?tier=pro" color="#6d4fe0" />
       </div>
     );
   }
@@ -742,11 +742,11 @@ export function GatedLineups({ awayBatters, homeBatters, awayTeamId, homeTeamId 
   function LineupCol({ batters, teamId, abbr, accentColor }: { batters: RosterBatter[]; teamId: number; abbr: string; accentColor: string }) {
     return (
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-white/[0.05]">
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-[#14161b]/[.09]">
           <PlayerImg src={teamLogoUrl(teamId)} alt={abbr} className="w-5 h-5 object-contain" />
-          <p className="text-sm font-black text-white">{abbr}</p>
+          <p className="text-sm font-black text-[#14161b]">{abbr}</p>
         </div>
-        <div className="divide-y divide-white/[0.03]">
+        <div className="divide-y divide-[#14161b]/[.09]">
           {batters.slice(0, 9).map((b, i) => (
             <motion.div
               key={b.id}
@@ -754,9 +754,9 @@ export function GatedLineups({ awayBatters, homeBatters, awayTeamId, homeTeamId 
               initial="hidden"
               animate="visible"
               variants={fadeUp}
-              className="flex items-center gap-2.5 px-4 py-2.5 group hover:bg-white/[0.02] transition-colors"
+              className="flex items-center gap-2.5 px-4 py-2.5 group hover:bg-[#14161b]/[0.02] transition-colors"
             >
-              <span className="text-[10px] font-black text-white/20 w-4 shrink-0">{i + 1}</span>
+              <span className="text-[10px] font-black text-[#14161b]/38 w-4 shrink-0">{i + 1}</span>
               <div className="w-9 h-9 shrink-0 flex items-center justify-center">
                 <Headshot
                   id={b.id}
@@ -766,14 +766,14 @@ export function GatedLineups({ awayBatters, homeBatters, awayTeamId, homeTeamId 
                 />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-white truncate">{b.fullName}</p>
-                <p className="text-[9px] text-white/25">{b.position} · {b.stats.avg} AVG</p>
+                <p className="text-xs font-bold text-[#14161b] truncate">{b.fullName}</p>
+                <p className="text-[9px] text-[#14161b]/46">{b.position} · {b.stats.avg} AVG</p>
               </div>
               <div className="text-right shrink-0">
                 <p className="text-xs font-black tabular-nums" style={{ color: accentColor }}>
                   {b.stats.ops}
                 </p>
-                <p className="text-[9px] text-white/20">OPS</p>
+                <p className="text-[9px] text-[#14161b]/38">OPS</p>
               </div>
             </motion.div>
           ))}
@@ -787,14 +787,14 @@ export function GatedLineups({ awayBatters, homeBatters, awayTeamId, homeTeamId 
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, delay: 0.25 }}
-      className="rounded-2xl border border-white/[0.07] bg-[#0D1320] overflow-hidden"
+      className="rounded-2xl border border-[#14161b]/[.09] bg-[#ffffff] overflow-hidden"
     >
-      <div className="px-5 py-4 border-b border-white/[0.05]">
-        <p className="text-[10px] font-bold text-white/25 tracking-widest uppercase mb-1">Roster</p>
-        <p className="text-sm font-black text-white">Expected Lineups</p>
-        <p className="text-[10px] text-white/25 mt-0.5">Sorted by season OPS — confirmed batting order may differ</p>
+      <div className="px-5 py-4 border-b border-[#14161b]/[.09]">
+        <p className="text-[10px] font-bold text-[#14161b]/46 tracking-widest uppercase mb-1">Roster</p>
+        <p className="text-sm font-black text-[#14161b]">Expected Lineups</p>
+        <p className="text-[10px] text-[#14161b]/46 mt-0.5">Sorted by season OPS — confirmed batting order may differ</p>
       </div>
-      <div className="flex divide-x divide-white/[0.06]">
+      <div className="flex divide-x divide-[#14161b]/[.09]">
         <LineupCol batters={awayBatters} teamId={awayTeamId} abbr={awayAbbr} accentColor={awayColor} />
         <LineupCol batters={homeBatters} teamId={homeTeamId} abbr={homeAbbr} accentColor={homeColor} />
       </div>

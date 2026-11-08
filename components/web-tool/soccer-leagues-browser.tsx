@@ -41,7 +41,7 @@ function LeagueCard({ def }: { def: SoccerLeagueDef }) {
               }}
             />
             <div
-              className="w-12 h-12 rounded-2xl items-center justify-center font-spot-sans font-black text-[11px] text-white"
+              className="w-12 h-12 rounded-2xl items-center justify-center font-spot-sans font-black text-[11px] text-[#14161b]"
               style={{ display: "none", background: def.color }}
             >
               {initials}

@@ -7,9 +7,9 @@ import { getPlayerProps } from "@/lib/wnba/sportsblaze";
 import { wnbaTeamHex, wnbaLogoUrl, wnbaHeadshotUrl } from "@/lib/wnba/teams";
 
 const ZONE_COLOR: Record<string, string> = {
-  Paint: "#34d399",
-  "Mid-range": "#fb923c",
-  "3PT": "#a78bfa",
+  Paint: "#12a150",
+  "Mid-range": "#ea6a0a",
+  "3PT": "#6d4fe0",
 };
 
 async function DailyPicks() {
@@ -93,9 +93,9 @@ async function ImpactGrid() {
               </div>
               <div>
                 <p className="font-spot-sans font-bold text-[10px] uppercase tracking-[.08em] mb-1.5" style={{ color: "var(--text-faint)" }}>Shot Zone Split</p>
-                <div className="flex h-2.5 rounded overflow-hidden" style={{ background: "rgba(255,255,255,.08)" }}>
+                <div className="flex h-2.5 rounded overflow-hidden" style={{ background: "var(--wash-3)" }}>
                   {s.zones.map((z, zi) => (
-                    <div key={z.zone} style={{ width: `${z.pct}%`, background: ZONE_COLOR[z.zone] ?? "#818cf8", transformOrigin: "left", animation: `bar-grow .7s cubic-bezier(.22,1,.36,1) ${zi * 0.1}s both` }} />
+                    <div key={z.zone} style={{ width: `${z.pct}%`, background: ZONE_COLOR[z.zone] ?? "#6d4fe0", transformOrigin: "left", animation: `bar-grow .7s cubic-bezier(.22,1,.36,1) ${zi * 0.1}s both` }} />
                   ))}
                 </div>
                 <div className="flex justify-between mt-1.5">
@@ -127,7 +127,7 @@ export default function WnbaImpactPage() {
       <div className="spotlight min-h-screen">
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-6">
           <div className="mb-6">
-            <SectionLabel style={{ color: "#2dd4bf" }}>Pro Deep Dive</SectionLabel>
+            <SectionLabel style={{ color: "#0f9d8e" }}>Pro Deep Dive</SectionLabel>
             <h1 className="font-spot-sans text-3xl sm:text-4xl font-black leading-tight mt-1" style={{ color: "var(--text)" }}>Player Impact Deep Dive</h1>
             <p className="mt-1.5 font-spot-sans text-[13px]" style={{ color: "var(--text-muted)" }}>
               Usage, efficiency, and shot-zone splits for the players moving win probability.

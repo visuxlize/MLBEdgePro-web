@@ -5,10 +5,10 @@ import { motion } from "framer-motion";
 
 // ── Floating gradient orbs ─────────────────────────────────────────────────────
 const ORBS = [
-  { color: "rgba(255,120,40,0.18)",  size: 600, x: "15%",  y: "10%",  duration: 18, delay: 0    },
+  { color: "rgba(26,115,255,0.18)",  size: 600, x: "15%",  y: "10%",  duration: 18, delay: 0    },
   { color: "rgba(129,140,248,0.12)", size: 500, x: "70%",  y: "5%",   duration: 22, delay: 3    },
   { color: "rgba(45,212,191,0.08)",  size: 400, x: "80%",  y: "60%",  duration: 25, delay: 6    },
-  { color: "rgba(255,120,40,0.10)",  size: 350, x: "5%",   y: "70%",  duration: 20, delay: 9    },
+  { color: "rgba(26,115,255,0.10)",  size: 350, x: "5%",   y: "70%",  duration: 20, delay: 9    },
   { color: "rgba(129,140,248,0.08)", size: 450, x: "45%",  y: "80%",  duration: 28, delay: 2    },
 ];
 
@@ -61,7 +61,7 @@ function DataLines() {
         <motion.line
           key={i}
           x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2}
-          stroke="#FF7828"
+          stroke="#1a73ff"
           strokeWidth="0.5"
           strokeDasharray="4 12"
           initial={{ pathLength: 0, opacity: 0 }}
@@ -80,11 +80,11 @@ function DataLines() {
 
 // ── Floating stat chips (subtle data points that drift up) ────────────────────
 const CHIPS = [
-  { text: "67.3% win rate",   left: "8%",  startY: 75, color: "#FF7828",  delay: 0   },
-  { text: "ERA 2.40",         left: "25%", startY: 80, color: "#818cf8",  delay: 2.5 },
-  { text: "HR +14%",          left: "60%", startY: 70, color: "#50C882",  delay: 5   },
-  { text: "Edge score 91",    left: "78%", startY: 78, color: "#FF7828",  delay: 7.5 },
-  { text: "K/9 11.2",         left: "44%", startY: 85, color: "#2dd4bf",  delay: 10  },
+  { text: "Win prob 76%",   left: "8%",  startY: 75, color: "#1a73ff",  delay: 0   },
+  { text: "Line 68.5",         left: "25%", startY: 80, color: "#6d4fe0",  delay: 2.5 },
+  { text: "xG 2.1",          left: "60%", startY: 70, color: "#12a150",  delay: 5   },
+  { text: "Edge score 91",    left: "78%", startY: 78, color: "#1a73ff",  delay: 7.5 },
+  { text: "Over 24.5 pts",         left: "44%", startY: 85, color: "#0f9d8e",  delay: 10  },
 ];
 
 function FloatingChips() {
@@ -135,7 +135,7 @@ function DotGrid() {
     <div
       className="absolute inset-0 pointer-events-none"
       style={{
-        backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)",
+        backgroundImage: "radial-gradient(circle, var(--wash-1) 1px, transparent 1px)",
         backgroundSize: "32px 32px",
         maskImage: "radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%)",
         WebkitMaskImage: "radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%)",
@@ -155,7 +155,7 @@ export function AnimatedBackground() {
       <div
         className="absolute inset-0"
         style={{
-          background: "radial-gradient(ellipse 100% 100% at 50% 50%, transparent 40%, rgba(10,14,20,0.7) 100%)",
+          background: "radial-gradient(ellipse 100% 100% at 50% 50%, transparent 40%, rgba(236,238,242,0.9) 100%)",
         }}
       />
     </div>

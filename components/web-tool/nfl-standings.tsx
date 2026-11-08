@@ -7,7 +7,7 @@ import { Panel, Segmented, SportHeader } from "@/components/web-tool/sport-ui";
 import { nflLogoUrl, nflTeamHex, nflTeamName } from "@/lib/nfl/teams";
 import type { NflStandingRow } from "@/lib/nfl/types";
 
-const ACCENT = "#a78bfa";
+const ACCENT = "#1a73ff";
 type View = "divisions" | "seeds" | "power";
 type Conf = "AFC" | "NFC";
 
@@ -44,7 +44,7 @@ function Row({ r, i, mode, maxPower, cut }: { r: NflStandingRow; i: number; mode
     <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i, 14) * 0.02 }}
       className="relative flex items-center gap-2 px-3 sm:px-4 py-2.5" style={{ borderTop: i ? "1px solid var(--hairline)" : undefined, boxShadow: cut ? "inset 0 1px 0 rgba(167,139,250,.55)" : undefined }}>
       <div className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r" style={{ background: hex }} />
-      <span className="font-spot-mono font-black text-[12px] w-6 text-center" style={{ color: lead || (mode === "seeds" && i < 7) ? "#c4b5fd" : "var(--text-faint)" }}>
+      <span className="font-spot-mono font-black text-[12px] w-6 text-center" style={{ color: lead || (mode === "seeds" && i < 7) ? "#6d4fe0" : "var(--text-faint)" }}>
         {mode === "seeds" ? (r.seed || i + 1) : i + 1}
       </span>
       <div className="flex-1 min-w-0 flex items-center gap-2.5">
@@ -59,8 +59,8 @@ function Row({ r, i, mode, maxPower, cut }: { r: NflStandingRow; i: number; mode
       <span className="font-spot-mono font-extrabold text-[12.5px] w-12 text-right" style={{ color: "var(--text)" }}>{rec(r)}</span>
       {mode === "power" ? (
         <div className="w-28 sm:w-44 flex items-center justify-end gap-2">
-          <div className="flex-1 h-[6px] rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,.06)" }}>
-            <div className="h-full rounded-full" style={{ width: `${Math.max(6, ((r.power + maxPower) / (2 * maxPower)) * 100)}%`, background: r.power >= 0 ? "linear-gradient(90deg,#7c5cfa,#c4b5fd)" : "linear-gradient(90deg,#6b7280,#9ca3af)", transformOrigin: "left", animation: `bar-grow .8s cubic-bezier(.22,1,.36,1) ${Math.min(i, 14) * 0.03}s both` }} />
+          <div className="flex-1 h-[6px] rounded-full overflow-hidden" style={{ background: "var(--wash-2)" }}>
+            <div className="h-full rounded-full" style={{ width: `${Math.max(6, ((r.power + maxPower) / (2 * maxPower)) * 100)}%`, background: r.power >= 0 ? "linear-gradient(90deg,#6d4fe0,#6d4fe0)" : "linear-gradient(90deg,#6b7280,#9ca3af)", transformOrigin: "left", animation: `bar-grow .8s cubic-bezier(.22,1,.36,1) ${Math.min(i, 14) * 0.03}s both` }} />
           </div>
           <span className="font-spot-mono font-extrabold text-[11px] w-10 text-right" style={{ color: r.power >= 0 ? "var(--green)" : "var(--red-soft)" }}>{r.power > 0 ? "+" : ""}{r.power.toFixed(1)}</span>
         </div>
@@ -100,7 +100,7 @@ export function NflStandings({ rows }: { rows: NflStandingRow[] }) {
 
         <div className="flex flex-wrap gap-3 mb-4">
           <Segmented id="nfl-view" accent={ACCENT} value={view} onChange={setView} options={[{ key: "divisions", label: "Divisions" }, { key: "seeds", label: "Playoff seeds" }, { key: "power", label: "Power rankings" }]} />
-          {view !== "power" && <Segmented id="nfl-conf" accent="#fbbf24" value={conf} onChange={setConf} options={[{ key: "AFC", label: "AFC" }, { key: "NFC", label: "NFC" }]} />}
+          {view !== "power" && <Segmented id="nfl-conf" accent="#d49a06" value={conf} onChange={setConf} options={[{ key: "AFC", label: "AFC" }, { key: "NFC", label: "NFC" }]} />}
         </div>
 
         {view === "divisions" && (

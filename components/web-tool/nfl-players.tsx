@@ -7,7 +7,7 @@ import { Chip, Panel, Segmented, SportHeader } from "@/components/web-tool/sport
 import { nflHeadshotUrl, nflLogoUrl, nflTeamHex } from "@/lib/nfl/teams";
 import type { NflPlayerSeason, NflPropPlay } from "@/lib/nfl/types";
 
-const ACCENT = "#a78bfa";
+const ACCENT = "#1a73ff";
 type Cat = "passing" | "rushing" | "receiving" | "defense";
 
 interface Col { key: string; label: string; fmt?: (v: number, p: NflPlayerSeason) => string }
@@ -51,7 +51,7 @@ const CATS: Record<Cat, { label: string; sort: string; market: NflPropPlay["mark
 
 function MatchupChip({ play }: { play?: NflPropPlay }) {
   if (!play) return <Chip color="#94a3b8">No game this week</Chip>;
-  const c = play.factor >= 1.03 ? "#34d399" : play.factor <= 0.97 ? "#f87171" : "#94a3b8";
+  const c = play.factor >= 1.03 ? "#12a150" : play.factor <= 0.97 ? "#e5484d" : "#94a3b8";
   return <Chip color={c}>{play.home ? "vs" : "@"} {play.opp} · {play.factor >= 1.03 ? "Soft spot" : play.factor <= 0.97 ? "Tough spot" : "Neutral"} ×{play.factor.toFixed(2)}</Chip>;
 }
 
@@ -82,7 +82,7 @@ export function NflPlayers({ boards, props }: { boards: Record<Cat, NflPlayerSea
               const play = playFor.get(p.espnId);
               return (
                 <div key={p.espnId} className="relative overflow-hidden rounded-[22px] p-4" style={{ background: `linear-gradient(140deg, ${alpha(hex, "30")}, var(--panel) 70%)`, border: `1px solid ${alpha(hex, "55")}` }}>
-                  <span className="absolute top-3 right-4 font-spot-mono font-black text-[34px] leading-none" style={{ color: "rgba(255,255,255,.07)" }}>#{i + 1}</span>
+                  <span className="absolute top-3 right-4 font-spot-mono font-black text-[34px] leading-none" style={{ color: "var(--wash-2)" }}>#{i + 1}</span>
                   <div className="flex items-center gap-3.5">
                     <div className="relative shrink-0">
                       <WnbaHeadshot hex={hex} src={nflHeadshotUrl(p.espnId)} name={p.name} size={92} radius={22} />
@@ -121,7 +121,7 @@ export function NflPlayers({ boards, props }: { boards: Record<Cat, NflPlayerSea
                     const play = playFor.get(p.espnId);
                     return (
                       <motion.tr key={p.espnId} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: Math.min(i, 15) * 0.02 }} style={{ borderTop: i ? "1px solid var(--hairline)" : undefined }}>
-                        <td className="pl-4 pr-1 py-2 font-spot-mono font-black text-[11px]" style={{ color: i < 3 ? "#c4b5fd" : "var(--text-faint)" }}>{i + 1}</td>
+                        <td className="pl-4 pr-1 py-2 font-spot-mono font-black text-[11px]" style={{ color: i < 3 ? "#6d4fe0" : "var(--text-faint)" }}>{i + 1}</td>
                         <td className="px-2 py-2">
                           <div className="flex items-center gap-2.5">
                             <WnbaHeadshot hex={nflTeamHex(p.team)} src={nflHeadshotUrl(p.espnId)} name={p.name} size={38} radius={11} />

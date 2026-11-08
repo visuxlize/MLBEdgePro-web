@@ -1,20 +1,19 @@
 import Link from "next/link";
 import { AppSidebar } from "@/components/web-tool/app-sidebar";
 import { PendingTrialRedirect } from "@/components/PendingTrialRedirect";
-import { FloatingChat } from "@/components/web-tool/floating-chat";
 import { OffseasonGuard } from "@/components/web-tool/offseason-guard";
 
 function DisclaimerStrip() {
   return (
-    <div className="border-t border-white/[0.04] bg-[#080C12] px-4 py-3 text-center">
-      <p className="text-[10px] text-white/18 leading-relaxed max-w-4xl mx-auto">
-        <span className="font-bold text-white/28">DISCLAIMER:</span> MLB Edge is for entertainment &amp; informational purposes only.
+    <div className="px-4 py-4 text-center" style={{ borderTop: "1px solid rgba(20,22,27,.06)" }}>
+      <p className="text-[11px] leading-relaxed max-w-4xl mx-auto" style={{ color: "#8a909b" }}>
+        <span className="font-bold" style={{ color: "#6b7280" }}>DISCLAIMER:</span> Edge Pro is for entertainment &amp; informational purposes only.
         All projections are model estimates — not guarantees of any outcome. Sports betting involves risk. Must be 21+.{" "}
-        <Link href="/responsible-gambling" className="text-[#50C882]/50 hover:text-[#50C882]/80 underline underline-offset-2 transition-colors">
+        <Link href="/responsible-gambling" className="underline underline-offset-2 transition-colors" style={{ color: "#1a73ff" }}>
           Responsible Gambling
         </Link>
         {" · "}
-        <span className="text-white/22">Helpline: 1-800-522-4700</span>
+        <span>Helpline: 1-800-522-4700</span>
       </p>
     </div>
   );
@@ -22,7 +21,7 @@ function DisclaimerStrip() {
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen flex flex-col" style={{ background: "#eceef2" }}>
       <PendingTrialRedirect />
       <AppSidebar />
       {/* Phones: clear the bottom tab bar. 640–1023: clear the vertical rail. */}
@@ -32,7 +31,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </OffseasonGuard>
         <DisclaimerStrip />
       </div>
-      <FloatingChat />
     </div>
   );
 }

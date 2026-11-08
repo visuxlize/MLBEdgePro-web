@@ -29,7 +29,6 @@ const QUICK_LINKS = [
   { label: "Live Scores", desc: "Live innings, win probability", href: "/scores", color: "var(--red)" },
   { label: "HR Nuke Report", desc: "Top HR props ranked by model", href: "/hr-deep-dive", color: "var(--gold)" },
   { label: "Props Builder", desc: "Build parlays from model picks", href: "/props", color: "var(--green)" },
-  { label: "Edge AI", desc: "Ask the model anything", href: "/ai", color: "var(--purple-2)" },
 ];
 
 const STRATEGY_CARDS = [

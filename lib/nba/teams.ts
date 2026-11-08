@@ -51,7 +51,7 @@ export function nbaShortName(abbr: string): string {
   return n.split(" ").slice(-1)[0];
 }
 export function nbaLogoUrl(abbr: string): string {
-  return `https://a.espncdn.com/i/teamlogos/nba/500-dark/${abbr.toLowerCase()}.png`;
+  return `https://a.espncdn.com/i/teamlogos/nba/500/${abbr.toLowerCase()}.png`;
 }
 export function nbaHeadshotUrl(espnId: string): string {
   return `https://a.espncdn.com/i/headshots/nba/players/full/${espnId}.png`;

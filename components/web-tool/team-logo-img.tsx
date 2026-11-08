@@ -15,7 +15,7 @@ export function TeamLogoImg({ teamId, name, size = 40, badge = false }: Props) {
   const [src, setSrc] = useState<"primary" | "dark" | "fallback">("primary");
 
   const abbr  = TEAM_ABBR[teamId] ?? name.split(" ").pop()?.slice(0, 3).toUpperCase() ?? "MLB";
-  const color = TEAM_COLORS[teamId] ?? "#FF7828";
+  const color = TEAM_COLORS[teamId] ?? "#1a73ff";
 
   if (src === "fallback") {
     return (
@@ -68,8 +68,8 @@ export function TeamLogoImg({ teamId, name, size = 40, badge = false }: Props) {
         style={{
           width:  size + pad * 2,
           height: size + pad * 2,
-          background: "rgba(255,255,255,0.92)",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.1)",
+          background: "var(--text)",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.35), 0 0 0 1px var(--wash-3)",
           padding: pad,
         }}
       >

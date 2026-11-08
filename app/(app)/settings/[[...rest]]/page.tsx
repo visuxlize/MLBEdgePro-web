@@ -56,26 +56,26 @@ function TeamPicker() {
   return (
     <div>
       {teamId ? (
-        <div className="flex items-center gap-4 p-4 rounded-xl border border-[#FF7828]/25 bg-[#FF7828]/[0.05] mb-4">
+        <div className="flex items-center gap-4 p-4 rounded-xl border border-[#1a73ff]/25 bg-[#1a73ff]/[0.05] mb-4">
           <TeamLogoImg teamId={teamId} name={teamName ?? ""} size={44} />
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] text-[#FF7828]/60 font-bold tracking-widest uppercase mb-0.5">Selected Team</p>
-            <p className="text-white font-bold text-base truncate">{teamName}</p>
+            <p className="text-[10px] text-[#1a73ff]/60 font-bold tracking-widest uppercase mb-0.5">Selected Team</p>
+            <p className="text-[#14161b] font-bold text-base truncate">{teamName}</p>
           </div>
           <button
             onClick={() => setTeam(null)}
-            className="text-white/25 hover:text-white/50 text-xs transition-colors shrink-0"
+            className="text-[#14161b]/46 hover:text-[#14161b]/64 text-xs transition-colors shrink-0"
           >
             Remove
           </button>
         </div>
       ) : (
-        <p className="text-white/30 text-sm mb-4">No favorite team selected. Your team will be featured on the Today screen.</p>
+        <p className="text-[#14161b]/46 text-sm mb-4">No favorite team selected. Your team will be featured on the Today screen.</p>
       )}
 
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 text-sm font-semibold text-white/50 hover:text-white transition-colors mb-4"
+        className="flex items-center gap-2 text-sm font-semibold text-[#14161b]/64 hover:text-[#14161b] transition-colors mb-4"
       >
         <ChevronDown size={14} className={`transition-transform ${open ? "rotate-180" : ""}`} strokeWidth={2} />
         {open ? "Hide teams" : "Choose team"}
@@ -91,15 +91,15 @@ function TeamPicker() {
                 onClick={() => { setTeam(team.id); setOpen(false); }}
                 className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-colors ${
                   selected
-                    ? "border-[#FF7828]/40 bg-[#FF7828]/[0.08]"
-                    : "border-white/[0.06] bg-[#111622] hover:border-white/[0.12]"
+                    ? "border-[#1a73ff]/40 bg-[#1a73ff]/[0.08]"
+                    : "border-[#14161b]/[.09] bg-[#ffffff] hover:border-[#14161b]/[.09]"
                 }`}
               >
                 <TeamLogoImg teamId={team.id} name={team.name} size={30} />
-                <span className={`text-sm flex-1 min-w-0 truncate ${selected ? "text-white font-bold" : "text-white/60"}`}>
+                <span className={`text-sm flex-1 min-w-0 truncate ${selected ? "text-[#14161b] font-bold" : "text-[#14161b]/74"}`}>
                   {team.name}
                 </span>
-                {selected && <Check size={13} className="text-[#FF7828] shrink-0" strokeWidth={2.5} />}
+                {selected && <Check size={13} className="text-[#1a73ff] shrink-0" strokeWidth={2.5} />}
               </button>
             );
           })}
@@ -146,7 +146,7 @@ function Switch({ on, onClick }: { on: boolean; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className={`w-[46px] h-[26px] shrink-0 rounded-full relative transition-colors ${on ? "bg-[#FF7828]" : "bg-white/10"}`}
+      className={`w-[46px] h-[26px] shrink-0 rounded-full relative transition-colors ${on ? "bg-[#1a73ff]" : "bg-[#14161b]/[0.1]"}`}
     >
       <span
         className="absolute top-[3px] w-5 h-5 rounded-full bg-white shadow transition-all"
@@ -166,12 +166,12 @@ const TOGGLE_DEFS: { key: keyof Preferences; label: string; desc: string }[] = [
 function PreferencesCard() {
   const { prefs, toggle } = usePreferences();
   return (
-    <div className="rounded-xl border border-white/[0.07] bg-[#111622] overflow-hidden">
+    <div className="rounded-xl border border-[#14161b]/[.09] bg-[#ffffff] overflow-hidden">
       {TOGGLE_DEFS.map((t, i) => (
-        <div key={t.key} className={`flex items-center gap-4 p-4 ${i > 0 ? "border-t border-white/[0.05]" : ""}`}>
+        <div key={t.key} className={`flex items-center gap-4 p-4 ${i > 0 ? "border-t border-[#14161b]/[.09]" : ""}`}>
           <div className="flex-1 min-w-0">
-            <p className="text-white font-bold text-sm">{t.label}</p>
-            <p className="text-white/35 text-xs mt-0.5 leading-relaxed">{t.desc}</p>
+            <p className="text-[#14161b] font-bold text-sm">{t.label}</p>
+            <p className="text-[#14161b]/56 text-xs mt-0.5 leading-relaxed">{t.desc}</p>
           </div>
           <Switch on={prefs[t.key]} onClick={() => toggle(t.key)} />
         </div>
@@ -206,8 +206,8 @@ function OddsFormatCard() {
           onClick={() => setFormat(f)}
           className={`flex-1 rounded-xl py-2.5 text-sm font-bold transition-colors ${
             f === format
-              ? "bg-[#7c5cfa] text-white"
-              : "border border-white/[0.08] bg-white/[0.03] text-white/50 hover:text-white/80"
+              ? "bg-[#6d4fe0] text-white"
+              : "border border-[#14161b]/[.09] bg-[#14161b]/[0.03] text-white/50 hover:text-[#14161b]/86"
           }`}
         >
           {f}
@@ -221,22 +221,22 @@ function OddsFormatCard() {
 
 function ResponsibleGamingCard() {
   return (
-    <div className="rounded-xl border border-[#34d399]/20 bg-[#34d399]/[0.06] p-5">
+    <div className="rounded-xl border border-[#12a150]/20 bg-[#12a150]/[0.06] p-5">
       <div className="flex items-center gap-2 mb-2.5">
-        <Check size={16} className="text-[#34d399]" strokeWidth={2.5} />
-        <p className="text-[#a7f3d0] font-bold text-sm">Responsible Gaming</p>
+        <Check size={16} className="text-[#12a150]" strokeWidth={2.5} />
+        <p className="text-[#0f8f80] font-bold text-sm">Responsible Gaming</p>
       </div>
-      <p className="text-white/40 text-xs leading-relaxed mb-3.5">
+      <p className="text-[#14161b]/56 text-xs leading-relaxed mb-3.5">
         Set a weekly reminder and session limits. We&rsquo;ll nudge you &mdash; this is analysis, not a guarantee.
       </p>
       <div className="flex flex-wrap gap-2">
-        <Link href="/responsible-gambling" className="rounded-lg px-3.5 py-2 text-xs font-bold text-white/60 bg-white/[0.04] border border-white/[0.08] hover:text-white transition-colors">
+        <Link href="/responsible-gambling" className="rounded-lg px-3.5 py-2 text-xs font-bold text-[#14161b]/74 bg-[#14161b]/[0.04] border border-[#14161b]/[.09] hover:text-[#14161b] transition-colors">
           Set limits
         </Link>
-        <Link href="/responsible-gambling" className="rounded-lg px-3.5 py-2 text-xs font-bold text-white/60 bg-white/[0.04] border border-white/[0.08] hover:text-white transition-colors">
+        <Link href="/responsible-gambling" className="rounded-lg px-3.5 py-2 text-xs font-bold text-[#14161b]/74 bg-[#14161b]/[0.04] border border-[#14161b]/[.09] hover:text-[#14161b] transition-colors">
           Take a break
         </Link>
-        <span className="rounded-lg px-3.5 py-2 text-xs font-bold text-white/35 border border-white/[0.06]">Helpline: 1-800-522-4700</span>
+        <span className="rounded-lg px-3.5 py-2 text-xs font-bold text-[#14161b]/56 border border-[#14161b]/[.09]">Helpline: 1-800-522-4700</span>
       </div>
     </div>
   );
@@ -255,25 +255,25 @@ function SubscriptionCard() {
 
   return (
     <div className={`rounded-xl border p-5 ${
-      isPro ? "border-[#FF7828]/25 bg-[#FF7828]/[0.05]" : "border-white/[0.07] bg-[#111622]"
+      isPro ? "border-[#1a73ff]/25 bg-[#1a73ff]/[0.05]" : "border-[#14161b]/[.09] bg-[#ffffff]"
     }`}>
       <div className="flex items-start justify-between mb-3 gap-3">
         <div className="min-w-0">
           <p className="text-[10px] font-bold tracking-widest uppercase mb-1"
-            style={{ color: isPro ? "#FF7828" : "rgba(255,255,255,0.30)" }}>
+            style={{ color: isPro ? "#1a73ff" : "rgba(20,22,27,.38)" }}>
             Current Plan
           </p>
-          <p className="text-white font-black text-xl">{planLabel ? `Edge ${planLabel}` : "Free Plan"}</p>
+          <p className="text-[#14161b] font-black text-xl">{planLabel ? `Edge ${planLabel}` : "Free Plan"}</p>
           {isPro && expiresAt && (
-            <p className="text-white/30 text-xs mt-1">
+            <p className="text-[#14161b]/46 text-xs mt-1">
               Renews {new Date(expiresAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
             </p>
           )}
         </div>
         {isPro && (
-          <div className="flex items-center gap-1.5 rounded-full border border-[#FF7828]/30 bg-[#FF7828]/10 px-2.5 py-1 shrink-0">
-            <Zap size={10} className="text-[#FF7828]" strokeWidth={2.5} />
-            <span className="text-[9px] font-black text-[#FF7828] tracking-widest uppercase">Active</span>
+          <div className="flex items-center gap-1.5 rounded-full border border-[#1a73ff]/30 bg-[#1a73ff]/10 px-2.5 py-1 shrink-0">
+            <Zap size={10} className="text-[#1a73ff]" strokeWidth={2.5} />
+            <span className="text-[9px] font-black text-[#1a73ff] tracking-widest uppercase">Active</span>
           </div>
         )}
       </div>
@@ -281,13 +281,13 @@ function SubscriptionCard() {
       {!isPro ? (
         <Link
           href="/upgrade"
-          className="inline-flex items-center gap-2 bg-[#FF7828] hover:bg-[#FFA550] text-white text-sm font-bold px-5 py-2.5 rounded-full transition-colors shadow-[0_4px_16px_rgba(255,120,40,0.30)]"
+          className="inline-flex items-center gap-2 bg-[#1a73ff] hover:bg-[#5a9bff] text-white text-sm font-bold px-5 py-2.5 rounded-full transition-colors shadow-[0_4px_16px_rgba(26,115,255,0.30)]"
         >
           <Zap size={13} strokeWidth={2.5} />
           Upgrade to Edge Pro — $4.99/mo
         </Link>
       ) : (
-        <p className="text-white/30 text-sm">
+        <p className="text-[#14161b]/46 text-sm">
           Manage your subscription in your App Store or Google Play settings.
         </p>
       )}
@@ -302,14 +302,14 @@ function ActionButtons({ onSignOut, className = "" }: { onSignOut: () => void; c
     <div className={`flex items-center gap-2 ${className}`}>
       <Link
         href="/"
-        className="flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-white/45 hover:text-white hover:border-white/15 transition-colors font-medium"
+        className="flex items-center gap-1.5 rounded-xl border border-[#14161b]/[.09] bg-[#14161b]/[0.03] px-3 py-2 text-sm text-[#14161b]/56 hover:text-[#14161b] hover:border-[#14161b]/[.09] transition-colors font-medium"
       >
         <Home size={14} strokeWidth={1.7} />
         <span className="hidden sm:inline">Home</span>
       </Link>
       <button
         onClick={onSignOut}
-        className="flex items-center gap-1.5 rounded-xl border border-[#EB505A]/25 bg-[#EB505A]/[0.06] px-3 py-2 text-sm text-[#EB505A] hover:bg-[#EB505A]/10 transition-colors font-bold"
+        className="flex items-center gap-1.5 rounded-xl border border-[#ef3b4a]/25 bg-[#ef3b4a]/[0.06] px-3 py-2 text-sm text-[#ef3b4a] hover:bg-[#ef3b4a]/10 transition-colors font-bold"
       >
         <LogOut size={14} strokeWidth={1.7} />
         <span className="hidden sm:inline">Sign Out</span>
@@ -335,8 +335,8 @@ export default function SettingsPage() {
       {/* Page header — title left, action buttons right on mobile; title only on desktop */}
       <div className="flex items-center justify-between gap-4 mb-8">
         <div>
-          <p className="text-[10px] font-bold text-white/25 tracking-widest uppercase mb-1">Account</p>
-          <h1 className="text-2xl sm:text-3xl font-black text-white">Settings</h1>
+          <p className="text-[10px] font-bold text-[#14161b]/46 tracking-widest uppercase mb-1">Account</p>
+          <h1 className="text-2xl sm:text-3xl font-black text-[#14161b]">Settings</h1>
         </div>
         {/* Mobile only — shown in header */}
         <ActionButtons onSignOut={handleSignOut} className="lg:hidden" />
@@ -349,24 +349,24 @@ export default function SettingsPage() {
         <div className="space-y-6 lg:space-y-8 lg:pr-8">
 
           <section>
-            <h2 className="text-xs font-bold text-white/30 tracking-widest uppercase mb-4">Subscription</h2>
+            <h2 className="text-xs font-bold text-[#14161b]/46 tracking-widest uppercase mb-4">Subscription</h2>
             <SubscriptionCard />
           </section>
 
           <section>
-            <h2 className="text-xs font-bold text-white/30 tracking-widest uppercase mb-4">Favorite Team</h2>
-            <div className="rounded-xl border border-white/[0.07] bg-[#111622] p-4 sm:p-5">
+            <h2 className="text-xs font-bold text-[#14161b]/46 tracking-widest uppercase mb-4">Favorite Team</h2>
+            <div className="rounded-xl border border-[#14161b]/[.09] bg-[#ffffff] p-4 sm:p-5">
               <TeamPicker />
             </div>
           </section>
 
           <section>
-            <h2 className="text-xs font-bold text-white/30 tracking-widest uppercase mb-4">Preferences</h2>
+            <h2 className="text-xs font-bold text-[#14161b]/46 tracking-widest uppercase mb-4">Preferences</h2>
             <PreferencesCard />
           </section>
 
           <section>
-            <h2 className="text-xs font-bold text-white/30 tracking-widest uppercase mb-4">Odds Format</h2>
+            <h2 className="text-xs font-bold text-[#14161b]/46 tracking-widest uppercase mb-4">Odds Format</h2>
             <OddsFormatCard />
           </section>
 
@@ -379,18 +379,18 @@ export default function SettingsPage() {
         </div>
 
         {/* ── Right column — Clerk UserProfile ────────────────────────────── */}
-        <section className="lg:pl-8 lg:border-l lg:border-white/[0.06]">
-          <h2 className="text-xs font-bold text-white/30 tracking-widest uppercase mb-4">Profile</h2>
+        <section className="lg:pl-8 lg:border-l lg:border-[#14161b]/[.09]">
+          <h2 className="text-xs font-bold text-[#14161b]/46 tracking-widest uppercase mb-4">Profile</h2>
           <UserProfile
             routing="hash"
             appearance={{
               variables: {
-                colorPrimary:         "#FF7828",
-                colorBackground:      "#111622",
-                colorInputBackground: "#191C22",
+                colorPrimary:         "#1a73ff",
+                colorBackground:      "#ffffff",
+                colorInputBackground: "#f3f4f7",
                 colorInputText:       "#ffffff",
                 colorText:            "#ffffff",
-                colorTextSecondary:   "rgba(255,255,255,0.45)",
+                colorTextSecondary:   "rgba(20,22,27,.6)",
                 borderRadius:         "0.875rem",
               },
               elements: {

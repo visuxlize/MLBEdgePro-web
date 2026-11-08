@@ -1,7 +1,7 @@
 import "server-only";
 import { SOCCER_LEAGUES, LEAGUE_MAP } from "./leagues";
 import { fetchAllSoccerFixtures } from "./espn";
-import { poissonModel, tableRowsFromEntries, type TableRow } from "./model";
+import { liveOutcome, poissonModel, tableRowsFromEntries, type TableRow } from "./model";
 import type { SoccerLeagueKey, SoccerMatch } from "./types";
 
 const BASE = "https://site.api.espn.com/apis/site/v2/sports/soccer";
@@ -80,6 +80,15 @@ export interface SoccerMatchCenter {
   model: ReturnType<typeof poissonModel> & { pick: string; reason: string; edge: number; grade: string; value?: { side: "home" | "draw" | "away"; modelPct: number; marketPct: number } };
   video?: { thumbnail: string; href: string; title: string };
   recap?: string;
+  /** In-play state — only for live matches */
+  live?: {
+    minute: number;
+    clock: string;
+    progress: number;
+    prob: { home: number; draw: number; away: number };
+    probStart: { home: number; draw: number; away: number };
+    recent: { minute: string; text: string; type: string }[];
+  };
 }
 
 const num = (v: any) => (v == null ? 0 : parseFloat(String(v)) || 0);
@@ -267,7 +276,22 @@ export async function getSoccerMatchCenter(league: SoccerLeagueKey, eventId: str
   const tableSlice = table.slice(lo, Math.max(hi, lo + 5)).map((r) => ({ ...r, isMatch: r.id === match.homeTeam.id || r.id === match.awayTeam.id }));
 
   const vid = data.videos?.[0];
+  let live: SoccerMatchCenter["live"];
+  if (status === "live") {
+    const minute = minuteSort(match.clock ?? "");
+    const recent = (data.commentary ?? [])
+      .filter((c: any) => c.text && !/^(lineup|substitution|delay|match ends)/i.test(c.text))
+      .slice(-12).reverse()
+      .map((c: any) => ({ minute: c.time?.displayValue ?? c.play?.clock?.displayValue ?? "", text: String(c.text), type: c.play?.type?.text ?? "" }));
+    live = {
+      minute, clock: match.clock ?? "", progress: Math.min(100, (minute / 90) * 100),
+      prob: liveOutcome(model0.xgHome, model0.xgAway, match.homeScore ?? 0, match.awayScore ?? 0, minute),
+      probStart: { home: model0.home, draw: model0.draw, away: model0.away },
+      recent,
+    };
+  }
   return {
+    live,
     match,
     league: { key: league, name: data.header?.league?.name ?? def.label, season: data.header?.season?.displayName ?? data.header?.league?.season?.displayName },
     stats, xg, events, momentum, lineups, best, odds,

@@ -15,9 +15,9 @@ interface SeasonTimelineProps {
 }
 
 const SPORT_COLOR: Record<string, string> = {
-  mlb:  "#f97316",
-  nfl:  "#a78bfa",
-  wnba: "#2dd4bf",
+  mlb:  "#ea6a0a",
+  nfl:  "#6d4fe0",
+  wnba: "#0f9d8e",
 };
 
 function parseDate(s: string): Date {
@@ -30,7 +30,7 @@ function fmtDate(s: string) {
 }
 
 export function SeasonTimeline({ title, subtitle, phases, sport }: SeasonTimelineProps) {
-  const color = SPORT_COLOR[sport] ?? "#f97316";
+  const color = SPORT_COLOR[sport] ?? "#ea6a0a";
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -83,8 +83,8 @@ export function SeasonTimeline({ title, subtitle, phases, sport }: SeasonTimelin
                 isActive
                   ? { background: color, color: "#fff" }
                   : isPast
-                  ? { background: "rgba(255,255,255,.05)", color: "var(--text-ghost)", textDecoration: "line-through" }
-                  : { background: "rgba(255,255,255,.04)", border: "1px solid var(--hairline)", color: "var(--text-3)" }
+                  ? { background: "var(--wash-2)", color: "var(--text-ghost)", textDecoration: "line-through" }
+                  : { background: "var(--wash-1)", border: "1px solid var(--hairline)", color: "var(--text-3)" }
               }>
               {p.shortLabel ?? p.label}
             </span>
@@ -95,7 +95,7 @@ export function SeasonTimeline({ title, subtitle, phases, sport }: SeasonTimelin
       {/* Timeline bar */}
       <div className="px-5 pb-4 pt-2">
         {/* Bar + Today marker */}
-        <div className="relative" style={{ height: 8, borderRadius: 4, background: "rgba(255,255,255,.07)" }}>
+        <div className="relative" style={{ height: 8, borderRadius: 4, background: "var(--wash-2)" }}>
           {/* Filled portion */}
           {todayPct > 0 && (
             <div className="absolute left-0 top-0 h-full rounded-l"
@@ -106,7 +106,7 @@ export function SeasonTimeline({ title, subtitle, phases, sport }: SeasonTimelin
             const pp = pct(parseDate(p.start));
             return (
               <div key={p.label} className="absolute top-0 bottom-0"
-                style={{ left: `${pp}%`, width: 1, background: "rgba(255,255,255,.15)" }} />
+                style={{ left: `${pp}%`, width: 1, background: "var(--wash-3)" }} />
             );
           })}
           {/* Today dot */}
@@ -115,7 +115,7 @@ export function SeasonTimeline({ title, subtitle, phases, sport }: SeasonTimelin
               style={{
                 left: `${todayPct}%`, transform: "translate(-50%, -50%)",
                 width: 14, height: 14, borderRadius: "50%",
-                background: color, border: "2px solid #0b0d15",
+                background: color, border: "2px solid #ffffff",
                 boxShadow: `0 0 0 3px ${color}50, 0 0 12px ${color}60`,
                 zIndex: 2,
               }} />

@@ -31,7 +31,7 @@ export default function AnalysisError({
         <Link
           href="/games"
           className="flex items-center gap-2 px-4 py-2.5 rounded-[var(--r-tile)] font-spot-sans text-sm font-bold transition-colors"
-          style={{ background: "rgba(255,255,255,.06)", border: "1px solid var(--hairline)", color: "var(--text-muted)" }}
+          style={{ background: "var(--wash-2)", border: "1px solid var(--hairline)", color: "var(--text-muted)" }}
         >
           <ArrowLeft size={13} strokeWidth={2} />
           Games

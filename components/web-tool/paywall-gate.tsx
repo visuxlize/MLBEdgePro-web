@@ -16,7 +16,7 @@ const TIER_CONFIG = {
   fan: {
     label:    "Fan Plan",
     price:    "$4.99",
-    color:    "#FF7828",
+    color:    "#1a73ff",
     badge:    "FAN",
     tagline:  "Win probability, full props, edge reports & matchup analysis",
     benefits: [
@@ -30,7 +30,7 @@ const TIER_CONFIG = {
   pro: {
     label:    "Pro Plan",
     price:    "$14.99",
-    color:    "#818cf8",
+    color:    "#6d4fe0",
     badge:    "PRO",
     tagline:  "Everything in Fan + the deepest MLB analysis anywhere",
     benefits: [
@@ -80,7 +80,7 @@ export function PaywallGate({
       <div className="relative z-10 flex w-full items-center justify-center p-5 sm:p-8">
         <div
           className="w-full max-w-[440px] rounded-3xl backdrop-blur-2xl shadow-[0_32px_80px_rgba(0,0,0,0.8)] overflow-hidden border"
-          style={{ backgroundColor: "#0D1117fd", borderColor: `${cfg.color}22` }}
+          style={{ backgroundColor: "#fffffffd", borderColor: `${cfg.color}22` }}
         >
           {/* Glow */}
           <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-72 h-44 rounded-full blur-3xl pointer-events-none"
@@ -103,8 +103,8 @@ export function PaywallGate({
               <span className="text-[9px] font-black tracking-widest uppercase" style={{ color: cfg.color }}>{cfg.badge} PLAN</span>
             </div>
 
-            <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight mb-2">{displayFeature}</h3>
-            <p className="text-sm text-white/40 mb-6 leading-relaxed max-w-xs">{cfg.tagline}</p>
+            <h3 className="text-2xl sm:text-3xl font-black text-[#14161b] tracking-tight mb-2">{displayFeature}</h3>
+            <p className="text-sm text-[#14161b]/56 mb-6 leading-relaxed max-w-xs">{cfg.tagline}</p>
 
             {/* Benefits */}
             <ul className="space-y-2.5 mb-7 w-full text-left">
@@ -114,21 +114,21 @@ export function PaywallGate({
                     style={{ backgroundColor: `${cfg.color}15`, border: `1px solid ${cfg.color}25` }}>
                     <Check size={10} style={{ color: cfg.color }} strokeWidth={3} />
                   </div>
-                  <span className="text-sm text-white/60">{b}</span>
+                  <span className="text-sm text-[#14161b]/74">{b}</span>
                 </li>
               ))}
             </ul>
 
             {/* Price */}
             <div className="flex items-baseline justify-center gap-1 mb-5">
-              <span className="text-4xl font-black text-white">{cfg.price}</span>
-              <span className="text-white/30 text-base">/month</span>
+              <span className="text-4xl font-black text-[#14161b]">{cfg.price}</span>
+              <span className="text-[#14161b]/46 text-base">/month</span>
             </div>
 
             {/* CTA */}
             <Link href={`/upgrade?tier=${requiredTier}`} className="w-full">
               <button
-                className="w-full h-12 rounded-full flex items-center justify-center gap-2 font-bold text-white text-sm transition-all hover:opacity-90 active:scale-[0.98]"
+                className="w-full h-12 rounded-full flex items-center justify-center gap-2 font-bold text-[#14161b] text-sm transition-all hover:opacity-90 active:scale-[0.98]"
                 style={{ background: `linear-gradient(135deg, ${cfg.color}ee, ${cfg.color}bb)`, boxShadow: `0 8px 28px ${cfg.color}40` }}
               >
                 <Zap size={14} strokeWidth={2.5} />
@@ -137,7 +137,7 @@ export function PaywallGate({
               </button>
             </Link>
 
-            <p className="mt-4 text-xs text-white/18">Cancel anytime · Billed monthly · No contracts</p>
+            <p className="mt-4 text-xs text-[#14161b]/38">Cancel anytime · Billed monthly · No contracts</p>
           </div>
         </div>
       </div>

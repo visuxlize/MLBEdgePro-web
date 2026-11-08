@@ -28,7 +28,7 @@ export function SportHeader({
   return (
     <div className="flex items-end justify-between gap-x-4 gap-y-3 flex-wrap mb-5 rise">
       <div className="min-w-0">
-        <p className="spot-label" style={{ color: accent }}>{eyebrow}</p>
+        <p className="spot-label" style={{ color: "var(--blue)" }}>{eyebrow}</p>
         <h1 className="font-spot-sans text-[28px] sm:text-4xl font-black leading-[1.05] mt-1.5" style={{ color: "var(--text)" }}>{title}</h1>
         {subtitle && <p className="mt-1.5 font-spot-sans text-[13px] max-w-xl" style={{ color: "var(--text-muted)" }}>{subtitle}</p>}
       </div>
@@ -42,7 +42,7 @@ export function Segmented<T extends string>({
   options, value, onChange, accent, id,
 }: { options: { key: T; label: string; badge?: string }[]; value: T; onChange: (v: T) => void; accent: string; id: string }) {
   return (
-    <div className="snap-row rounded-2xl p-1 w-full sm:w-auto" style={{ background: "rgba(255,255,255,.04)", border: "1px solid var(--hairline)" }}>
+    <div className="snap-row rounded-2xl p-1 w-full sm:w-auto" style={{ background: "var(--panel)", boxShadow: "var(--shadow-card)" }}>
       {options.map((o) => {
         const active = o.key === value;
         return (
@@ -50,13 +50,13 @@ export function Segmented<T extends string>({
             key={o.key}
             onClick={() => onChange(o.key)}
             className="relative px-3.5 py-2 rounded-xl font-spot-sans font-extrabold text-[12px] whitespace-nowrap press"
-            style={{ color: active ? "#06070d" : "var(--text-muted)" }}
+            style={{ color: active ? "#ffffff" : "var(--text-muted)" }}
           >
             {active && (
               <motion.span
                 layoutId={`seg-${id}`}
                 className="absolute inset-0 rounded-xl"
-                style={{ background: accent }}
+                style={{ background: "var(--blue)", boxShadow: "0 6px 16px rgba(26,115,255,.32)" }}
                 transition={{ type: "spring", stiffness: 420, damping: 34 }}
               />
             )}
@@ -86,8 +86,8 @@ export function DateStrip({
             onClick={() => onChange(d.key)}
             className="relative flex flex-col items-center justify-center rounded-2xl w-[58px] py-2.5 press"
             style={on
-              ? { background: accent, color: "#06070d", boxShadow: `0 8px 24px ${accent}44` }
-              : { background: "var(--panel)", border: "1px solid var(--hairline)", color: "var(--text-muted)" }}
+              ? { background: "var(--blue)", color: "#ffffff", boxShadow: "0 8px 22px rgba(26,115,255,.35)" }
+              : { background: "var(--panel)", boxShadow: "var(--shadow-card)", color: "var(--text-muted)" }}
           >
             <span className="font-spot-sans font-extrabold text-[9px] uppercase tracking-[.12em]">{d.dow}</span>
             <span className="font-spot-mono font-black text-[19px] leading-tight mt-0.5">{d.num}</span>
@@ -111,7 +111,7 @@ export function LiveBadge({ label = "LIVE" }: { label?: string }) {
 export function Chip({ children, color, bg, border }: { children: ReactNode; color: string; bg?: string; border?: string }) {
   return (
     <span className="inline-flex items-center gap-1 rounded-full px-2 py-[3px] font-spot-sans font-extrabold text-[9.5px] tracking-[.08em] uppercase whitespace-nowrap"
-      style={{ color, background: bg ?? `${color}1f`, border: `1px solid ${border ?? `${color}44`}` }}>
+      style={{ color: `color-mix(in srgb, ${color} 72%, #14161b)`, background: bg ?? `color-mix(in srgb, ${color} 13%, transparent)`, border: `1px solid ${border ?? `color-mix(in srgb, ${color} 30%, transparent)`}` }}>
       {children}
     </span>
   );
@@ -129,10 +129,10 @@ export function CompareBar({
         <span className="font-spot-mono font-extrabold text-xs" style={{ color: homePct >= awayPct ? "var(--text)" : "var(--text-muted)" }}>{home}</span>
       </div>
       <div className="flex items-center gap-1 h-[7px]">
-        <div className="flex-1 flex justify-end h-full rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,.05)" }}>
+        <div className="flex-1 flex justify-end h-full rounded-full overflow-hidden" style={{ background: "var(--wash-2)" }}>
           <div className="h-full rounded-full" style={{ width: `${awayPct}%`, background: awayHex, transformOrigin: "right", animation: `bar-grow .8s cubic-bezier(.22,1,.36,1) ${delay}s both` }} />
         </div>
-        <div className="flex-1 h-full rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,.05)" }}>
+        <div className="flex-1 h-full rounded-full overflow-hidden" style={{ background: "var(--wash-2)" }}>
           <div className="h-full rounded-full" style={{ width: `${homePct}%`, background: homeHex, transformOrigin: "left", animation: `bar-grow .8s cubic-bezier(.22,1,.36,1) ${delay}s both` }} />
         </div>
       </div>
@@ -151,7 +151,7 @@ export function Gauge({
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
       <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }} aria-hidden>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,.08)" strokeWidth={stroke} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--wash-3)" strokeWidth={stroke} />
         <motion.circle
           key={gid}
           cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke} strokeLinecap="round"
@@ -179,7 +179,7 @@ export function ProbSplit({
         <span className="font-spot-mono font-extrabold text-[11px]" style={{ color: "var(--text-2)" }}>{awayLabel} {100 - homePct}%</span>
         <span className="font-spot-mono font-extrabold text-[11px]" style={{ color: "var(--text-2)" }}>{homePct}% {homeLabel}</span>
       </div>
-      <div className="flex h-[7px] rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,.1)" }}>
+      <div className="flex h-[7px] rounded-full overflow-hidden" style={{ background: "var(--wash-3)" }}>
         <div style={{ width: `${100 - homePct}%`, background: awayHex, transition: "width .6s cubic-bezier(.22,1,.36,1)" }} />
         <div style={{ flex: 1, background: homeHex }} />
       </div>
@@ -212,8 +212,8 @@ export function OddsStrip({
     <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0,1fr))` }}>
       {items.map((it) => (
         <div key={it.label} className="rounded-xl px-2.5 py-2 text-center" style={{
-          background: it.accent ? "rgba(52,211,153,.12)" : "rgba(255,255,255,.04)",
-          border: `1px solid ${it.accent ? "rgba(52,211,153,.32)" : "var(--hairline)"}`,
+          background: it.accent ? "var(--green-bg)" : "var(--wash-1)",
+          border: `1px solid ${it.accent ? "rgba(18,161,80,.3)" : "var(--hairline)"}`,
         }}>
           <p className="font-spot-sans font-extrabold text-[8.5px] uppercase tracking-[.12em]" style={{ color: "var(--text-faint)" }}>{it.label}</p>
           <p className="mt-0.5 font-spot-mono font-black text-[13px]" style={{ color: it.accent ? "var(--green)" : "var(--text)" }}>{it.value}</p>

@@ -4,11 +4,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { LogoPlate, gradeColor } from "@/components/web-tool/spotlight";
+import { LiveStrip } from "@/components/web-tool/live-tracker";
 import { Chip, DateStrip, EmptyState, LiveBadge, Panel, ProbSplit, SportHeader, type StripDay } from "@/components/web-tool/sport-ui";
 import { nbaLogoUrl, nbaShortName, nbaTeamHex } from "@/lib/nba/teams";
 import type { NbaGame, NbaStandingRow } from "@/lib/nba/types";
 
-const ACCENT = "#fb923c";
+const ACCENT = "#1a73ff";
 
 function addDays(key: string, n: number): string {
   const d = new Date(`${key.slice(0, 4)}-${key.slice(4, 6)}-${key.slice(6, 8)}T12:00:00Z`);
@@ -61,11 +62,11 @@ function GameCard({ g }: { g: NbaGame }) {
       <div className="relative flex items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-1.5 flex-wrap min-w-0">
           {live ? <LiveBadge label={g.statusDetail} /> : (
-            <span className="font-spot-mono font-extrabold text-[10px] tracking-[.06em]" style={{ color: final ? "var(--text-muted)" : "#fdba74" }}>
+            <span className="font-spot-mono font-extrabold text-[10px] tracking-[.06em]" style={{ color: final ? "var(--text-muted)" : "#c2540a" }}>
               {final ? "FINAL" : g.timeLabel + " ET"}
             </span>
           )}
-          {g.isCup && <Chip color="#fbbf24">NBA Cup</Chip>}
+          {g.isCup && <Chip color="#d49a06">NBA Cup</Chip>}
         </div>
         {g.broadcast && <span className="font-spot-sans font-bold text-[9.5px] shrink-0" style={{ color: "var(--text-faint)" }}>{g.broadcast}</span>}
       </div>
@@ -111,10 +112,10 @@ function RankingsPanel({ standings }: { standings: NbaStandingRow[] }) {
     <Panel className="p-4">
       <div className="flex items-center justify-between mb-3">
         <p className="spot-label" style={{ color: "var(--text-faint)" }}>Conference Rankings</p>
-        <div className="flex gap-1 rounded-lg p-0.5" style={{ background: "rgba(255,255,255,.05)" }}>
+        <div className="flex gap-1 rounded-lg p-0.5" style={{ background: "var(--wash-2)" }}>
           {(["East", "West"] as const).map((c) => (
             <button key={c} onClick={() => setConf(c)} className="px-2.5 py-1 rounded-md font-spot-sans font-extrabold text-[10px] press"
-              style={conf === c ? { background: ACCENT, color: "#06070d" } : { color: "var(--text-muted)" }}>{c}</button>
+              style={conf === c ? { background: ACCENT, color: "#ffffff" } : { color: "var(--text-muted)" }}>{c}</button>
           ))}
         </div>
       </div>
@@ -122,7 +123,7 @@ function RankingsPanel({ standings }: { standings: NbaStandingRow[] }) {
         {rows.map((r, i) => (
           <motion.div key={`${conf}-${r.abbr}`} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
             className="flex items-center gap-2.5 py-2" style={{ borderTop: i ? "1px solid var(--hairline)" : undefined }}>
-            <span className="font-spot-mono font-black text-[11px] w-4 text-center" style={{ color: i < 6 ? "#fdba74" : "var(--text-faint)" }}>{r.rank}</span>
+            <span className="font-spot-mono font-black text-[11px] w-4 text-center" style={{ color: i < 6 ? "#c2540a" : "var(--text-faint)" }}>{r.rank}</span>
             <LogoPlate hex={nbaTeamHex(r.abbr)} src={nbaLogoUrl(r.abbr)} code={r.abbr} size={26} radius={8} variant="clean" />
             <span className="flex-1 font-spot-sans font-extrabold text-[12.5px] truncate" style={{ color: "var(--text)" }}>{nbaShortName(r.abbr)}</span>
             <span className="font-spot-mono font-bold text-[11px]" style={{ color: "var(--text-2)" }}>{r.wins}-{r.losses}</span>
@@ -131,7 +132,7 @@ function RankingsPanel({ standings }: { standings: NbaStandingRow[] }) {
         ))}
       </div>
       <Link href="/nba/standings" className="press mt-2 flex items-center justify-center rounded-xl py-2 font-spot-sans font-extrabold text-[11px]"
-        style={{ color: ACCENT, background: "rgba(251,146,60,.08)", border: "1px solid rgba(251,146,60,.22)" }}>
+        style={{ color: ACCENT, background: "rgba(26,115,255,.08)", border: "1px solid rgba(26,115,255,.22)" }}>
         Full standings & power rankings →
       </Link>
     </Panel>
@@ -194,12 +195,14 @@ export function NbaToday({
           right={
             <div className="flex items-center gap-2 flex-wrap">
               {live.length > 0 && <LiveBadge label={`${live.length} LIVE`} />}
-              {cupCount > 0 && <Chip color="#fbbf24">{cupCount} Cup {cupCount === 1 ? "game" : "games"}</Chip>}
+              {cupCount > 0 && <Chip color="#d49a06">{cupCount} Cup {cupCount === 1 ? "game" : "games"}</Chip>}
               <Link href="/nba/cup" className="press rounded-xl px-3 py-2 font-spot-sans font-extrabold text-[11px]"
-                style={{ color: "#fbbf24", background: "rgba(251,191,36,.1)", border: "1px solid rgba(251,191,36,.28)" }}>Emirates NBA Cup →</Link>
+                style={{ color: "#d49a06", background: "rgba(251,191,36,.1)", border: "1px solid rgba(251,191,36,.28)" }}>Emirates NBA Cup →</Link>
             </div>
           }
         />
+
+        <LiveStrip title="Live in the NBA" items={games.map((g) => ({ id: g.id, href: `/nba/game/${g.id}`, status: g.status, label: g.statusDetail, away: { abbr: g.away, score: g.awayScore, logo: nbaLogoUrl(g.away), hex: nbaTeamHex(g.away) }, home: { abbr: g.home, score: g.homeScore, logo: nbaLogoUrl(g.home), hex: nbaTeamHex(g.home) } }))} />
 
         <div className="mb-5"><DateStrip days={days} active={day} onChange={setDay} accent={ACCENT} /></div>
 
@@ -233,9 +236,9 @@ export function NbaToday({
           <aside className="flex flex-col gap-4 lg:sticky lg:top-20">
             <RankingsPanel standings={standings} />
             <Link href="/nba/props" className="press group rounded-[20px] p-4 flex items-center gap-3"
-              style={{ background: "linear-gradient(135deg,rgba(251,146,60,.14),var(--panel) 70%)", border: "1px solid rgba(251,146,60,.28)" }}>
+              style={{ background: "linear-gradient(135deg,rgba(251,146,60,.14),var(--panel) 70%)", border: "1px solid rgba(26,115,255,.28)" }}>
               <div className="flex-1 min-w-0">
-                <p className="spot-label" style={{ color: "#fdba74" }}>Props analysis</p>
+                <p className="spot-label" style={{ color: "#c2540a" }}>Props analysis</p>
                 <p className="mt-1 font-spot-sans font-black text-[15px]" style={{ color: "var(--text)" }}>Matchup-adjusted player projections</p>
                 <p className="mt-0.5 font-spot-sans text-[11px]" style={{ color: "var(--text-muted)" }}>Points, rebounds, assists & threes vs tonight&rsquo;s defenses.</p>
               </div>

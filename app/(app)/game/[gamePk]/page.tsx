@@ -53,15 +53,15 @@ async function fetchGame(gamePk: number): Promise<Game | null> {
 function StatBox({
   label,
   value,
-  color = "#FF7828",
+  color = "#1a73ff",
 }: {
   label: string;
   value: string;
   color?: string;
 }) {
   return (
-    <div className="rounded-xl border border-white/[0.05] bg-white/[0.03] p-3 text-center">
-      <p className="text-[9px] text-white/25 tracking-widest uppercase mb-1">{label}</p>
+    <div className="rounded-xl border border-[#14161b]/[.09] bg-[#14161b]/[0.03] p-3 text-center">
+      <p className="text-[9px] text-[#14161b]/46 tracking-widest uppercase mb-1">{label}</p>
       <p className="text-sm font-black tabular-nums" style={{ color }}>
         {value}
       </p>
@@ -82,18 +82,18 @@ function PitcherCard({
   teamId: number;
   side: "away" | "home";
 }) {
-  const accentColor = TEAM_COLORS[teamId] ?? "#FF7828";
+  const accentColor = TEAM_COLORS[teamId] ?? "#1a73ff";
   const isRight = side === "home";
 
   if (!pitcher) {
     return (
       <div className={`flex flex-col items-center gap-3 flex-1 ${isRight ? "items-end" : "items-start"}`}>
-        <div className="w-20 h-20 rounded-full border border-white/10 bg-white/5 flex items-center justify-center">
-          <span className="text-white/20 text-2xl font-black">?</span>
+        <div className="w-20 h-20 rounded-full border border-[#14161b]/[.09] bg-[#14161b]/[0.05] flex items-center justify-center">
+          <span className="text-[#14161b]/38 text-2xl font-black">?</span>
         </div>
         <div className={isRight ? "text-right" : ""}>
-          <p className="text-sm font-black text-white">TBD</p>
-          <p className="text-[10px] text-white/30">{teamName.split(" ").pop()}</p>
+          <p className="text-sm font-black text-[#14161b]">TBD</p>
+          <p className="text-[10px] text-[#14161b]/46">{teamName.split(" ").pop()}</p>
         </div>
       </div>
     );
@@ -110,7 +110,7 @@ function PitcherCard({
         <Headshot id={pitcher.id} name={pitcher.fullName} size={96} variant="lg" />
         {/* Team logo badge */}
         <div
-          className="absolute bottom-0 right-0 w-6 h-6 rounded-full overflow-hidden border bg-[#0D1320]"
+          className="absolute bottom-0 right-0 w-6 h-6 rounded-full overflow-hidden border bg-[#ffffff]"
           style={{ borderColor: `${accentColor}40` }}
         >
           <PlayerImg
@@ -122,16 +122,16 @@ function PitcherCard({
       </div>
 
       <div className={isRight ? "text-right" : ""}>
-        <p className="text-sm font-black text-white">{pitcher.fullName}</p>
-        <p className="text-[10px] text-white/35">{teamName.split(" ").pop()}</p>
+        <p className="text-sm font-black text-[#14161b]">{pitcher.fullName}</p>
+        <p className="text-[10px] text-[#14161b]/56">{teamName.split(" ").pop()}</p>
       </div>
 
       {stats && (
         <div className="grid grid-cols-4 gap-1.5 w-full">
-          <StatBox label="ERA"  value={stats.era.toFixed(2)}               color="#FF7828" />
-          <StatBox label="WHIP" value={stats.whip.toFixed(2)}              color="#818cf8" />
-          <StatBox label="K/9"  value={stats.strikeoutsPer9Inn.toFixed(1)} color="#50C882" />
-          <StatBox label="W-L"  value={`${stats.wins}-${stats.losses}`}    color="#2dd4bf" />
+          <StatBox label="ERA"  value={stats.era.toFixed(2)}               color="#1a73ff" />
+          <StatBox label="WHIP" value={stats.whip.toFixed(2)}              color="#6d4fe0" />
+          <StatBox label="K/9"  value={stats.strikeoutsPer9Inn.toFixed(1)} color="#12a150" />
+          <StatBox label="W-L"  value={`${stats.wins}-${stats.losses}`}    color="#0f9d8e" />
         </div>
       )}
     </div>
@@ -159,8 +159,8 @@ function PredictionVerdict({
   const actualWinner    = awayScore > homeScore ? "away" : "home";
   const correct = predictedWinner === actualWinner;
 
-  const awayColor = TEAM_COLORS[awayTeamId] ?? "#818cf8";
-  const homeColor = TEAM_COLORS[homeTeamId] ?? "#FF7828";
+  const awayColor = TEAM_COLORS[awayTeamId] ?? "#6d4fe0";
+  const homeColor = TEAM_COLORS[homeTeamId] ?? "#1a73ff";
   const predictedColor = predictedWinner === "away" ? awayColor : homeColor;
   const predictedAbbr  = predictedWinner === "away" ? awayAbbr : homeAbbr;
   const predictedPct   = predictedWinner === "away" ? winProb.away : winProb.home;
@@ -169,12 +169,12 @@ function PredictionVerdict({
     <div
       className="rounded-xl border px-4 py-3 flex items-center justify-between"
       style={{
-        background: correct ? "#50C88210" : "#EB505A10",
-        borderColor: correct ? "#50C88230" : "#EB505A30",
+        background: correct ? "#12a15010" : "#ef3b4a10",
+        borderColor: correct ? "#12a15030" : "#ef3b4a30",
       }}
     >
       <div>
-        <p className="text-[10px] text-white/30 tracking-widest uppercase mb-1">Model Prediction</p>
+        <p className="text-[10px] text-[#14161b]/46 tracking-widest uppercase mb-1">Model Prediction</p>
         <p className="text-sm font-black" style={{ color: predictedColor }}>
           {predictedAbbr} wins ({predictedPct}%)
         </p>
@@ -182,9 +182,9 @@ function PredictionVerdict({
       <div
         className="flex items-center gap-1.5 rounded-full px-3 py-1.5 border text-xs font-black"
         style={{
-          background: correct ? "#50C88220" : "#EB505A20",
-          borderColor: correct ? "#50C88240" : "#EB505A40",
-          color: correct ? "#50C882" : "#EB505A",
+          background: correct ? "#12a15020" : "#ef3b4a20",
+          borderColor: correct ? "#12a15040" : "#ef3b4a40",
+          color: correct ? "#12a150" : "#ef3b4a",
         }}
       >
         {correct ? "✓ Correct" : "✗ Missed"}
@@ -202,8 +202,8 @@ async function GameDetailContent({ game }: { game: Game }) {
     const isLive  = game.status.detailedState === "In Progress";
     const isFinal = ["Final", "Game Over"].includes(game.status.detailedState);
     const stadiumUrl = getStadiumImageUrl(game.venue.id);
-    const awayColor = TEAM_COLORS[away.team.id] ?? "#818cf8";
-    const homeColor = TEAM_COLORS[home.team.id] ?? "#FF7828";
+    const awayColor = TEAM_COLORS[away.team.id] ?? "#6d4fe0";
+    const homeColor = TEAM_COLORS[home.team.id] ?? "#1a73ff";
     const awayAbbr = TEAM_ABBR[away.team.id] ?? away.team.name.split(" ").pop() ?? "";
     const homeAbbr = TEAM_ABBR[home.team.id] ?? home.team.name.split(" ").pop() ?? "";
 
@@ -285,7 +285,7 @@ async function GameDetailContent({ game }: { game: Game }) {
     const homeFinalScore = game.teams.home.score;
 
     return (
-      <div className="min-h-screen bg-[#080C14]">
+      <div className="min-h-screen bg-[#eceef2]">
         {/* ── Hero ──────────────────────────────────────────────────────────── */}
         <GameHero game={game} stadiumUrl={stadiumUrl} />
 
@@ -308,8 +308,8 @@ async function GameDetailContent({ game }: { game: Game }) {
           {/* ── Pitcher Duel + Win Prob ──────────────────────────────────── */}
           <div className="grid lg:grid-cols-[1fr_360px] gap-5 items-start">
             {/* Pitcher duel card */}
-            <div className="rounded-2xl border border-white/[0.07] bg-[#0D1320] p-6">
-              <p className="text-[10px] font-bold text-white/25 tracking-widest uppercase mb-6 text-center">
+            <div className="rounded-2xl border border-[#14161b]/[.09] bg-[#ffffff] p-6">
+              <p className="text-[10px] font-bold text-[#14161b]/46 tracking-widest uppercase mb-6 text-center">
                 Starting Pitchers
               </p>
               <div className="flex items-start gap-5 justify-between">
@@ -322,9 +322,9 @@ async function GameDetailContent({ game }: { game: Game }) {
                 />
                 {/* VS divider */}
                 <div className="flex flex-col items-center gap-2 pt-8 shrink-0">
-                  <div className="w-px h-10 bg-white/[0.06]" />
-                  <span className="text-white/10 font-black text-sm">VS</span>
-                  <div className="w-px h-10 bg-white/[0.06]" />
+                  <div className="w-px h-10 bg-[#14161b]/[0.06]" />
+                  <span className="text-[#14161b]/38 font-black text-sm">VS</span>
+                  <div className="w-px h-10 bg-[#14161b]/[0.06]" />
                 </div>
                 <PitcherCard
                   pitcher={home.probablePitcher}
@@ -337,20 +337,20 @@ async function GameDetailContent({ game }: { game: Game }) {
 
               {/* NRFI preview inside pitcher card */}
               {(awayP || homeP) && (
-                <div className="mt-5 pt-4 border-t border-white/[0.05] grid grid-cols-2 gap-3">
-                  <div className="rounded-xl bg-white/[0.03] border border-white/[0.05] p-3 text-center">
-                    <p className="text-[9px] text-white/25 tracking-widest uppercase mb-1">Away ERA</p>
-                    <p className="text-lg font-black text-[#FF7828] tabular-nums">
+                <div className="mt-5 pt-4 border-t border-[#14161b]/[.09] grid grid-cols-2 gap-3">
+                  <div className="rounded-xl bg-[#14161b]/[0.03] border border-[#14161b]/[.09] p-3 text-center">
+                    <p className="text-[9px] text-[#14161b]/46 tracking-widest uppercase mb-1">Away ERA</p>
+                    <p className="text-lg font-black text-[#1a73ff] tabular-nums">
                       {awayP?.era.toFixed(2) ?? "—"}
                     </p>
-                    <p className="text-[9px] text-white/25">{awayP ? `${awayP.wins}W ${awayP.losses}L` : "TBD"}</p>
+                    <p className="text-[9px] text-[#14161b]/46">{awayP ? `${awayP.wins}W ${awayP.losses}L` : "TBD"}</p>
                   </div>
-                  <div className="rounded-xl bg-white/[0.03] border border-white/[0.05] p-3 text-center">
-                    <p className="text-[9px] text-white/25 tracking-widest uppercase mb-1">Home ERA</p>
-                    <p className="text-lg font-black text-[#818cf8] tabular-nums">
+                  <div className="rounded-xl bg-[#14161b]/[0.03] border border-[#14161b]/[.09] p-3 text-center">
+                    <p className="text-[9px] text-[#14161b]/46 tracking-widest uppercase mb-1">Home ERA</p>
+                    <p className="text-lg font-black text-[#6d4fe0] tabular-nums">
                       {homeP?.era.toFixed(2) ?? "—"}
                     </p>
-                    <p className="text-[9px] text-white/25">{homeP ? `${homeP.wins}W ${homeP.losses}L` : "TBD"}</p>
+                    <p className="text-[9px] text-[#14161b]/46">{homeP ? `${homeP.wins}W ${homeP.losses}L` : "TBD"}</p>
                   </div>
                 </div>
               )}
@@ -413,32 +413,32 @@ async function GameDetailContent({ game }: { game: Game }) {
           {/* ── Upsell cards ──────────────────────────────────────────────── */}
           <div className="grid sm:grid-cols-2 gap-4">
             <Link href="/analysis" className="block group">
-              <div className="rounded-2xl border border-[#FF7828]/20 bg-[#FF7828]/[0.04] p-5 hover:border-[#FF7828]/35 transition-all hover:bg-[#FF7828]/[0.07] h-full">
+              <div className="rounded-2xl border border-[#1a73ff]/20 bg-[#1a73ff]/[0.04] p-5 hover:border-[#1a73ff]/35 transition-all hover:bg-[#1a73ff]/[0.07] h-full">
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="w-8 h-8 rounded-xl bg-[#FF7828]/15 flex items-center justify-center">
-                    <Zap size={14} className="text-[#FF7828]" strokeWidth={2} />
+                  <div className="w-8 h-8 rounded-xl bg-[#1a73ff]/15 flex items-center justify-center">
+                    <Zap size={14} className="text-[#1a73ff]" strokeWidth={2} />
                   </div>
-                  <span className="text-[9px] font-black text-[#FF7828] tracking-widest uppercase">Fan — $4.99/mo</span>
+                  <span className="text-[9px] font-black text-[#1a73ff] tracking-widest uppercase">Fan — $4.99/mo</span>
                 </div>
-                <p className="text-sm font-black text-white mb-1">Edge Report</p>
-                <p className="text-xs text-white/35">AI-ranked value plays, pitcher grades & strong picks across all games today</p>
+                <p className="text-sm font-black text-[#14161b] mb-1">Edge Report</p>
+                <p className="text-xs text-[#14161b]/56">AI-ranked value plays, pitcher grades & strong picks across all games today</p>
               </div>
             </Link>
             <Link href="/hr-deep-dive" className="block group">
-              <div className="rounded-2xl border border-[#818cf8]/20 bg-[#818cf8]/[0.04] p-5 hover:border-[#818cf8]/35 transition-all hover:bg-[#818cf8]/[0.07] h-full">
+              <div className="rounded-2xl border border-[#6d4fe0]/20 bg-[#6d4fe0]/[0.04] p-5 hover:border-[#6d4fe0]/35 transition-all hover:bg-[#6d4fe0]/[0.07] h-full">
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="w-8 h-8 rounded-xl bg-[#818cf8]/15 flex items-center justify-center">
-                    <RefreshCw size={14} className="text-[#818cf8]" strokeWidth={2} />
+                  <div className="w-8 h-8 rounded-xl bg-[#6d4fe0]/15 flex items-center justify-center">
+                    <RefreshCw size={14} className="text-[#6d4fe0]" strokeWidth={2} />
                   </div>
-                  <span className="text-[9px] font-black text-[#818cf8] tracking-widest uppercase">Pro — $14.99/mo</span>
+                  <span className="text-[9px] font-black text-[#6d4fe0] tracking-widest uppercase">Pro — $14.99/mo</span>
                 </div>
-                <p className="text-sm font-black text-white mb-1">HR Deep Dive</p>
-                <p className="text-xs text-white/35">Spray charts, wall clearance, carry conditions & pitch-to-spray for all batters</p>
+                <p className="text-sm font-black text-[#14161b] mb-1">HR Deep Dive</p>
+                <p className="text-xs text-[#14161b]/56">Spray charts, wall clearance, carry conditions & pitch-to-spray for all batters</p>
               </div>
             </Link>
           </div>
 
-          <p className="text-xs text-white/15 text-center pb-4">
+          <p className="text-xs text-[#14161b]/38 text-center pb-4">
             Predictions are model estimates based on 2025 season stats. For educational purposes only.
           </p>
         </div>
@@ -447,14 +447,14 @@ async function GameDetailContent({ game }: { game: Game }) {
   } catch {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center px-6 text-center">
-        <div className="w-14 h-14 rounded-2xl bg-[#FF7828]/10 border border-[#FF7828]/20 flex items-center justify-center mb-5">
-          <RefreshCw size={22} className="text-[#FF7828]" strokeWidth={1.5} />
+        <div className="w-14 h-14 rounded-2xl bg-[#1a73ff]/10 border border-[#1a73ff]/20 flex items-center justify-center mb-5">
+          <RefreshCw size={22} className="text-[#1a73ff]" strokeWidth={1.5} />
         </div>
-        <h1 className="text-xl font-black text-white mb-2">Game data unavailable</h1>
-        <p className="text-sm text-white/40 mb-6 max-w-xs">Stats are loading or temporarily unavailable. Try refreshing.</p>
+        <h1 className="text-xl font-black text-[#14161b] mb-2">Game data unavailable</h1>
+        <p className="text-sm text-[#14161b]/56 mb-6 max-w-xs">Stats are loading or temporarily unavailable. Try refreshing.</p>
         <Link
           href="/games"
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#FF7828]/15 border border-[#FF7828]/30 text-sm font-bold text-[#FF7828] hover:bg-[#FF7828]/25 transition-colors"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#1a73ff]/15 border border-[#1a73ff]/30 text-sm font-bold text-[#1a73ff] hover:bg-[#1a73ff]/25 transition-colors"
         >
           <ArrowLeft size={13} strokeWidth={2} />
           Back to Games
@@ -476,14 +476,14 @@ export default async function GameDetailPage({
 
   const notFoundUI = (
     <div className="min-h-[60vh] flex flex-col items-center justify-center px-6 text-center">
-      <div className="w-14 h-14 rounded-2xl bg-white/[0.06] border border-white/[0.10] flex items-center justify-center mb-5">
-        <Zap size={22} className="text-white/30" strokeWidth={1.5} />
+      <div className="w-14 h-14 rounded-2xl bg-[#14161b]/[0.06] border border-[#14161b]/[.09] flex items-center justify-center mb-5">
+        <Zap size={22} className="text-[#14161b]/46" strokeWidth={1.5} />
       </div>
-      <h1 className="text-xl font-black text-white mb-2">Game not found</h1>
-      <p className="text-sm text-white/40 mb-6 max-w-xs">This game may have been postponed or the link is outdated.</p>
+      <h1 className="text-xl font-black text-[#14161b] mb-2">Game not found</h1>
+      <p className="text-sm text-[#14161b]/56 mb-6 max-w-xs">This game may have been postponed or the link is outdated.</p>
       <Link
         href="/games"
-        className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.06] border border-white/[0.10] text-sm font-bold text-white/70 hover:text-white transition-colors"
+        className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#14161b]/[0.06] border border-[#14161b]/[.09] text-sm font-bold text-[#14161b]/74 hover:text-[#14161b] transition-colors"
       >
         <ArrowLeft size={13} strokeWidth={2} />
         Back to Games
@@ -498,7 +498,7 @@ export default async function GameDetailPage({
   return (
     <Suspense
       fallback={
-        <div className="flex items-center gap-3 py-32 justify-center text-white/30">
+        <div className="flex items-center gap-3 py-32 justify-center text-[#14161b]/46">
           <RefreshCw size={18} className="animate-spin" strokeWidth={1.5} />
           <span className="text-sm">Loading game breakdown…</span>
         </div>

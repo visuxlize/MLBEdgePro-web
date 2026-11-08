@@ -35,7 +35,7 @@ function AnimatedEdgeRing({ value, grade, color, size = 96 }: { value: number; g
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,.08)" strokeWidth={strokeWidth} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--wash-3)" strokeWidth={strokeWidth} />
         <motion.circle
           cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round"
           strokeDasharray={c}
@@ -93,7 +93,7 @@ export function WnbaGameDeepDive({ game, h2h, factors, narrativeText, narrativeT
           <div className="relative p-6 sm:p-7 flex flex-col gap-5">
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <div className="flex items-center gap-2.5 flex-wrap">
-                <span className="font-spot-mono font-extrabold text-[10px] tracking-[.08em]" style={{ color: "#5eead4" }}>{game.dateLabel} &middot; {game.timeLabel}</span>
+                <span className="font-spot-mono font-extrabold text-[10px] tracking-[.08em]" style={{ color: "#0f8f80" }}>{game.dateLabel} &middot; {game.timeLabel}</span>
                 <span className="font-spot-sans text-[10px]" style={{ color: "var(--text-3)" }}>{game.venue}</span>
               </div>
               {game.status === "live" && (
@@ -123,12 +123,12 @@ export function WnbaGameDeepDive({ game, h2h, factors, narrativeText, narrativeT
                     <span className="font-spot-mono font-bold text-[11px]" style={{ color: "var(--text-3)" }}>{game.away} {100 - game.homeWinProb}%</span>
                     <span className="font-spot-mono font-bold text-[11px]" style={{ color: "var(--text-3)" }}>{game.home} {game.homeWinProb}%</span>
                   </div>
-                  <div className="flex h-2 rounded overflow-hidden mb-2.5" style={{ background: "rgba(255,255,255,.12)" }}>
+                  <div className="flex h-2 rounded overflow-hidden mb-2.5" style={{ background: "var(--wash-3)" }}>
                     <div style={{ width: `${game.homeWinProb}%`, background: awayHex }} />
                     <div style={{ flex: 1, background: homeHex }} />
                   </div>
                   <div className="flex items-center justify-between gap-2.5 rounded-xl px-3.5 py-2.5" style={{ background: "var(--purple-tint)", border: "1px solid var(--purple-line)" }}>
-                    <span className="font-spot-sans font-extrabold text-[10px] uppercase tracking-[.12em]" style={{ color: "var(--purple-2)" }}>◆ AI Prediction</span>
+                    <span className="font-spot-sans font-extrabold text-[10px] uppercase tracking-[.12em]" style={{ color: "var(--purple-2)" }}>◆ Model Pick</span>
                     <span className="font-spot-sans font-black text-[13px]" style={{ color: "var(--purple-soft)" }}>{favHome ? game.home : game.away} ML ↗</span>
                   </div>
                 </div>
@@ -142,7 +142,7 @@ export function WnbaGameDeepDive({ game, h2h, factors, narrativeText, narrativeT
           requiredTier="fan"
           feature="WNBA Matchup Analysis"
           benefits={[
-            "Edge AI breakdown for every game",
+            "Model breakdown for every game",
             "Live win-probability timeline",
             "Head-to-head splits & edge factors",
             "Best player props for this matchup",
@@ -153,19 +153,19 @@ export function WnbaGameDeepDive({ game, h2h, factors, narrativeText, narrativeT
               <div className="absolute top-0 bottom-0 left-0 w-1/4 pointer-events-none" style={{ background: "linear-gradient(90deg, transparent, rgba(45,212,191,.12), transparent)", animation: "scan 5.5s linear infinite" }} />
               <div className="relative flex items-center justify-between gap-2 mb-3.5">
                 <div className="flex items-center gap-2">
-                  <span className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ color: "#2dd4bf", background: "rgba(45,212,191,.14)", border: "1px solid rgba(45,212,191,.3)" }}>
+                  <span className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ color: "#0f9d8e", background: "rgba(45,212,191,.14)", border: "1px solid rgba(45,212,191,.3)" }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2l2.2 6.8L21 11l-6.8 2.2L12 20l-2.2-6.8L3 11l6.8-2.2L12 2z" fill="currentColor" /></svg>
                   </span>
-                  <span className="font-spot-sans font-extrabold text-xs tracking-[.06em]" style={{ color: "#5eead4" }}>Edge AI Breakdown</span>
+                  <span className="font-spot-sans font-extrabold text-xs tracking-[.06em]" style={{ color: "#0f8f80" }}>Model Breakdown</span>
                 </div>
-                <span className="rounded-full px-2.5 py-1 font-spot-mono font-extrabold text-[11px]" style={{ color: "#5eead4", background: "rgba(45,212,191,.12)", border: "1px solid rgba(45,212,191,.28)" }}>{game.edge} edge</span>
+                <span className="rounded-full px-2.5 py-1 font-spot-mono font-extrabold text-[11px]" style={{ color: "#0f8f80", background: "rgba(45,212,191,.12)", border: "1px solid rgba(45,212,191,.28)" }}>{game.edge} edge</span>
               </div>
-              <div className="relative rounded-xl pl-3.5 pr-3.5 py-3" style={{ borderLeft: "2.5px solid rgba(45,212,191,.5)", background: "rgba(255,255,255,.025)" }}>
+              <div className="relative rounded-xl pl-3.5 pr-3.5 py-3" style={{ borderLeft: "2.5px solid rgba(45,212,191,.5)", background: "var(--wash-1)" }}>
                 <p className="font-spot-sans font-medium text-[13px] leading-relaxed" style={{ color: "var(--text-2)" }}>{narrativeText}</p>
               </div>
               <div className="relative flex flex-wrap gap-1.5 mt-3.5">
                 {narrativeTags.map((t) => (
-                  <span key={t} className="rounded-full px-2.5 py-1 font-spot-sans font-bold text-[10px]" style={{ color: "#5eead4", background: "rgba(45,212,191,.10)", border: "1px solid rgba(45,212,191,.26)" }}>{t}</span>
+                  <span key={t} className="rounded-full px-2.5 py-1 font-spot-sans font-bold text-[10px]" style={{ color: "#0f8f80", background: "rgba(45,212,191,.10)", border: "1px solid rgba(45,212,191,.26)" }}>{t}</span>
                 ))}
               </div>
             </div>
@@ -181,7 +181,7 @@ export function WnbaGameDeepDive({ game, h2h, factors, narrativeText, narrativeT
                     <stop offset="1" stopColor={homeHex} stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <line x1="0" y1="60" x2="320" y2="60" stroke="rgba(255,255,255,.12)" strokeWidth="1" strokeDasharray="3 4" />
+                <line x1="0" y1="60" x2="320" y2="60" stroke="var(--wash-3)" strokeWidth="1" strokeDasharray="3 4" />
                 <path d={wpArea} fill="url(#wpAreaWnba)" />
                 <path d={wpLine} fill="none" stroke={homeHex} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" style={{ strokeDasharray: 1000, strokeDashoffset: 1000, animation: "draw 2s ease .2s forwards" }} />
               </svg>
@@ -204,10 +204,10 @@ export function WnbaGameDeepDive({ game, h2h, factors, narrativeText, narrativeT
                       <span className="font-spot-mono font-extrabold text-xs" style={{ color: "var(--text-2)" }}>{h.homeVal}</span>
                     </div>
                     <div className="flex items-center gap-1 h-2">
-                      <div className="flex-1 flex justify-end h-full rounded overflow-hidden" style={{ background: "rgba(255,255,255,.05)" }}>
+                      <div className="flex-1 flex justify-end h-full rounded overflow-hidden" style={{ background: "var(--wash-2)" }}>
                         <div className="h-full rounded" style={{ width: `${h.awayPct}%`, background: awayHex, transformOrigin: "right", animation: `bar-grow .8s cubic-bezier(.22,1,.36,1) ${i * 0.08}s both` }} />
                       </div>
-                      <div className="flex-1 h-full rounded overflow-hidden" style={{ background: "rgba(255,255,255,.05)" }}>
+                      <div className="flex-1 h-full rounded overflow-hidden" style={{ background: "var(--wash-2)" }}>
                         <div className="h-full rounded" style={{ width: `${h.homePct}%`, background: homeHex, transformOrigin: "left", animation: `bar-grow .8s cubic-bezier(.22,1,.36,1) ${i * 0.08}s both` }} />
                       </div>
                     </div>
@@ -224,7 +224,7 @@ export function WnbaGameDeepDive({ game, h2h, factors, narrativeText, narrativeT
                       <span className="font-spot-sans text-xs" style={{ color: "var(--text-2)" }}>{f.label}</span>
                       <span className="font-spot-mono font-extrabold text-[11px]" style={{ color: f.color }}>{f.value}</span>
                     </div>
-                    <div className="h-1.5 rounded overflow-hidden" style={{ background: "rgba(255,255,255,.08)" }}>
+                    <div className="h-1.5 rounded overflow-hidden" style={{ background: "var(--wash-3)" }}>
                       <div className="h-full rounded" style={{ width: `${f.pct}%`, background: f.color, transformOrigin: "left", animation: `bar-grow .8s cubic-bezier(.22,1,.36,1) ${i * 0.08}s both` }} />
                     </div>
                   </div>

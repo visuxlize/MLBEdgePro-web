@@ -285,7 +285,7 @@ function EdgeCard({ data }: { data: GameWithScore }) {
           <div className="flex flex-wrap gap-1.5">
             {score.keyEdges.slice(0, 3).map((k) => (
               <span key={k} className="font-spot-sans text-[10px] rounded-full px-2.5 py-0.5"
-                style={{ color: "var(--text-3)", border: "1px solid var(--hairline)", background: "rgba(255,255,255,.03)" }}>{k}</span>
+                style={{ color: "var(--text-3)", border: "1px solid var(--hairline)", background: "var(--wash-1)" }}>{k}</span>
             ))}
           </div>
         )}
@@ -422,8 +422,8 @@ async function EdgeContent() {
     if (!withPitchers.length) {
       return (
         <div className="flex flex-col items-center justify-center py-20">
-          <Zap size={44} className="text-white/10 mb-4" strokeWidth={1.2} />
-          <p className="text-white/35">Edge data requires confirmed pitchers</p>
+          <Zap size={44} className="text-[#14161b]/38 mb-4" strokeWidth={1.2} />
+          <p className="text-[#14161b]/56">Edge data requires confirmed pitchers</p>
         </div>
       );
     }
@@ -468,7 +468,7 @@ async function EdgeContent() {
           <div className="mb-5 rounded-[var(--r-tile)] px-4 py-3 flex items-center gap-3" style={{ border: "1px solid var(--orange-line)", background: "var(--orange-tint)" }}>
             <TrendingUp size={14} className="shrink-0" style={{ color: "var(--orange)" }} strokeWidth={2} />
             <p className="font-spot-sans text-xs" style={{ color: "var(--text-3)" }}>
-              <span className="font-bold" style={{ color: "var(--orange-soft)" }}>Tip:</span> Add <code className="px-1 rounded" style={{ color: "var(--text-2)", background: "rgba(255,255,255,.08)" }}>ANTHROPIC_API_KEY</code> to your Vercel env vars to enable AI-powered edge scoring.
+              <span className="font-bold" style={{ color: "var(--orange-soft)" }}>Tip:</span> Add <code className="px-1 rounded" style={{ color: "var(--text-2)", background: "var(--wash-3)" }}>ANTHROPIC_API_KEY</code> to your Vercel env vars to enable AI-powered edge scoring.
             </p>
           </div>
         )}
@@ -1068,8 +1068,8 @@ async function PropsContent() {
   if (!games.length) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
-        <Layers size={44} className="text-white/10 mb-4" strokeWidth={1.2} />
-        <p className="text-white/35">No prop data available yet. Check back closer to first pitch.</p>
+        <Layers size={44} className="text-[#14161b]/38 mb-4" strokeWidth={1.2} />
+        <p className="text-[#14161b]/56">No prop data available yet. Check back closer to first pitch.</p>
       </div>
     );
   }
@@ -1097,7 +1097,7 @@ export default async function AnalysisPage({
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 mb-6 p-1 rounded-[var(--r-pill)] w-fit" style={{ background: "rgba(255,255,255,.04)", border: "1px solid var(--hairline)" }}>
+      <div className="flex items-center gap-1 mb-6 p-1 rounded-[var(--r-pill)] w-fit" style={{ background: "var(--wash-1)", border: "1px solid var(--hairline)" }}>
         <Link
           href="/analysis"
           className="flex items-center gap-2 px-4 py-2 rounded-[var(--r-tile)] font-spot-sans text-sm font-bold transition-all"
@@ -1130,7 +1130,7 @@ export default async function AnalysisPage({
           ]}
         >
           <Suspense fallback={
-            <div className="flex items-center gap-3 py-16 text-white/30">
+            <div className="flex items-center gap-3 py-16 text-[#14161b]/46">
               <RefreshCw size={18} className="animate-spin" strokeWidth={1.5} />
               <span className="text-sm">Loading edge data...</span>
             </div>
@@ -1149,7 +1149,7 @@ export default async function AnalysisPage({
           ]}
         >
           <Suspense fallback={
-            <div className="flex items-center gap-3 py-16 text-white/30">
+            <div className="flex items-center gap-3 py-16 text-[#14161b]/46">
               <RefreshCw size={18} className="animate-spin" strokeWidth={1.5} />
               <span className="text-sm">Loading prop data...</span>
             </div>

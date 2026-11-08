@@ -5,10 +5,10 @@ import { loadSavedSlips, deleteSlip, type SavedSlip, type SlipSport } from "@/li
 import { BookmarkCheck, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 
 const SPORT_COLOR: Record<SlipSport, string> = {
-  MLB:    "#f97316",
-  NFL:    "#a78bfa",
-  WNBA:   "#2dd4bf",
-  Soccer: "#34d399",
+  MLB:    "#ea6a0a",
+  NFL:    "#6d4fe0",
+  WNBA:   "#0f9d8e",
+  Soccer: "#12a150",
 };
 
 const SPORT_EMOJI: Record<SlipSport, string> = { MLB: "⚾", NFL: "🏈", WNBA: "🏀", Soccer: "⚽" };
@@ -42,7 +42,7 @@ export function SavedSlipsPanel() {
           <BookmarkCheck size={16} style={{ color: "var(--orange)" }} />
           <span className="font-spot-sans font-extrabold text-sm" style={{ color: "var(--text)" }}>Your Saved Slips</span>
           <span className="font-spot-mono font-bold text-[10px] px-1.5 py-0.5 rounded-full"
-            style={{ color: "var(--text-muted)", background: "rgba(255,255,255,.06)", border: "1px solid var(--hairline)" }}>
+            style={{ color: "var(--text-muted)", background: "var(--wash-2)", border: "1px solid var(--hairline)" }}>
             {slips.length}
           </span>
         </div>
@@ -55,7 +55,7 @@ export function SavedSlipsPanel() {
               <button key={sp} onClick={() => setSport(sp)}
                 className="font-spot-sans font-extrabold text-[10px] uppercase tracking-[.08em] px-2 py-1 rounded-full transition-all"
                 style={active
-                  ? { background: sp !== "All" ? `${SPORT_COLOR[sp as SlipSport]}22` : "rgba(255,255,255,.08)", color, border: `1px solid ${sp !== "All" ? `${SPORT_COLOR[sp as SlipSport]}40` : "rgba(255,255,255,.14)"}` }
+                  ? { background: sp !== "All" ? `${SPORT_COLOR[sp as SlipSport]}22` : "var(--wash-3)", color, border: `1px solid ${sp !== "All" ? `${SPORT_COLOR[sp as SlipSport]}40` : "var(--wash-3)"}` }
                   : { color: "var(--text-dim)" }}>
                 {sp === "All" ? "All" : `${SPORT_EMOJI[sp as SlipSport]} ${sp}`}
               </button>
@@ -77,7 +77,7 @@ export function SavedSlipsPanel() {
             const date = new Date(s.savedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
             return (
               <div key={s.id}>
-                <div className="flex items-center gap-3 px-5 py-3 cursor-pointer hover:bg-white/[.02] transition-colors"
+                <div className="flex items-center gap-3 px-5 py-3 cursor-pointer hover:bg-[#14161b]/[.02] transition-colors"
                   onClick={() => setExpanded(isExpanded ? null : s.id)}>
                   {/* Sport badge */}
                   <span className="font-spot-sans font-extrabold text-[9px] uppercase tracking-[.10em] px-2 py-0.5 rounded-full shrink-0"
@@ -107,7 +107,7 @@ export function SavedSlipsPanel() {
                   <div className="px-5 pb-3 space-y-1.5">
                     {s.legs.map((leg) => (
                       <div key={leg.id} className="flex items-center gap-2.5 rounded-xl px-3 py-2"
-                        style={{ background: "rgba(255,255,255,.03)", border: "1px solid var(--hairline)" }}>
+                        style={{ background: "var(--wash-1)", border: "1px solid var(--hairline)" }}>
                         <div>
                           <p className="font-spot-sans font-extrabold text-[11px]" style={{ color: "var(--text)" }}>{leg.player}</p>
                           <p className="font-spot-sans text-[9px]" style={{ color: "var(--text-muted)" }}>{leg.market} · {leg.team}</p>
@@ -116,7 +116,7 @@ export function SavedSlipsPanel() {
                         <span className="font-spot-sans font-extrabold text-[10px] px-2 py-0.5 rounded-lg"
                           style={leg.side === "OVER" || leg.side === "YES"
                             ? { color: "var(--green)", background: "var(--green-bg)", border: "1px solid rgba(52,211,153,.25)" }
-                            : { color: "#fda4a4", background: "var(--red-bg)", border: "1px solid rgba(239,68,68,.25)" }}>
+                            : { color: "#d6303d", background: "var(--red-bg)", border: "1px solid rgba(239,68,68,.25)" }}>
                           {leg.side} {leg.line}
                         </span>
                         <span className="font-spot-sans font-extrabold text-[10px]" style={{ color: `${color}` }}>{leg.grade}</span>

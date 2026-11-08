@@ -32,13 +32,12 @@ export default async function GuidesPage() {
       href:        "/guides/mlb",
       description: "Betting guides, pitcher matchups, run line analysis, and park factor breakdowns for every MLB game.",
       gameCount:   mlbGames.length,
-      accentColor: "#f97316",
+      accentColor: "#ea6a0a",
       subcategories: [
         { label: "Today's Games",   href: "/games" },
         { label: "Live Scores",     href: "/scores" },
         { label: "HR Nuke Report",  href: "/hr-deep-dive" },
         { label: "Props Builder",   href: "/props" },
-        { label: "Edge AI",         href: "/ai" },
       ],
     },
     {
@@ -48,7 +47,7 @@ export default async function GuidesPage() {
       href:        "/guides/nfl",
       description: "Weekly matchup breakdowns, spread analysis, player props, and best bet trends for the NFL slate.",
       gameCount:   nflGames.length,
-      accentColor: "#7c5cfa",
+      accentColor: "#6d4fe0",
       subcategories: [
         { label: "This Week's Slate", href: "/nfl" },
         { label: "Player Props",      href: "/nfl/props" },
@@ -61,7 +60,7 @@ export default async function GuidesPage() {
       href:        "/guides/wnba",
       description: "Game-by-game analysis, player impact scores, and model-backed picks for every WNBA matchup.",
       gameCount:   wnbaGames.length,
-      accentColor: "#2dd4bf",
+      accentColor: "#0f9d8e",
       subcategories: [
         { label: "Today's Games",   href: "/wnba" },
         { label: "Player Props",    href: "/wnba/props" },
@@ -167,7 +166,7 @@ export default async function GuidesPage() {
               ) : (
                 <div className="flex-1 flex items-center justify-center py-8">
                   <span className="font-spot-sans font-bold text-[12px] uppercase tracking-[.10em]"
-                    style={{ color: "var(--text-dim)", background: "rgba(255,255,255,.05)", padding: "6px 14px", borderRadius: 8, border: "1px solid var(--hairline)" }}>
+                    style={{ color: "var(--text-dim)", background: "var(--wash-2)", padding: "6px 14px", borderRadius: 8, border: "1px solid var(--hairline)" }}>
                     Coming Soon
                   </span>
                 </div>

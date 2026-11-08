@@ -158,7 +158,7 @@ function SlateCard({ game, onClick }: { game: Game; onClick: () => void }) {
   const awayScore = getScore(away, game.linescore, "away");
   const homeScore = getScore(home, game.linescore, "home");
   const { edge, grade, homeProb, favId, favCode } = quickEdge(game);
-  const gc = grade === "A+" ? "#34d399" : grade === "A" ? "#34d399" : grade === "B+" ? "#fbbf24" : grade === "B" ? "#fbbf24" : "var(--text-3)";
+  const gc = grade === "A+" ? "#12a150" : grade === "A" ? "#12a150" : grade === "B+" ? "#d49a06" : grade === "B" ? "#d49a06" : "var(--text-3)";
   const ls = game.linescore;
   const statusLabel = isLive
     ? `${ls?.inningState ?? ""} ${ls?.currentInningOrdinal ?? ""}`.trim().toUpperCase() || "LIVE"
@@ -197,7 +197,7 @@ function SlateCard({ game, onClick }: { game: Game; onClick: () => void }) {
         </div>
       ))}
       {/* Win prob bar */}
-      <div className="flex h-1 rounded overflow-hidden mt-1" style={{ background: "rgba(255,255,255,.08)" }}>
+      <div className="flex h-1 rounded overflow-hidden mt-1" style={{ background: "var(--wash-3)" }}>
         <div style={{ width: `${100 - homeProb}%`, background: awayHex }} />
         <div style={{ flex: 1, background: homeHex }} />
       </div>
@@ -529,7 +529,7 @@ export default function GamesPage() {
         {loading ? (
           <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))" }}>
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="rounded-[16px] animate-pulse" style={{ background: "rgba(255,255,255,.03)", height: 120 }} />
+              <div key={i} className="rounded-[16px] animate-pulse" style={{ background: "var(--wash-1)", height: 120 }} />
             ))}
           </div>
         ) : games.length === 0 ? (

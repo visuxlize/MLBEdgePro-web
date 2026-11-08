@@ -33,8 +33,8 @@ html {
 /* Scrollbar styling for webkit browsers */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+::-webkit-scrollbar-thumb { background: rgba(20,22,27,0.15); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(20,22,27,0.28); }
 
 /* Hide scrollbar utility */
 .hide-scrollbar {
@@ -73,55 +73,51 @@ img, video { max-width: 100%; height: auto; }
   --radius-sm: calc(var(--radius) - 4px);
 
   /* Brand tokens */
-  --color-orange:       #FF7828;
-  --color-orange-light: #FFA550;
-  --color-orange-dark:  #C85014;
-  --color-surface:      #111622;
-  --color-surface-2:    #191C22;
+  --color-orange:       #1a73ff;
+  --color-orange-light: #5a9bff;
+  --color-orange-dark:  #1257cc;
+  --color-surface:      #ffffff;
+  --color-surface-2:    #f3f4f7;
 
   --font-sans: 'Hanken Grotesk', system-ui, -apple-system, sans-serif;
   --font-display: 'Bricolage Grotesque', 'Hanken Grotesk', system-ui, sans-serif;
 }
 
-/* Single theme — always dark, matching the mobile app exactly */
+/* Single theme — light "Edge Soccer" palette used across the whole site */
 :root {
-  /* Background: #0A0E14 → hsl(220 30% 6%) */
-  --background:       220 30% 6%;
-  --foreground:       0 0% 96%;
+  --background:       220 18% 94%;   /* #eceef2 */
+  --foreground:       222 14% 9%;    /* #14161b */
 
-  /* Card: #111622 → hsl(220 27% 9%) */
-  --card:             220 27% 9%;
-  --card-foreground:  0 0% 96%;
+  --card:             0 0% 100%;
+  --card-foreground:  222 14% 9%;
+  --popover:          0 0% 100%;
+  --popover-foreground: 222 14% 9%;
 
-  --popover:          220 27% 9%;
-  --popover-foreground: 0 0% 96%;
-
-  /* Primary: #FF7828 orange → hsl(24 100% 57%) */
-  --primary:          24 100% 57%;
+  /* Primary: #1a73ff */
+  --primary:          217 100% 55%;
   --primary-foreground: 0 0% 100%;
 
-  --secondary:        220 20% 12%;
-  --secondary-foreground: 0 0% 96%;
+  --secondary:        220 18% 96%;
+  --secondary-foreground: 222 14% 9%;
+  --muted:            220 18% 96%;
+  --muted-foreground: 222 8% 42%;
+  --accent:           220 18% 96%;
+  --accent-foreground: 222 14% 9%;
 
-  --muted:            220 20% 12%;
-  --muted-foreground: 0 0% 45%;
-
-  --accent:           220 20% 14%;
-  --accent-foreground: 0 0% 96%;
-
-  --destructive:      0 72% 51%;
-
-  /* Border: rgba(255,255,255,0.08) */
-  --border:           220 20% 15%;
-  --input:            220 20% 12%;
-  --ring:             24 100% 57%;
-
+  --destructive:      354 83% 57%;
+  --border:           220 14% 90%;
+  --input:            220 14% 90%;
+  --ring:             217 100% 55%;
   --radius: 0.75rem;
+
+  --wash-1: rgba(20,22,27,.035);
+  --wash-2: rgba(20,22,27,.055);
+  --wash-3: rgba(20,22,27,.09);
+  --blue: #1a73ff;
 }
 
-/* Force dark on html always */
 html {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 @layer base {
@@ -133,109 +129,81 @@ html {
     font-feature-settings: "rlig" 1, "calt" 1;
   }
   ::selection {
-    background-color: rgba(255, 120, 40, 0.25);
+    background-color: rgba(26, 115, 255, 0.22);
   }
 }
 
 /* ── Gradient utilities ──────────────────────────────────────────────────────── */
 .gradient-orange {
-  background: linear-gradient(135deg, #FFA550, #FF7828, #C85014);
+  background: linear-gradient(135deg, #5a9bff, #1a73ff, #1257cc);
 }
 
 .gradient-orange-text {
-  background: linear-gradient(135deg, #FFA550, #FF7828);
+  background: linear-gradient(135deg, #5a9bff, #1a73ff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .glass-card {
-  background: rgba(17, 22, 34, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(20, 22, 27, 0.07);
+  box-shadow: 0 1px 2px rgba(20,22,27,.04), 0 8px 24px rgba(20,22,27,.05);
   backdrop-filter: blur(12px);
 }
 
 /* Glow effects */
 .glow-orange {
-  box-shadow: 0 0 40px rgba(255, 120, 40, 0.15), 0 0 80px rgba(255, 120, 40, 0.06);
+  box-shadow: 0 8px 40px rgba(26, 115, 255, 0.14);
 }
 
-/* ── Clerk dark-mode overrides ───────────────────────────────────────────────── */
-/* Force the social buttons (Apple, Google) to fit the dark theme */
-
-/* Card root */
+/* ── Clerk — light theme ────────────────────────────────────────────────────── */
 .cl-card,
 .cl-rootBox .cl-card {
-  background-color: #111622 !important;
-  border: 1px solid rgba(255,255,255,0.07) !important;
-  box-shadow: 0 24px 80px rgba(0,0,0,0.5) !important;
+  background-color: #ffffff !important;
+  border: 1px solid rgba(20,22,27,0.07) !important;
+  box-shadow: 0 1px 2px rgba(20,22,27,.04), 0 24px 60px rgba(20,22,27,0.10) !important;
+  border-radius: 24px !important;
 }
-
-/* Social buttons */
 .cl-socialButtonsBlockButton {
-  background-color: rgba(255,255,255,0.04) !important;
-  border: 1px solid rgba(255,255,255,0.09) !important;
-  color: #ffffff !important;
+  background-color: #ffffff !important;
+  border: 1px solid rgba(20,22,27,0.10) !important;
+  color: #14161b !important;
   border-radius: 14px !important;
   transition: background-color 0.15s !important;
 }
-.cl-socialButtonsBlockButton:hover {
-  background-color: rgba(255,255,255,0.08) !important;
-}
-.cl-socialButtonsBlockButtonText {
-  color: #ffffff !important;
-  font-weight: 600 !important;
-}
-/* Make Apple logo white (it's black by default) */
-.cl-providerIcon__apple {
-  filter: brightness(0) invert(1) !important;
-}
-
-/* Divider */
-.cl-dividerLine { background: rgba(255,255,255,0.07) !important; }
-.cl-dividerText { color: rgba(255,255,255,0.25) !important; }
-
-/* Inputs */
+.cl-socialButtonsBlockButton:hover { background-color: #f3f4f7 !important; }
+.cl-socialButtonsBlockButtonText { color: #14161b !important; font-weight: 600 !important; }
+.cl-dividerLine { background: rgba(20,22,27,0.08) !important; }
+.cl-dividerText { color: rgba(20,22,27,0.4) !important; }
 .cl-formFieldInput {
-  background-color: #191C22 !important;
-  border-color: rgba(255,255,255,0.09) !important;
-  color: #ffffff !important;
+  background-color: #f6f7f9 !important;
+  border-color: rgba(20,22,27,0.10) !important;
+  color: #14161b !important;
   border-radius: 14px !important;
 }
 .cl-formFieldInput:focus {
-  border-color: rgba(255,120,40,0.5) !important;
-  box-shadow: 0 0 0 2px rgba(255,120,40,0.15) !important;
+  border-color: rgba(26,115,255,0.6) !important;
+  box-shadow: 0 0 0 3px rgba(26,115,255,0.14) !important;
 }
-
-/* Labels */
-.cl-formFieldLabel { color: rgba(255,255,255,0.45) !important; font-size: 11px !important; font-weight: 700 !important; letter-spacing: 0.08em !important; }
-
-/* Primary button */
+.cl-formFieldLabel { color: rgba(20,22,27,0.55) !important; font-size: 11px !important; font-weight: 700 !important; letter-spacing: 0.08em !important; }
 .cl-formButtonPrimary {
-  background: linear-gradient(135deg, #FFA550, #FF7828, #C85014) !important;
-  border-radius: 999px !important;
-  font-weight: 800 !important;
-  box-shadow: 0 6px 20px rgba(255,120,40,0.35) !important;
+  background: #1a73ff !important;
+  border-radius: 14px !important;
+  font-weight: 700 !important;
+  box-shadow: 0 8px 22px rgba(26,115,255,0.35) !important;
   transition: opacity 0.15s !important;
 }
-.cl-formButtonPrimary:hover { opacity: 0.9 !important; }
-
-/* Footer links */
-.cl-footerActionText { color: rgba(255,255,255,0.35) !important; }
-.cl-footerActionLink { color: #FF7828 !important; }
-.cl-footerActionLink:hover { color: #FFA550 !important; }
-
-/* Header */
-.cl-headerTitle { color: #ffffff !important; font-weight: 900 !important; }
-.cl-headerSubtitle { color: rgba(255,255,255,0.40) !important; }
-
-/* Optional / badge text */
-.cl-formFieldHintText { color: rgba(255,255,255,0.25) !important; }
+.cl-formButtonPrimary:hover { opacity: 0.92 !important; }
+.cl-footerActionText { color: rgba(20,22,27,0.5) !important; }
+.cl-footerActionLink { color: #1a73ff !important; }
+.cl-footerActionLink:hover { color: #1257cc !important; }
+.cl-headerTitle { color: #14161b !important; font-weight: 800 !important; }
+.cl-headerSubtitle { color: rgba(20,22,27,0.55) !important; }
+.cl-formFieldHintText { color: rgba(20,22,27,0.4) !important; }
 .cl-badge { display: none !important; }
-
-/* Internal link (sign in / sign up) */
-.cl-identityPreviewText { color: #ffffff !important; }
-.cl-identityPreviewEditButton { color: #FF7828 !important; }
+.cl-identityPreviewText { color: #14161b !important; }
+.cl-identityPreviewEditButton { color: #1a73ff !important; }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
    SPOTLIGHT DESIGN SYSTEM — scoped to .spotlight on the redesigned user pages.
@@ -244,63 +212,69 @@ html {
 
 .spotlight {
   /* ---- Surfaces ---- */
-  --bg:            #06070d;
-  --panel:         #0b0d15;
-  --panel-2:       #0c0e16;
-  --panel-wash:    radial-gradient(130% 70% at 50% -8%, #161126, #06070d 58%);
-  --hairline:      rgba(255,255,255,.06);
-  --hairline-2:    rgba(255,255,255,.05);
-  --ring-inset:    inset 0 0 0 2px rgba(255,255,255,.18);
-  --inset-soft:    rgba(0,0,0,.25);
+  --bg:            #eceef2;
+  --panel:         #ffffff;
+  --panel-2:       #f6f7f9;
+  --panel-wash:    #eceef2;
+  --hairline:      rgba(20,22,27,.07);
+  --hairline-2:    rgba(20,22,27,.05);
+  --ring-inset:    inset 0 0 0 2px rgba(20,22,27,.12);
+  --inset-soft:    rgba(20,22,27,.05);
+  /* neutral washes — replace the old white-alpha fills */
+  --wash-1:        rgba(20,22,27,.035);
+  --wash-2:        rgba(20,22,27,.055);
+  --wash-3:        rgba(20,22,27,.09);
 
-  /* ---- Accents ---- */
-  --orange:        #f97316;
-  --orange-2:      #fb923c;
-  --orange-soft:   #f8a878;
-  --orange-tint:   rgba(249,115,22,.10);
-  --orange-line:   rgba(249,115,22,.30);
-  --grad-orange:   linear-gradient(135deg,#f97316,#fb923c);
+  /* ---- Accents (readable on white) ---- */
+  --blue:          #1a73ff;
+  --blue-tint:     rgba(26,115,255,.10);
+  --blue-line:     rgba(26,115,255,.28);
+  --orange:        #ea6a0a;
+  --orange-2:      #f08a3a;
+  --orange-soft:   #c2540a;
+  --orange-tint:   rgba(234,106,10,.10);
+  --orange-line:   rgba(234,106,10,.30);
+  --grad-orange:   linear-gradient(135deg,#ea6a0a,#f08a3a);
 
-  --purple:        #7c5cfa;
-  --purple-2:      #a78bfa;
-  --purple-soft:   #c9bdf3;
-  --purple-tint:   rgba(124,92,250,.10);
-  --purple-line:   rgba(167,139,250,.30);
-  --grad-purple:   linear-gradient(135deg,#7c5cfa,#a78bfa);
+  --purple:        #6d4fe0;
+  --purple-2:      #6d4fe0;
+  --purple-soft:   #5b3fd6;
+  --purple-tint:   rgba(109,79,224,.09);
+  --purple-line:   rgba(109,79,224,.26);
+  --grad-purple:   linear-gradient(135deg,#6d4fe0,#8b73f0);
 
-  --gold:          #f59e0b;
-  --gold-2:        #fbbf24;
-  --gold-soft:     #fcd97a;
-  --gold-tint:     rgba(245,158,11,.12);
-  --gold-line:     rgba(251,191,36,.30);
-  --grad-gold:     linear-gradient(135deg,#f59e0b,#fbbf24);
+  --gold:          #d49a06;
+  --gold-2:        #e0a90f;
+  --gold-soft:     #a87a05;
+  --gold-tint:     rgba(212,154,6,.12);
+  --gold-line:     rgba(212,154,6,.30);
+  --grad-gold:     linear-gradient(135deg,#d49a06,#f0b81c);
 
   /* ---- Grades / status ---- */
-  --green:         #34d399;   --green-bg:  rgba(52,211,153,.16);
-  --grade-b:       #fb923c;   --grade-b-bg:rgba(251,146,60,.16);
-  --grade-c:       #a78bfa;   --grade-c-bg:rgba(167,139,250,.18);
-  --red:           #ef4444;   --red-soft:  #fda4a4;  --red-bg: rgba(239,68,68,.16);
-  --blue:          #60a5fa;
+  --green:         #12a150;   --green-bg:  rgba(18,161,80,.12);
+  --grade-b:       #e0731a;   --grade-b-bg:rgba(224,115,26,.13);
+  --grade-c:       #6d4fe0;   --grade-c-bg:rgba(109,79,224,.12);
+  --red:           #ef3b4a;   --red-soft:  #d6303d;  --red-bg: rgba(239,59,74,.10);
 
   /* ---- Text ---- */
-  --text:          #ffffff;
-  --text-2:        #cfd6e0;
-  --text-3:        #aab2bd;
-  --text-muted:    #8b94a1;
-  --text-dim:      #6b7280;
-  --text-faint:    #5b6472;
-  --text-ghost:    #4d5563;
+  --text:          #14161b;
+  --text-2:        #2f343d;
+  --text-3:        #4b515c;
+  --text-muted:    #6b7280;
+  --text-dim:      #8a909b;
+  --text-faint:    #8a909b;
+  --text-ghost:    #b5bac4;
 
   /* ---- Radii ---- */
-  --r-pill:        20px;   --r-panel: 20px;  --r-card: 18px;
-  --r-tile:        12px;   --r-badge: 11px;  --r-chip: 10px;  --r-sm: 8px;
+  --r-pill:        20px;   --r-panel: 22px;  --r-card: 20px;
+  --r-tile:        14px;   --r-badge: 11px;  --r-chip: 10px;  --r-sm: 8px;
   --r-window:      96px 16px 16px 96px;
 
   /* ---- Shadows ---- */
-  --shadow-panel:  0 28px 80px rgba(0,0,0,.5);
-  --shadow-card:   0 20px 60px rgba(0,0,0,.45);
-  --shadow-badge:  0 8px 22px rgba(0,0,0,.5);
-  --glow-edge:     0 6px 30px rgba(52,211,153,.40);
+  --shadow-panel:  0 1px 2px rgba(20,22,27,.04), 0 12px 36px rgba(20,22,27,.07);
+  --shadow-card:   0 1px 2px rgba(20,22,27,.04), 0 8px 24px rgba(20,22,27,.05);
+  --shadow-badge:  0 4px 14px rgba(20,22,27,.12);
+  --glow-edge:     0 6px 24px rgba(18,161,80,.25);
 
   /* ---- Type ---- */
   --font-spot-sans: 'Hanken Grotesk', system-ui, sans-serif;
@@ -311,6 +285,9 @@ html {
   background: var(--panel-wash);
   background-attachment: fixed;
 }
+
+/* White cards float on the grey page like the Edge Soccer match centre */
+.spotlight [style*="background: var(--panel)"] { box-shadow: var(--shadow-card); }
 
 /* Numbers & stats — JetBrains Mono everywhere inside spotlight */
 .spotlight .font-mono,
@@ -329,7 +306,7 @@ html {
 /* Conic grade / HR ring — drive with --grade (color) and --edge (0-100) */
 .spot-ring {
   position: relative; width: 58px; height: 58px; border-radius: 50%;
-  background: conic-gradient(var(--grade) calc(var(--edge) * 1%), rgba(255,255,255,.08) 0);
+  background: conic-gradient(var(--grade) calc(var(--edge) * 1%), rgba(20,22,27,.08) 0);
   display: grid; place-items: center;
 }
 .spot-ring::before {
@@ -402,7 +379,7 @@ html {
 .stagger > *:nth-child(n+9) { animation-delay: .34s; }
 
 @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-.skeleton { background: linear-gradient(90deg, rgba(255,255,255,.04) 25%, rgba(255,255,255,.09) 50%, rgba(255,255,255,.04) 75%); background-size: 200% 100%; animation: shimmer 1.4s linear infinite; border-radius: 14px; }
+.skeleton { background: linear-gradient(90deg, rgba(20,22,27,.04) 25%, rgba(20,22,27,.09) 50%, rgba(20,22,27,.04) 75%); background-size: 200% 100%; animation: shimmer 1.4s linear infinite; border-radius: 14px; }
 
 @keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
 @keyframes ring-sweep { from { stroke-dashoffset: var(--ring-c); } to { stroke-dashoffset: var(--ring-to); } }

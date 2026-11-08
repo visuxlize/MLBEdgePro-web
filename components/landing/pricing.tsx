@@ -7,36 +7,28 @@ import { Button } from "@/components/ui/button";
 import { Container } from "./container";
 
 const FREE_FEATURES = [
-  "Today's full game schedule",
-  "Live scores & inning-by-inning updates",
-  "Starting pitcher stats (ERA, WHIP, K/9)",
-  "Top 4 HR candidates per game",
-  "Basic matchup overview",
+  "Every NBA, NFL & soccer schedule and live score",
+  "Live game trackers — drive tracker, shot chart, match timeline",
+  "Standings, power rankings & the Emirates NBA Cup",
+  "Model win probability on every game",
+  "Soccer match centre — lineups, momentum, xG & match insights",
 ];
 
 const FAN_FEATURES = [
   "Everything in Free",
-  "Edge Report — AI-ranked value plays across all games",
-  "Full Prop Builder (HR, 1+ Hit, 2+ Hits, K props)",
-  "Win probability model for every game",
-  "NRFI prediction with confidence score",
-  "Head-to-head history (last 5 meetings)",
-  "Full HR & hit prop rankings — all batters",
+  "Real DraftKings player-prop lines — NBA, NFL & soccer",
+  "Model projection vs the book on every prop",
+  "Line movement since open",
+  "Betting lines vs model spread & total",
+  "Game props with the reasoning behind each lean",
   "Priority data refresh",
-  "NEW: WNBA Edge Report & Prop Builder",
 ];
 
 const PRO_FEATURES = [
   "Everything in Fan",
-  "Full team lineups with season stats",
-  "HR Deep Dive — spray charts & grade",
-  "Wall Clearance + Carry Analysis",
-  "Pitch → Spray Connection",
-  "Barrel Rate & Exit Velocity Analysis",
-  "Post-game AI accuracy report",
-  "Batter power & pitcher vulnerability index",
-  "NEW: NFL Edge Pro early access — This Week dashboard, live drive tracker & prop builder",
-  "NEW: WNBA Player Impact Deep Dive & Daily Picks",
+  "WNBA Player Impact Deep Dive (in season)",
+  "MLB HR Deep Dive — spray charts & grade (in season)",
+  "Early access to new leagues & markets",
 ];
 
 const fadeUp = {
@@ -49,231 +41,83 @@ const fadeUp = {
 };
 
 const COMPARISON: [string, boolean, boolean, boolean][] = [
-  ["Game schedule",                true,  true,  true ],
-  ["Live scores & status",         true,  true,  true ],
-  ["Starting pitcher stats",       true,  true,  true ],
-  ["Basic game breakdown",         true,  true,  true ],
-  ["Top 4 HR candidates",          true,  true,  true ],
-  ["Win probability model",        false, true,  true ],
-  ["NRFI prediction",              false, true,  true ],
-  ["Head-to-head history",         false, true,  true ],
-  ["Full HR & hit prop rankings",  false, true,  true ],
-  ["Edge Report (all games)",      false, true,  true ],
-  ["Prop Builder & slips",         false, true,  true ],
-  ["Full team lineups",            false, false, true ],
-  ["HR Deep Dive",                 false, false, true ],
-  ["Wall Clearance Analysis",      false, false, true ],
-  ["Pitch → Spray Connection",     false, false, true ],
-  ["Post-game AI accuracy report", false, false, true ],
-  ["NFL Edge Pro (early access)",  false, false, true ],
-  ["WNBA Edge Report & Props",     false, true,  true ],
-  ["WNBA Player Impact Deep Dive", false, false, true ],
+  ["Schedules & live scores",          true,  true,  true ],
+  ["Live game trackers",               true,  true,  true ],
+  ["Standings & power rankings",       true,  true,  true ],
+  ["Emirates NBA Cup tracker",         true,  true,  true ],
+  ["Model win probability",            true,  true,  true ],
+  ["DraftKings game lines vs model",   false, true,  true ],
+  ["Real DraftKings player props",     false, true,  true ],
+  ["Prop line movement",               false, true,  true ],
+  ["Game props & reasoning",           false, true,  true ],
+  ["Soccer match centre & insights",    true,  true,  true ],
+  ["WNBA Player Impact Deep Dive",     false, false, true ],
+  ["MLB HR Deep Dive",                 false, false, true ],
 ];
 
 function CheckIcon({ yes, color }: { yes: boolean; color?: string }) {
-  if (!yes) return <Minus size={13} className="text-white/15" strokeWidth={2} />;
-  return <Check size={14} strokeWidth={2.5} style={{ color: color ?? "rgba(255,255,255,0.3)" }} />;
+  if (!yes) return <Minus size={14} className="text-[#14161b]/25" strokeWidth={2} />;
+  return <Check size={15} strokeWidth={2.6} style={{ color: color ?? "#12a150" }} />;
 }
+
+const PLANS = [
+  { key: "free", name: "Free", price: "$0", per: "forever", tag: "Start here", cta: "Create free account", href: "/sign-up", features: FREE_FEATURES, color: "#12a150", trial: "No card required" },
+  { key: "fan", name: "Fan", price: "$4.99", per: "/month", tag: "Most popular", cta: "Try Fan free — 14 days", href: "/trial?tier=fan", features: FAN_FEATURES, color: "#1a73ff", trial: "14-day free trial · cancel anytime", featured: true },
+  { key: "pro", name: "Pro", price: "$14.99", per: "/month", tag: "Everything", cta: "Try Pro free — 3 days", href: "/trial?tier=pro", features: PRO_FEATURES, color: "#6d4fe0", trial: "3-day free trial · cancel anytime" },
+] as const;
 
 export function LandingPricing() {
   return (
     <section id="pricing" className="py-20 sm:py-28">
       <Container>
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.5 }}
-          className="flex justify-center"
-        >
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.04] px-4 py-1.5 text-xs font-semibold text-white/50 tracking-wider uppercase">
-            Pricing
-          </span>
+        <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-60px" }} transition={{ duration: 0.5 }} className="text-center max-w-2xl mx-auto">
+          <span className="inline-flex items-center rounded-full bg-white px-4 py-1.5 text-xs font-bold text-[#14161b]/64 tracking-wider uppercase" style={{ boxShadow: "0 8px 24px rgba(20,22,27,.05)" }}>Pricing</span>
+          <h2 className="mt-5 text-3xl sm:text-5xl font-black tracking-tight text-[#14161b] leading-[1.05]">Free to start. <span className="gradient-orange-text">Built to win.</span></h2>
+          <p className="mt-4 text-base text-[#14161b]/60">Live trackers and standings are free. Upgrade when you want real prop lines and the model&rsquo;s full read.</p>
         </motion.div>
 
-        <motion.h2
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="mt-5 text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-center text-white"
-        >
-          Start free. Try Fan or Pro on us.
-        </motion.h2>
-
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.5, delay: 0.18 }}
-          className="mt-4 text-center text-white/45 max-w-md mx-auto"
-        >
-          14-day Fan trial. 3-day Pro trial. Card required. No charge until your trial ends.
-        </motion.p>
-
-        <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-5 max-w-5xl mx-auto">
-          {/* Free */}
-          <motion.div
-            custom={0}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-50px" }}
-            variants={fadeUp}
-            className="flex flex-col rounded-2xl border border-white/[0.08] bg-[#111622] p-7"
-          >
-            <p className="text-xs font-bold text-white/35 tracking-widest uppercase mb-5">Free</p>
-            <div className="flex items-baseline gap-1 mb-1">
-              <span className="text-4xl font-black text-white">$0</span>
-              <span className="text-white/35 text-base">/month</span>
-            </div>
-            <p className="text-sm text-white/35 mb-7">Always free. No credit card required.</p>
-
-            <Link href="/sign-up">
-              <Button variant="outline" className="w-full rounded-full h-11 font-bold border-white/10 hover:border-white/20">
-                Get Started Free
-              </Button>
-            </Link>
-
-            <ul className="mt-7 space-y-3">
-              {FREE_FEATURES.map((f) => (
-                <li key={f} className="flex items-center gap-3">
-                  <Check size={15} className="text-white/35 shrink-0" strokeWidth={2.5} />
-                  <span className="text-sm text-white/50">{f}</span>
-                </li>
-              ))}
-            </ul>
-          </motion.div>
-
-          {/* Fan */}
-          <motion.div
-            custom={1}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-50px" }}
-            variants={fadeUp}
-            className="relative flex flex-col rounded-2xl border border-[#FF7828]/30 bg-[#FF7828]/[0.05] p-7 overflow-hidden"
-          >
-            <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full bg-[#FF7828]/10 blur-3xl pointer-events-none" />
-
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-bold text-[#FF7828] tracking-widest uppercase">Fan</p>
-              <div className="flex items-center gap-1.5 rounded-full border border-[#FF7828]/30 bg-[#FF7828]/10 px-2.5 py-1">
-                <Zap size={9} className="text-[#FF7828]" strokeWidth={2.5} />
-                <span className="text-[9px] font-black text-[#FF7828] tracking-widest uppercase">Most Popular</span>
+        <div className="mt-14 grid gap-5 lg:grid-cols-3 items-stretch">
+          {PLANS.map((p, i) => (
+            <motion.div key={p.key} custom={i} variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }}
+              className={`relative rounded-[28px] bg-white p-7 flex flex-col ${"featured" in p && p.featured ? "lg:-mt-4 lg:pb-9" : ""}`}
+              style={{ boxShadow: "featured" in p && p.featured ? "0 0 0 2px #1a73ff, 0 30px 70px rgba(26,115,255,.22)" : "0 1px 2px rgba(20,22,27,.04), 0 12px 36px rgba(20,22,27,.07)" }}>
+              <div className="flex items-center justify-between">
+                <p className="text-[13px] font-black uppercase tracking-[.14em]" style={{ color: p.color }}>{p.name}</p>
+                <span className="text-[10px] font-black tracking-widest uppercase rounded-full px-2.5 py-1" style={{ color: p.color, background: `${p.color}14` }}>{p.tag}</span>
               </div>
-            </div>
-
-            {/* Trial badge */}
-            <div className="mb-4 w-fit flex items-center gap-1.5 rounded-full border border-[#FF7828]/40 bg-[#FF7828]/15 px-2.5 py-1">
-              <span className="text-[9px] font-black text-[#FF7828] tracking-widest uppercase">14-Day Free Trial</span>
-            </div>
-
-            <div className="flex items-baseline gap-1 mb-1">
-              <span className="text-4xl font-black text-white">$4.99</span>
-              <span className="text-white/45 text-base">/mo after trial</span>
-            </div>
-            <p className="text-sm text-white/35 mb-7">Cancel anytime. No contracts.</p>
-
-            <Link href="/trial?tier=fan">
-              <Button className="w-full rounded-full h-11 font-bold bg-[#FF7828] hover:bg-[#FFA550] text-white gap-2 shadow-[0_6px_24px_rgba(255,120,40,0.35)]">
-                <Zap size={14} strokeWidth={2.5} />
-                Try Fan Free → 14 Days
-              </Button>
-            </Link>
-
-            <ul className="mt-7 space-y-3">
-              {FAN_FEATURES.map((f) => (
-                <li key={f} className="flex items-center gap-3">
-                  <div className="w-4 h-4 rounded-full bg-[#FF7828]/15 flex items-center justify-center shrink-0">
-                    <Check size={10} className="text-[#FF7828]" strokeWidth={3} />
-                  </div>
-                  <span className="text-sm text-white/70">{f}</span>
-                </li>
-              ))}
-            </ul>
-          </motion.div>
-
-          {/* Pro */}
-          <motion.div
-            custom={2}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-50px" }}
-            variants={fadeUp}
-            className="relative flex flex-col rounded-2xl border border-[#818cf8]/30 bg-[#818cf8]/[0.05] p-7 overflow-hidden"
-          >
-            <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full bg-[#818cf8]/10 blur-3xl pointer-events-none" />
-
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-bold text-[#818cf8] tracking-widest uppercase">Pro</p>
-              <div className="flex items-center gap-1.5 rounded-full border border-[#818cf8]/30 bg-[#818cf8]/10 px-2.5 py-1">
-                <Star size={9} className="text-[#818cf8]" strokeWidth={2.5} />
-                <span className="text-[9px] font-black text-[#818cf8] tracking-widest uppercase">Best Value</span>
-              </div>
-            </div>
-
-            {/* Trial badge */}
-            <div className="mb-4 w-fit flex items-center gap-1.5 rounded-full border border-[#818cf8]/40 bg-[#818cf8]/15 px-2.5 py-1">
-              <span className="text-[9px] font-black text-[#818cf8] tracking-widest uppercase">3-Day Free Trial</span>
-            </div>
-
-            <div className="flex items-baseline gap-1 mb-1">
-              <span className="text-4xl font-black text-white">$14.99</span>
-              <span className="text-white/45 text-base">/mo after trial</span>
-            </div>
-            <p className="text-sm text-white/35 mb-7">Cancel anytime. No contracts.</p>
-
-            <Link href="/trial?tier=pro">
-              <Button
-                className="w-full rounded-full h-11 font-bold text-white gap-2"
-                style={{
-                  background: "linear-gradient(135deg, #818cf8ee, #818cf8bb)",
-                  boxShadow: "0 6px 24px rgba(129,140,248,0.35)",
-                }}
-              >
-                <Star size={14} strokeWidth={2.5} />
-                Try Pro Free → 3 Days
-              </Button>
-            </Link>
-
-            <ul className="mt-7 space-y-3">
-              {PRO_FEATURES.map((f) => (
-                <li key={f} className="flex items-center gap-3">
-                  <div className="w-4 h-4 rounded-full bg-[#818cf8]/15 flex items-center justify-center shrink-0">
-                    <Check size={10} className="text-[#818cf8]" strokeWidth={3} />
-                  </div>
-                  <span className="text-sm text-white/70">{f}</span>
-                </li>
-              ))}
-            </ul>
-          </motion.div>
+              <p className="mt-5 flex items-baseline gap-1"><span className="text-5xl font-black tracking-tight text-[#14161b]">{p.price}</span><span className="text-[14px] text-[#14161b]/45">{p.per}</span></p>
+              <p className="mt-1 text-[12px] text-[#14161b]/45">{p.trial}</p>
+              <Link href={p.href} className="mt-6 block">
+                <span className="flex items-center justify-center gap-2 rounded-2xl py-3.5 text-[14px] font-bold transition-transform hover:-translate-y-0.5"
+                  style={"featured" in p && p.featured ? { background: "#1a73ff", color: "#fff", boxShadow: "0 10px 26px rgba(26,115,255,.4)" } : { background: "#f3f4f7", color: "#14161b" }}>
+                  {p.cta} <ArrowRight size={15} strokeWidth={2.4} />
+                </span>
+              </Link>
+              <ul className="mt-6 flex flex-col gap-3">
+                {p.features.map((f) => (
+                  <li key={f} className="flex gap-2.5 text-[13.5px] leading-snug text-[#14161b]/72">
+                    <span className="mt-0.5 w-5 h-5 rounded-full flex items-center justify-center shrink-0" style={{ background: `${p.color}14` }}><Check size={11} strokeWidth={3} style={{ color: p.color }} /></span>{f}
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+          ))}
         </div>
 
-        {/* Full comparison table */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="mt-14 max-w-5xl mx-auto"
-        >
-          <div className="rounded-2xl border border-white/[0.07] overflow-hidden">
-            <div className="grid grid-cols-[1fr_48px_48px_48px] sm:grid-cols-[1fr_72px_72px_72px] border-b border-white/[0.07] bg-white/[0.02] px-4 sm:px-6 py-3">
-              <span className="text-xs font-bold text-white/30 uppercase tracking-wider">Feature</span>
-              <span className="text-xs font-bold text-white/30 uppercase tracking-wider text-center">Free</span>
-              <span className="text-xs font-bold text-[#FF7828] uppercase tracking-wider text-center">Fan</span>
-              <span className="text-xs font-bold text-[#818cf8] uppercase tracking-wider text-center">Pro</span>
-            </div>
-            {COMPARISON.map(([label, free, fan, pro]) => (
-              <div key={label} className="grid grid-cols-[1fr_48px_48px_48px] sm:grid-cols-[1fr_72px_72px_72px] border-b border-white/[0.04] last:border-0 px-4 sm:px-6 py-3.5">
-                <span className="text-sm text-white/55">{label}</span>
-                <div className="flex justify-center"><CheckIcon yes={free} /></div>
-                <div className="flex justify-center"><CheckIcon yes={fan} color="#FF7828" /></div>
-                <div className="flex justify-center"><CheckIcon yes={pro} color="#818cf8" /></div>
-              </div>
-            ))}
+        <div className="mt-16 rounded-[28px] bg-white overflow-hidden" style={{ boxShadow: "0 1px 2px rgba(20,22,27,.04), 0 12px 36px rgba(20,22,27,.07)" }}>
+          <div className="grid grid-cols-[1fr_64px_64px_64px] sm:grid-cols-[1fr_96px_96px_96px] px-5 sm:px-7 py-4 text-[11px] font-black uppercase tracking-wider" style={{ background: "#f6f7f9", color: "#8a909b" }}>
+            <span>Compare plans</span><span className="text-center">Free</span><span className="text-center" style={{ color: "#1a73ff" }}>Fan</span><span className="text-center" style={{ color: "#6d4fe0" }}>Pro</span>
           </div>
-        </motion.div>
+          {COMPARISON.map(([label, f, a, b], i) => (
+            <div key={label} className="grid grid-cols-[1fr_64px_64px_64px] sm:grid-cols-[1fr_96px_96px_96px] items-center px-5 sm:px-7 py-3.5" style={{ borderTop: i ? "1px solid #eceef2" : undefined }}>
+              <span className="text-[13.5px] text-[#14161b]/75">{label}</span>
+              <span className="flex justify-center"><CheckIcon yes={f} /></span>
+              <span className="flex justify-center"><CheckIcon yes={a} color="#1a73ff" /></span>
+              <span className="flex justify-center"><CheckIcon yes={b} color="#6d4fe0" /></span>
+            </div>
+          ))}
+        </div>
+        <p className="mt-5 text-center text-[12px] text-[#14161b]/40">Billed monthly. Cancel anytime from your account. Must be 21+ to use betting content.</p>
       </Container>
     </section>
   );

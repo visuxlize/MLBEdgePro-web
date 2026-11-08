@@ -13,7 +13,7 @@ import { saveSlip } from "@/lib/saved-slips";
 import { useRouter } from "next/navigation";
 import { playerHeadshotUrl, teamLogoUrl } from "@/lib/mlb/api";
 import { lookupOdds, type FanDuelOddsMap } from "@/lib/odds";
-import type { AIPick } from "@/app/(app)/ai/page";
+import type { AIPick } from "@/lib/pending-picks";
 
 const AI_SLIP_KEY = "edge-ai-pending-picks";
 
@@ -138,20 +138,20 @@ interface SlipEntry {
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const PROP_TABS: Array<{ id: PropType; label: string; icon: ElementType; color: string }> = [
-  { id: "HR",           label: "Home Run",   icon: Flame,           color: "#f97316" },
-  { id: "Hit",          label: "1+ Hit",     icon: Receipt,         color: "#34d399" },
-  { id: "2+ Hits",      label: "2+ Hits",    icon: Layers,          color: "#a78bfa" },
-  { id: "2+ Bases",     label: "2+ Bases",   icon: Activity,        color: "#2dd4bf" },
-  { id: "Pitcher K's",  label: "Pitcher Ks", icon: Zap,             color: "#fbbf24" },
+  { id: "HR",           label: "Home Run",   icon: Flame,           color: "#ea6a0a" },
+  { id: "Hit",          label: "1+ Hit",     icon: Receipt,         color: "#12a150" },
+  { id: "2+ Hits",      label: "2+ Hits",    icon: Layers,          color: "#6d4fe0" },
+  { id: "2+ Bases",     label: "2+ Bases",   icon: Activity,        color: "#0f9d8e" },
+  { id: "Pitcher K's",  label: "Pitcher Ks", icon: Zap,             color: "#d49a06" },
   { id: "Total Runs",   label: "Total Runs", icon: TrendingUp,      color: "#60a5fa" },
-  { id: "1st Inn O/U",  label: "1st Inn O/U",icon: Clock,           color: "#a78bfa" },
+  { id: "1st Inn O/U",  label: "1st Inn O/U",icon: Clock,           color: "#6d4fe0" },
   { id: "Moneyline",    label: "Moneyline",  icon: Trophy,          color: "#f472b6" },
 ];
 
 function propColor(pct: number) {
-  if (pct >= 65) return "#34d399";
-  if (pct >= 40) return "#f97316";
-  return "#ef4444";
+  if (pct >= 65) return "#12a150";
+  if (pct >= 40) return "#ea6a0a";
+  return "#ef3b4a";
 }
 function propLabel(pct: number) {
   if (pct >= 70) return "Strong";
@@ -188,32 +188,32 @@ function GameSelector({ games, selectedPk, onSelect }: {
     <div className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-3 rounded-2xl border border-white/[0.07] bg-[#0b0d15] px-4 py-3.5 hover:border-white/[0.12] transition-colors"
+        className="w-full flex items-center gap-3 rounded-2xl border border-[#14161b]/[.09] bg-[#ffffff] px-4 py-3.5 hover:border-[#14161b]/[.09] transition-colors"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={teamLogoUrl(selected.away.id)} alt="" className="w-7 h-7 object-contain shrink-0" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
         <div className="flex-1 text-left min-w-0">
-          <p className="text-sm font-black text-white">
-            {abbr(selected.away.name)} <span className="text-white/30 font-normal">@</span> {abbr(selected.home.name)}
+          <p className="text-sm font-black text-[#14161b]">
+            {abbr(selected.away.name)} <span className="text-[#14161b]/46 font-normal">@</span> {abbr(selected.home.name)}
           </p>
-          <p className="text-[11px] text-white/35 truncate">
+          <p className="text-[11px] text-[#14161b]/56 truncate">
             {selected.away.pitcher.split(" ").pop()} vs {selected.home.pitcher.split(" ").pop()} · {selected.venue}
           </p>
         </div>
         <div className="flex items-center gap-3 shrink-0">
           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
             selected.status === "In Progress" ? "bg-red-500/15 text-red-400" :
-            selected.status === "Final" ? "bg-white/5 text-white/30" :
-            "bg-[#f97316]/15 text-[#f97316]"
+            selected.status === "Final" ? "bg-[#14161b]/[0.05] text-white/30" :
+            "bg-[#ea6a0a]/15 text-[#ea6a0a]"
           }`}>{gameTimeLabel(selected)}</span>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={teamLogoUrl(selected.home.id)} alt="" className="w-7 h-7 object-contain" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-          <ChevronRight size={14} className={`text-white/30 transition-transform ${open ? "rotate-90" : ""}`} strokeWidth={2} />
+          <ChevronRight size={14} className={`text-[#14161b]/46 transition-transform ${open ? "rotate-90" : ""}`} strokeWidth={2} />
         </div>
       </button>
 
       {open && (
-        <div className="absolute left-0 right-0 top-full z-30 mt-1.5 rounded-2xl border border-white/[0.07] bg-[#0b0d15] shadow-2xl overflow-hidden">
+        <div className="absolute left-0 right-0 top-full z-30 mt-1.5 rounded-2xl border border-[#14161b]/[.09] bg-[#ffffff] shadow-2xl overflow-hidden">
           {games.map((g) => {
             const active = g.gamePk === selectedPk;
             const isLive = g.status === "In Progress";
@@ -221,21 +221,21 @@ function GameSelector({ games, selectedPk, onSelect }: {
               <button
                 key={g.gamePk}
                 onClick={() => { onSelect(g.gamePk); setOpen(false); }}
-                className={`w-full flex items-center gap-3 px-4 py-3.5 hover:bg-white/[0.04] transition-colors text-left border-b border-white/[0.04] last:border-0 ${active ? "bg-[#f97316]/[0.06]" : ""}`}
+                className={`w-full flex items-center gap-3 px-4 py-3.5 hover:bg-[#14161b]/[0.04] transition-colors text-left border-b border-[#14161b]/[.09] last:border-0 ${active ? "bg-[#ea6a0a]/[0.06]" : ""}`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={teamLogoUrl(g.away.id)} alt="" className="w-6 h-6 object-contain shrink-0" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                 <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-bold truncate ${active ? "text-[#f97316]" : "text-white"}`}>
+                  <p className={`text-sm font-bold truncate ${active ? "text-[#ea6a0a]" : "text-[#14161b]"}`}>
                     {abbr(g.away.name)} @ {abbr(g.home.name)}
                   </p>
-                  <p className="text-[10px] text-white/30 truncate">{g.venue}</p>
+                  <p className="text-[10px] text-[#14161b]/46 truncate">{g.venue}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                     isLive ? "bg-red-500/15 text-red-400" :
-                    g.status === "Final" ? "bg-white/5 text-white/25" :
-                    "bg-[#f97316]/15 text-[#f97316]"
+                    g.status === "Final" ? "bg-[#14161b]/[0.05] text-white/25" :
+                    "bg-[#ea6a0a]/15 text-[#ea6a0a]"
                   }`}>
                     {isLive && <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse mr-1" />}
                     {gameTimeLabel(g)}
@@ -265,8 +265,8 @@ function PropTabs({ active, onChange }: { active: PropType; onChange: (t: PropTy
             onClick={() => onChange(id)}
             className={`flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-bold transition-all ${
               isActive
-                ? "border-transparent text-white shadow-sm"
-                : "border-white/[0.07] text-white/40 hover:text-white hover:border-white/[0.14] bg-[#0b0d15]"
+                ? "border-transparent text-[#14161b] shadow-sm"
+                : "border-[#14161b]/[.09] text-[#14161b]/56 hover:text-[#14161b] hover:border-[#14161b]/[.09] bg-[#ffffff]"
             }`}
             style={isActive ? { backgroundColor: `${color}20`, borderColor: `${color}40`, color } : {}}
           >
@@ -289,27 +289,27 @@ function BatterCard({ rank, row, propType, inSlip, onAdd }: {
   const label = propLabel(row.pct);
 
   return (
-    <div className={`relative rounded-2xl border bg-[#0b0d15] overflow-hidden transition-all ${
-      row.isHot ? "border-[#f97316]/20" : "border-white/[0.07]"
+    <div className={`relative rounded-2xl border bg-[#ffffff] overflow-hidden transition-all ${
+      row.isHot ? "border-[#ea6a0a]/20" : "border-[#14161b]/[.09]"
     }`}>
       {/* Rank badge */}
-      <div className="absolute top-3 left-3 w-5 h-5 rounded-full bg-white/[0.06] flex items-center justify-center">
-        <span className="text-[9px] font-black text-white/30">{rank}</span>
+      <div className="absolute top-3 left-3 w-5 h-5 rounded-full bg-[#14161b]/[0.06] flex items-center justify-center">
+        <span className="text-[9px] font-black text-[#14161b]/46">{rank}</span>
       </div>
 
       {/* HOT badge */}
       {row.isHot && (
-        <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full border border-[#f97316]/40 bg-[#f97316]/15 px-1.5 py-0.5">
-          <Flame size={9} color="#f97316" strokeWidth={2.5} />
-          <span className="text-[8px] font-black text-[#f97316] tracking-wider">HOT</span>
+        <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full border border-[#ea6a0a]/40 bg-[#ea6a0a]/15 px-1.5 py-0.5">
+          <Flame size={9} color="#ea6a0a" strokeWidth={2.5} />
+          <span className="text-[8px] font-black text-[#ea6a0a] tracking-wider">HOT</span>
         </div>
       )}
 
       {/* DUE badge — only if not hot */}
       {row.isDue && !row.isHot && (
-        <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full border border-[#a78bfa]/40 bg-[#a78bfa]/15 px-1.5 py-0.5">
-          <Clock size={9} color="#a78bfa" strokeWidth={2.5} />
-          <span className="text-[8px] font-black text-[#a78bfa] tracking-wider">DUE</span>
+        <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full border border-[#6d4fe0]/40 bg-[#6d4fe0]/15 px-1.5 py-0.5">
+          <Clock size={9} color="#6d4fe0" strokeWidth={2.5} />
+          <span className="text-[8px] font-black text-[#6d4fe0] tracking-wider">DUE</span>
         </div>
       )}
 
@@ -334,20 +334,20 @@ function BatterCard({ rank, row, propType, inSlip, onAdd }: {
           style={{ color, borderColor: `${color}50`, backgroundColor: `${color}18` }}>
           {row.pct}%
         </div>
-        <p className="text-sm font-black text-white leading-tight">{row.playerName}</p>
-        <p className="text-[10px] text-white/30 mt-0.5">{row.position}</p>
-        <p className="text-[10px] text-white/40 mt-1.5 leading-snug">{row.subStats}</p>
-        <p className="text-[10px] text-white/25 mt-0.5">vs {row.pitcherName.split(" ").pop()}</p>
+        <p className="text-sm font-black text-[#14161b] leading-tight">{row.playerName}</p>
+        <p className="text-[10px] text-[#14161b]/46 mt-0.5">{row.position}</p>
+        <p className="text-[10px] text-[#14161b]/56 mt-1.5 leading-snug">{row.subStats}</p>
+        <p className="text-[10px] text-[#14161b]/46 mt-0.5">vs {row.pitcherName.split(" ").pop()}</p>
       </div>
 
       {/* Bottom bar */}
-      <div className="border-t border-white/[0.05] px-4 py-3 flex items-center justify-between">
+      <div className="border-t border-[#14161b]/[.09] px-4 py-3 flex items-center justify-between">
         <div className="flex flex-col">
           <span className="text-base font-black" style={{ color }}>{row.pct}%</span>
           <span className="text-[9px] font-bold" style={{ color: color + "80" }}>{label}</span>
         </div>
         <div className="flex-1 mx-3">
-          <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+          <div className="h-1.5 rounded-full bg-[#14161b]/[0.06] overflow-hidden">
             <div className="h-full rounded-full" style={{ width: `${row.pct}%`, backgroundColor: color }} />
           </div>
         </div>
@@ -356,8 +356,8 @@ function BatterCard({ rank, row, propType, inSlip, onAdd }: {
           disabled={inSlip}
           className={`flex items-center gap-1 rounded-xl border px-2.5 py-1.5 text-xs font-bold transition-all shrink-0 ${
             inSlip
-              ? "border-[#34d399]/40 bg-[#34d399]/10 text-[#34d399]"
-              : "border-[#f97316]/30 bg-[#f97316]/10 text-[#f97316] hover:bg-[#f97316]/18"
+              ? "border-[#12a150]/40 bg-[#12a150]/10 text-[#12a150]"
+              : "border-[#ea6a0a]/30 bg-[#ea6a0a]/10 text-[#ea6a0a] hover:bg-[#ea6a0a]/18"
           }`}
         >
           {inSlip ? <Check size={11} /> : <Plus size={11} />}
@@ -374,18 +374,18 @@ function HRLegend() {
   return (
     <div className="flex items-center gap-4 px-1">
       <div className="flex items-center gap-1.5">
-        <div className="flex items-center gap-1 rounded-full border border-[#f97316]/40 bg-[#f97316]/15 px-1.5 py-0.5">
-          <Flame size={9} color="#f97316" strokeWidth={2.5} />
-          <span className="text-[8px] font-black text-[#f97316]">HOT</span>
+        <div className="flex items-center gap-1 rounded-full border border-[#ea6a0a]/40 bg-[#ea6a0a]/15 px-1.5 py-0.5">
+          <Flame size={9} color="#ea6a0a" strokeWidth={2.5} />
+          <span className="text-[8px] font-black text-[#ea6a0a]">HOT</span>
         </div>
-        <span className="text-[10px] text-white/30">A+/A matchup grade</span>
+        <span className="text-[10px] text-[#14161b]/46">A+/A matchup grade</span>
       </div>
       <div className="flex items-center gap-1.5">
-        <div className="flex items-center gap-1 rounded-full border border-[#a78bfa]/40 bg-[#a78bfa]/15 px-1.5 py-0.5">
-          <Clock size={9} color="#a78bfa" strokeWidth={2.5} />
-          <span className="text-[8px] font-black text-[#a78bfa]">DUE</span>
+        <div className="flex items-center gap-1 rounded-full border border-[#6d4fe0]/40 bg-[#6d4fe0]/15 px-1.5 py-0.5">
+          <Clock size={9} color="#6d4fe0" strokeWidth={2.5} />
+          <span className="text-[8px] font-black text-[#6d4fe0]">DUE</span>
         </div>
-        <span className="text-[10px] text-white/30">overdue by power model</span>
+        <span className="text-[10px] text-[#14161b]/46">overdue by power model</span>
       </div>
     </div>
   );
@@ -402,54 +402,54 @@ function PitcherKCard({ pitcher, slip, onAdd }: {
   const underIn = slip.some((e) => e.id === underId);
 
   return (
-    <div className="rounded-2xl border border-white/[0.07] bg-[#0b0d15] overflow-hidden">
-      <div className="px-5 pt-5 pb-4 border-b border-white/[0.05]">
+    <div className="rounded-2xl border border-[#14161b]/[.09] bg-[#ffffff] overflow-hidden">
+      <div className="px-5 pt-5 pb-4 border-b border-[#14161b]/[.09]">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-base font-black text-white">{pitcher.name}</p>
-            <p className="text-xs text-white/35">{pitcher.teamName} vs {pitcher.opponent}</p>
+            <p className="text-base font-black text-[#14161b]">{pitcher.name}</p>
+            <p className="text-xs text-[#14161b]/56">{pitcher.teamName} vs {pitcher.opponent}</p>
           </div>
           <div className="flex gap-3 text-center shrink-0">
             {[
-              { v: pitcher.k9,                          l: "K/9",  c: "#fbbf24" },
-              { v: pitcher.era,                         l: "ERA",  c: "#f97316" },
-              { v: `${pitcher.wins}-${pitcher.losses}`, l: "W-L",  c: "#34d399" },
+              { v: pitcher.k9,                          l: "K/9",  c: "#d49a06" },
+              { v: pitcher.era,                         l: "ERA",  c: "#ea6a0a" },
+              { v: `${pitcher.wins}-${pitcher.losses}`, l: "W-L",  c: "#12a150" },
             ].map(({ v, l, c }) => (
               <div key={l}>
                 <p className="text-sm font-black" style={{ color: c }}>{v}</p>
-                <p className="text-[9px] font-bold text-white/25 uppercase tracking-wider">{l}</p>
+                <p className="text-[9px] font-bold text-[#14161b]/46 uppercase tracking-wider">{l}</p>
               </div>
             ))}
           </div>
         </div>
-        <div className="mt-4 flex items-center justify-between rounded-xl border border-[#fbbf24]/20 bg-[#fbbf24]/[0.06] px-4 py-3">
+        <div className="mt-4 flex items-center justify-between rounded-xl border border-[#d49a06]/20 bg-[#d49a06]/[0.06] px-4 py-3">
           <div>
-            <p className="text-[10px] font-bold tracking-widest text-white/30 uppercase">
+            <p className="text-[10px] font-bold tracking-widest text-[#14161b]/46 uppercase">
               {pitcher.bookLine !== undefined ? "FanDuel Line" : "Projected Line"}
             </p>
-            <p className="text-3xl font-black text-[#fbbf24] mt-0.5">
+            <p className="text-3xl font-black text-[#d49a06] mt-0.5">
               {pitcher.bookLine !== undefined ? pitcher.bookLine : pitcher.line} Ks
             </p>
             {pitcher.bookLine !== undefined && (
-              <p className="text-[9px] text-white/25 mt-0.5">Model proj: {pitcher.projectedKs} Ks</p>
+              <p className="text-[9px] text-[#14161b]/46 mt-0.5">Model proj: {pitcher.projectedKs} Ks</p>
             )}
           </div>
           <div className="text-right">
-            <p className="text-[10px] font-bold tracking-widest text-white/30 uppercase">K/9 Rate</p>
-            <p className="text-xl font-black text-white mt-0.5">{pitcher.k9}</p>
+            <p className="text-[10px] font-bold tracking-widest text-[#14161b]/46 uppercase">K/9 Rate</p>
+            <p className="text-xl font-black text-[#14161b] mt-0.5">{pitcher.k9}</p>
           </div>
         </div>
       </div>
       <div className="p-5 space-y-3">
         {[
-          { id: overId,  label: `Over ${pitcher.bookLine ?? pitcher.line} Ks`,  pct: pitcher.overPct,  color: "#34d399", inSlip: overIn,  Icon: TrendingUp  },
-          { id: underId, label: `Under ${pitcher.bookLine ?? pitcher.line} Ks`, pct: pitcher.underPct, color: "#ef4444", inSlip: underIn, Icon: TrendingDown },
+          { id: overId,  label: `Over ${pitcher.bookLine ?? pitcher.line} Ks`,  pct: pitcher.overPct,  color: "#12a150", inSlip: overIn,  Icon: TrendingUp  },
+          { id: underId, label: `Under ${pitcher.bookLine ?? pitcher.line} Ks`, pct: pitcher.underPct, color: "#ef3b4a", inSlip: underIn, Icon: TrendingDown },
         ].map((item) => (
-          <div key={item.id} className="rounded-xl border border-white/[0.05] bg-[#0c0e16] p-3.5">
+          <div key={item.id} className="rounded-xl border border-[#14161b]/[.09] bg-[#ffffff] p-3.5">
             <div className="flex items-center justify-between gap-3 mb-2">
               <div className="flex items-center gap-2">
                 <item.Icon size={13} style={{ color: item.color }} strokeWidth={2.5} />
-                <p className="text-sm font-bold text-white">{item.label}</p>
+                <p className="text-sm font-bold text-[#14161b]">{item.label}</p>
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-xl font-black" style={{ color: item.color }}>{item.pct}%</span>
@@ -458,15 +458,15 @@ function PitcherKCard({ pitcher, slip, onAdd }: {
                   disabled={item.inSlip}
                   className={`flex items-center gap-1 rounded-xl border px-2.5 py-1.5 text-xs font-bold transition-all ${
                     item.inSlip
-                      ? "border-[#34d399]/40 bg-[#34d399]/10 text-[#34d399]"
-                      : "border-white/[0.08] bg-white/[0.04] text-white/50 hover:bg-white/[0.08]"
+                      ? "border-[#12a150]/40 bg-[#12a150]/10 text-[#12a150]"
+                      : "border-[#14161b]/[.09] bg-[#14161b]/[0.04] text-[#14161b]/64 hover:bg-[#14161b]/[0.08]"
                   }`}
                 >
                   {item.inSlip ? <><Check size={10} className="mr-0.5" />Added</> : "Add Slip"}
                 </button>
               </div>
             </div>
-            <div className="h-1.5 rounded-full bg-white/[0.06]">
+            <div className="h-1.5 rounded-full bg-[#14161b]/[0.06]">
               <div className="h-full rounded-full" style={{ width: `${item.pct}%`, backgroundColor: item.color }} />
             </div>
           </div>
@@ -487,24 +487,24 @@ function FirstInningCard({ data, slip, onAdd }: {
   const underIn = slip.some((e) => e.id === underId);
 
   return (
-    <div className="rounded-2xl border border-white/[0.07] bg-[#0b0d15] overflow-hidden">
-      <div className="px-5 pt-5 pb-4 border-b border-white/[0.05]">
+    <div className="rounded-2xl border border-[#14161b]/[.09] bg-[#ffffff] overflow-hidden">
+      <div className="px-5 pt-5 pb-4 border-b border-[#14161b]/[.09]">
         <div className="flex items-center gap-3 mb-4">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1.5">
-              <span className="inline-flex items-center gap-1 rounded-full border border-[#a78bfa]/35 bg-[#a78bfa]/12 px-2 py-0.5 text-[9px] font-black text-[#a78bfa] tracking-wider uppercase">
+              <span className="inline-flex items-center gap-1 rounded-full border border-[#6d4fe0]/35 bg-[#6d4fe0]/12 px-2 py-0.5 text-[9px] font-black text-[#6d4fe0] tracking-wider uppercase">
                 <Clock size={8} strokeWidth={2.5} />
                 1st Inning O/U
               </span>
             </div>
-            <p className="text-base font-black text-white">
-              {abbr(data.awayTeam)} <span className="text-white/30 font-normal">@</span> {abbr(data.homeTeam)}
+            <p className="text-base font-black text-[#14161b]">
+              {abbr(data.awayTeam)} <span className="text-[#14161b]/46 font-normal">@</span> {abbr(data.homeTeam)}
             </p>
           </div>
           <div className="text-right">
-            <p className="text-[10px] font-bold tracking-widest text-white/30 uppercase mb-1">Line</p>
-            <p className="text-2xl font-black text-[#a78bfa]">0.5</p>
-            <p className="text-[10px] text-white/30">runs</p>
+            <p className="text-[10px] font-bold tracking-widest text-[#14161b]/46 uppercase mb-1">Line</p>
+            <p className="text-2xl font-black text-[#6d4fe0]">0.5</p>
+            <p className="text-[10px] text-[#14161b]/46">runs</p>
           </div>
         </div>
 
@@ -514,13 +514,13 @@ function FirstInningCard({ data, slip, onAdd }: {
             { pitcher: data.awayPitcherName, era: data.awayPitcherEra, team: abbr(data.awayTeam), label: "Away starter" },
             { pitcher: data.homePitcherName, era: data.homePitcherEra, team: abbr(data.homeTeam), label: "Home starter" },
           ].map(({ pitcher, era, team, label }) => (
-            <div key={team} className="rounded-xl border border-white/[0.05] bg-[#0c0e16] p-3">
-              <p className="text-[9px] text-white/30 uppercase tracking-wider mb-0.5">{label}</p>
-              <p className="text-xs font-black text-white truncate">{pitcher}</p>
-              <p className="text-[10px] text-white/35 mb-2">{team}</p>
+            <div key={team} className="rounded-xl border border-[#14161b]/[.09] bg-[#ffffff] p-3">
+              <p className="text-[9px] text-[#14161b]/46 uppercase tracking-wider mb-0.5">{label}</p>
+              <p className="text-xs font-black text-[#14161b] truncate">{pitcher}</p>
+              <p className="text-[10px] text-[#14161b]/56 mb-2">{team}</p>
               <div className="flex items-center gap-1">
-                <span className="text-sm font-black" style={{ color: era === "—" ? "rgba(255,255,255,0.3)" : "#f97316" }}>{era}</span>
-                <span className="text-[9px] font-bold text-white/25">ERA</span>
+                <span className="text-sm font-black" style={{ color: era === "—" ? "rgba(20,22,27,.38)" : "#ea6a0a" }}>{era}</span>
+                <span className="text-[9px] font-bold text-[#14161b]/46">ERA</span>
               </div>
             </div>
           ))}
@@ -529,14 +529,14 @@ function FirstInningCard({ data, slip, onAdd }: {
 
       <div className="p-5 space-y-3">
         {[
-          { id: overId,  label: "Over 0.5 Runs",  pct: data.overPct,  color: "#34d399", inSlip: overIn,  Icon: TrendingUp,  desc: `${abbr(data.awayTeam)} @ ${abbr(data.homeTeam)} Over 0.5 1st Inn` },
-          { id: underId, label: "Under 0.5 Runs", pct: data.underPct, color: "#ef4444", inSlip: underIn, Icon: TrendingDown, desc: `${abbr(data.awayTeam)} @ ${abbr(data.homeTeam)} Under 0.5 1st Inn` },
+          { id: overId,  label: "Over 0.5 Runs",  pct: data.overPct,  color: "#12a150", inSlip: overIn,  Icon: TrendingUp,  desc: `${abbr(data.awayTeam)} @ ${abbr(data.homeTeam)} Over 0.5 1st Inn` },
+          { id: underId, label: "Under 0.5 Runs", pct: data.underPct, color: "#ef3b4a", inSlip: underIn, Icon: TrendingDown, desc: `${abbr(data.awayTeam)} @ ${abbr(data.homeTeam)} Under 0.5 1st Inn` },
         ].map((item) => (
-          <div key={item.id} className="rounded-xl border border-white/[0.05] bg-[#0c0e16] p-3.5">
+          <div key={item.id} className="rounded-xl border border-[#14161b]/[.09] bg-[#ffffff] p-3.5">
             <div className="flex items-center justify-between gap-3 mb-2">
               <div className="flex items-center gap-2">
                 <item.Icon size={13} style={{ color: item.color }} strokeWidth={2.5} />
-                <p className="text-sm font-bold text-white">{item.label}</p>
+                <p className="text-sm font-bold text-[#14161b]">{item.label}</p>
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-xl font-black" style={{ color: item.color }}>{item.pct}%</span>
@@ -545,15 +545,15 @@ function FirstInningCard({ data, slip, onAdd }: {
                   disabled={item.inSlip}
                   className={`flex items-center gap-1 rounded-xl border px-2.5 py-1.5 text-xs font-bold transition-all ${
                     item.inSlip
-                      ? "border-[#34d399]/40 bg-[#34d399]/10 text-[#34d399]"
-                      : "border-white/[0.08] bg-white/[0.04] text-white/50 hover:bg-white/[0.08]"
+                      ? "border-[#12a150]/40 bg-[#12a150]/10 text-[#12a150]"
+                      : "border-[#14161b]/[.09] bg-[#14161b]/[0.04] text-[#14161b]/64 hover:bg-[#14161b]/[0.08]"
                   }`}
                 >
                   {item.inSlip ? <><Check size={10} className="mr-0.5" />Added</> : "Add Slip"}
                 </button>
               </div>
             </div>
-            <div className="h-1.5 rounded-full bg-white/[0.06]">
+            <div className="h-1.5 rounded-full bg-[#14161b]/[0.06]">
               <div className="h-full rounded-full" style={{ width: `${item.pct}%`, backgroundColor: item.color }} />
             </div>
           </div>
@@ -572,12 +572,12 @@ function MoneylineCard({ data, slip, onAdd }: {
   const awayId  = `${data.awayTeamId}-ml-away`;
   const homeIn  = slip.some((e) => e.id === homeId);
   const awayIn  = slip.some((e) => e.id === awayId);
-  const confColor = data.confidence === "High" ? "#34d399" : data.confidence === "Medium" ? "#f97316" : "rgba(255,255,255,0.35)";
+  const confColor = data.confidence === "High" ? "#12a150" : data.confidence === "Medium" ? "#ea6a0a" : "rgba(20,22,27,.38)";
 
   return (
-    <div className="rounded-2xl border border-white/[0.07] bg-[#0b0d15] overflow-hidden">
+    <div className="rounded-2xl border border-[#14161b]/[.09] bg-[#ffffff] overflow-hidden">
       {/* Header */}
-      <div className="px-5 pt-5 pb-4 border-b border-white/[0.05]">
+      <div className="px-5 pt-5 pb-4 border-b border-[#14161b]/[.09]">
         <div className="flex items-center gap-3">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
@@ -586,18 +586,18 @@ function MoneylineCard({ data, slip, onAdd }: {
                 Moneyline
               </span>
             </div>
-            <p className="text-base font-black text-white">
-              {abbr(data.awayTeam)} <span className="text-white/30 font-normal">@</span> {abbr(data.homeTeam)}
+            <p className="text-base font-black text-[#14161b]">
+              {abbr(data.awayTeam)} <span className="text-[#14161b]/46 font-normal">@</span> {abbr(data.homeTeam)}
             </p>
           </div>
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border"
             style={{ borderColor: `${confColor}30`, backgroundColor: `${confColor}10` }}>
             <span className="text-xs font-black" style={{ color: confColor }}>{data.confidence}</span>
-            <span className="text-[10px] text-white/30">conf.</span>
+            <span className="text-[10px] text-[#14161b]/46">conf.</span>
           </div>
         </div>
         {/* Key factor */}
-        <p className="mt-3 text-[11px] text-white/40 leading-relaxed bg-white/[0.03] rounded-xl px-3 py-2 border border-white/[0.05]">
+        <p className="mt-3 text-[11px] text-[#14161b]/56 leading-relaxed bg-[#14161b]/[0.03] rounded-xl px-3 py-2 border border-[#14161b]/[.09]">
           {data.keyFactor}
         </p>
       </div>
@@ -608,15 +608,15 @@ function MoneylineCard({ data, slip, onAdd }: {
           { id: awayId, team: data.awayTeam, teamId: data.awayTeamId, pct: data.awayWinPct, inSlip: awayIn, isWinner: data.predictedWinner === data.awayTeam },
           { id: homeId, team: data.homeTeam, teamId: data.homeTeamId, pct: data.homeWinPct, inSlip: homeIn, isWinner: data.predictedWinner === data.homeTeam },
         ].map((t) => {
-          const color = t.isWinner ? "#34d399" : "rgba(255,255,255,0.40)";
+          const color = t.isWinner ? "#12a150" : "rgba(20,22,27,.38)";
           return (
             <div key={t.id}>
               <div className="flex items-center gap-3 mb-2">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={teamLogoUrl(t.teamId)} alt="" className="w-7 h-7 object-contain shrink-0" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-                <p className="flex-1 text-sm font-black text-white">{abbr(t.team)}</p>
+                <p className="flex-1 text-sm font-black text-[#14161b]">{abbr(t.team)}</p>
                 {t.isWinner && (
-                  <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full border border-[#34d399]/35 bg-[#34d399]/12 text-[#34d399]">
+                  <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full border border-[#12a150]/35 bg-[#12a150]/12 text-[#12a150]">
                     PICK
                   </span>
                 )}
@@ -626,15 +626,15 @@ function MoneylineCard({ data, slip, onAdd }: {
                   disabled={t.inSlip}
                   className={`flex items-center gap-1 rounded-xl border px-2.5 py-1.5 text-xs font-bold transition-all shrink-0 ${
                     t.inSlip
-                      ? "border-[#34d399]/40 bg-[#34d399]/10 text-[#34d399]"
-                      : "border-white/[0.08] bg-white/[0.04] text-white/50 hover:bg-white/[0.08]"
+                      ? "border-[#12a150]/40 bg-[#12a150]/10 text-[#12a150]"
+                      : "border-[#14161b]/[.09] bg-[#14161b]/[0.04] text-[#14161b]/64 hover:bg-[#14161b]/[0.08]"
                   }`}
                 >
                   {t.inSlip ? <><Check size={10} className="mr-0.5" />Added</> : "Add Slip"}
                 </button>
               </div>
-              <div className="h-1.5 rounded-full bg-white/[0.06]">
-                <div className="h-full rounded-full transition-all" style={{ width: `${t.pct}%`, backgroundColor: t.isWinner ? "#34d399" : "rgba(255,255,255,0.18)" }} />
+              <div className="h-1.5 rounded-full bg-[#14161b]/[0.06]">
+                <div className="h-full rounded-full transition-all" style={{ width: `${t.pct}%`, backgroundColor: t.isWinner ? "#12a150" : "rgba(20,22,27,.38)" }} />
               </div>
             </div>
           );
@@ -647,25 +647,25 @@ function MoneylineCard({ data, slip, onAdd }: {
 // ── Total Runs full breakdown card ────────────────────────────────────────────
 
 function FactorRow({ f }: { f: { label: string; impact: "over" | "under" | "neutral"; description: string } }) {
-  const colors = { over: "#34d399", under: "#ef4444", neutral: "#a78bfa" };
+  const colors = { over: "#12a150", under: "#ef3b4a", neutral: "#6d4fe0" };
   const Icons  = { over: TrendingUp, under: TrendingDown, neutral: Activity };
   const color  = colors[f.impact];
   const Icon   = Icons[f.impact];
   return (
-    <div className="flex items-start gap-3 py-3 border-b border-white/[0.04] last:border-0">
+    <div className="flex items-start gap-3 py-3 border-b border-[#14161b]/[.09] last:border-0">
       <div className="w-6 h-6 rounded-lg flex items-center justify-center mt-0.5 shrink-0"
         style={{ backgroundColor: `${color}15` }}>
         <Icon size={11} style={{ color }} strokeWidth={2.5} />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-          <p className="text-xs font-black text-white">{f.label}</p>
+          <p className="text-xs font-black text-[#14161b]">{f.label}</p>
           <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full border"
             style={{ color, borderColor: `${color}30`, backgroundColor: `${color}10` }}>
             {f.impact.toUpperCase()}
           </span>
         </div>
-        <p className="text-[11px] text-white/40 leading-relaxed">{f.description}</p>
+        <p className="text-[11px] text-[#14161b]/56 leading-relaxed">{f.description}</p>
       </div>
     </div>
   );
@@ -680,7 +680,7 @@ function TotalRunsCard({ data, slip, onAdd }: {
   const overIn  = slip.some((e) => e.id === overId);
   const underIn = slip.some((e) => e.id === underId);
   const lean    = data.overPct >= 54 ? "OVER" : data.underPct >= 54 ? "UNDER" : "PUSH";
-  const leanClr = lean === "OVER" ? "#34d399" : lean === "UNDER" ? "#ef4444" : "#a78bfa";
+  const leanClr = lean === "OVER" ? "#12a150" : lean === "UNDER" ? "#ef3b4a" : "#6d4fe0";
   const awAbbr  = abbr(data.awayTeam);
   const hmAbbr  = abbr(data.homeTeam);
 
@@ -689,19 +689,19 @@ function TotalRunsCard({ data, slip, onAdd }: {
       <div className="rounded-2xl border overflow-hidden" style={{ borderColor: `${leanClr}25` }}>
         <div className="px-6 py-5 flex items-center justify-between" style={{ backgroundColor: `${leanClr}08` }}>
           <div>
-            <p className="text-[10px] font-bold text-white/30 tracking-widest uppercase mb-1">Model Total</p>
+            <p className="text-[10px] font-bold text-[#14161b]/46 tracking-widest uppercase mb-1">Model Total</p>
             <div className="flex items-baseline gap-2">
               <span className="text-5xl font-black" style={{ color: leanClr }}>{data.expectedRuns}</span>
-              <span className="text-white/30">runs</span>
+              <span className="text-[#14161b]/46">runs</span>
             </div>
           </div>
           <div className="text-right">
-            <p className="text-[10px] font-bold text-white/30 tracking-widest uppercase mb-1">
+            <p className="text-[10px] font-bold text-[#14161b]/46 tracking-widest uppercase mb-1">
               {data.bookLine !== undefined ? "FanDuel Line" : "O/U Line"}
             </p>
-            <p className="text-4xl font-black text-white">{data.bookLine ?? data.line}</p>
+            <p className="text-4xl font-black text-[#14161b]">{data.bookLine ?? data.line}</p>
             {data.bookLine !== undefined && (
-              <p className="text-[9px] text-white/25 mt-0.5">Model: {data.line}</p>
+              <p className="text-[9px] text-[#14161b]/46 mt-0.5">Model: {data.line}</p>
             )}
             <div className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full border"
               style={{ color: leanClr, borderColor: `${leanClr}40`, backgroundColor: `${leanClr}15` }}>
@@ -709,36 +709,36 @@ function TotalRunsCard({ data, slip, onAdd }: {
             </div>
           </div>
         </div>
-        <div className="grid grid-cols-2 divide-x divide-white/[0.05] border-t border-white/[0.05] bg-[#0b0d15]">
+        <div className="grid grid-cols-2 divide-x divide-[#14161b]/[.09] border-t border-[#14161b]/[.09] bg-[#ffffff]">
           <div className="px-5 py-4 text-center">
-            <p className="text-[10px] text-white/30 mb-1">{awAbbr} Expected</p>
-            <p className="text-2xl font-black text-[#a78bfa]">{data.expectedAway}</p>
-            <p className="text-[9px] text-white/20 mt-0.5">vs {data.homePitcher.name.split(" ").pop()}</p>
+            <p className="text-[10px] text-[#14161b]/46 mb-1">{awAbbr} Expected</p>
+            <p className="text-2xl font-black text-[#6d4fe0]">{data.expectedAway}</p>
+            <p className="text-[9px] text-[#14161b]/38 mt-0.5">vs {data.homePitcher.name.split(" ").pop()}</p>
           </div>
           <div className="px-5 py-4 text-center">
-            <p className="text-[10px] text-white/30 mb-1">{hmAbbr} Expected</p>
-            <p className="text-2xl font-black text-[#f97316]">{data.expectedHome}</p>
-            <p className="text-[9px] text-white/20 mt-0.5">vs {data.awayPitcher.name.split(" ").pop()}</p>
+            <p className="text-[10px] text-[#14161b]/46 mb-1">{hmAbbr} Expected</p>
+            <p className="text-2xl font-black text-[#ea6a0a]">{data.expectedHome}</p>
+            <p className="text-[9px] text-[#14161b]/38 mt-0.5">vs {data.awayPitcher.name.split(" ").pop()}</p>
           </div>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-white/[0.07] bg-[#0b0d15] p-5">
-        <p className="text-[10px] font-bold text-white/25 tracking-widest uppercase mb-4">Starting Pitchers</p>
+      <div className="rounded-2xl border border-[#14161b]/[.09] bg-[#ffffff] p-5">
+        <p className="text-[10px] font-bold text-[#14161b]/46 tracking-widest uppercase mb-4">Starting Pitchers</p>
         <div className="grid grid-cols-2 gap-3 mb-4">
           {[{ s: awAbbr, p: data.awayPitcher }, { s: hmAbbr, p: data.homePitcher }].map(({ s, p }) => (
-            <div key={s} className="rounded-xl border border-white/[0.06] bg-[#0c0e16] p-3">
-              <p className="text-xs font-black text-white truncate">{p.name}</p>
-              <p className="text-[10px] text-white/25 mb-2">{s} · {p.wins}-{p.losses}</p>
+            <div key={s} className="rounded-xl border border-[#14161b]/[.09] bg-[#ffffff] p-3">
+              <p className="text-xs font-black text-[#14161b] truncate">{p.name}</p>
+              <p className="text-[10px] text-[#14161b]/46 mb-2">{s} · {p.wins}-{p.losses}</p>
               <div className="grid grid-cols-3 gap-1 text-center">
                 {[
-                  { v: p.era  !== null ? p.era.toFixed(2)  : "—", l: "ERA",  c: "#f97316" },
-                  { v: p.whip !== null ? p.whip.toFixed(2) : "—", l: "WHIP", c: "#a78bfa" },
-                  { v: p.k9   !== null ? p.k9.toFixed(1)   : "—", l: "K/9",  c: "#34d399" },
+                  { v: p.era  !== null ? p.era.toFixed(2)  : "—", l: "ERA",  c: "#ea6a0a" },
+                  { v: p.whip !== null ? p.whip.toFixed(2) : "—", l: "WHIP", c: "#6d4fe0" },
+                  { v: p.k9   !== null ? p.k9.toFixed(1)   : "—", l: "K/9",  c: "#12a150" },
                 ].map(({ v, l, c }) => (
                   <div key={l}>
                     <p className="text-sm font-black" style={{ color: c }}>{v}</p>
-                    <p className="text-[8px] text-white/25 uppercase tracking-wider">{l}</p>
+                    <p className="text-[8px] text-[#14161b]/46 uppercase tracking-wider">{l}</p>
                   </div>
                 ))}
               </div>
@@ -747,15 +747,15 @@ function TotalRunsCard({ data, slip, onAdd }: {
         </div>
         <div className="space-y-2">
           {[
-            { label: `${awAbbr} lineup`, ops: data.awayLineupOPS, color: "#a78bfa" },
-            { label: `${hmAbbr} lineup`, ops: data.homeLineupOPS, color: "#f97316" },
+            { label: `${awAbbr} lineup`, ops: data.awayLineupOPS, color: "#6d4fe0" },
+            { label: `${hmAbbr} lineup`, ops: data.homeLineupOPS, color: "#ea6a0a" },
           ].map(({ label, ops, color }) => (
             <div key={label}>
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] text-white/35">{label} OPS</span>
-                <span className="text-xs font-black text-white">.{Math.round(ops * 1000)}</span>
+                <span className="text-[10px] text-[#14161b]/56">{label} OPS</span>
+                <span className="text-xs font-black text-[#14161b]">.{Math.round(ops * 1000)}</span>
               </div>
-              <div className="h-1.5 rounded-full bg-white/[0.06]">
+              <div className="h-1.5 rounded-full bg-[#14161b]/[0.06]">
                 <div className="h-full rounded-full" style={{ width: `${Math.min(100, (ops / 0.9) * 100)}%`, backgroundColor: color }} />
               </div>
             </div>
@@ -764,23 +764,23 @@ function TotalRunsCard({ data, slip, onAdd }: {
       </div>
 
 
-      <div className="rounded-2xl border border-white/[0.07] bg-[#0b0d15] p-5">
-        <p className="text-[10px] font-bold text-white/25 tracking-widest uppercase mb-0.5">Why the Model Leans {lean}</p>
-        <p className="text-[11px] text-white/30 mb-3">Key factors driving this total</p>
+      <div className="rounded-2xl border border-[#14161b]/[.09] bg-[#ffffff] p-5">
+        <p className="text-[10px] font-bold text-[#14161b]/46 tracking-widest uppercase mb-0.5">Why the Model Leans {lean}</p>
+        <p className="text-[11px] text-[#14161b]/46 mb-3">Key factors driving this total</p>
         {data.factors.map((f, i) => <FactorRow key={i} f={f} />)}
       </div>
 
-      <div className="rounded-2xl border border-white/[0.07] bg-[#0b0d15] p-5 space-y-3">
-        <p className="text-[10px] font-bold text-white/25 tracking-widest uppercase">Add to Slip</p>
+      <div className="rounded-2xl border border-[#14161b]/[.09] bg-[#ffffff] p-5 space-y-3">
+        <p className="text-[10px] font-bold text-[#14161b]/46 tracking-widest uppercase">Add to Slip</p>
         {[
-          { id: overId,  label: `Over ${data.bookLine ?? data.line}`,  pct: data.overPct,  color: "#34d399", inSlip: overIn,  Icon: TrendingUp  },
-          { id: underId, label: `Under ${data.bookLine ?? data.line}`, pct: data.underPct, color: "#ef4444", inSlip: underIn, Icon: TrendingDown },
+          { id: overId,  label: `Over ${data.bookLine ?? data.line}`,  pct: data.overPct,  color: "#12a150", inSlip: overIn,  Icon: TrendingUp  },
+          { id: underId, label: `Under ${data.bookLine ?? data.line}`, pct: data.underPct, color: "#ef3b4a", inSlip: underIn, Icon: TrendingDown },
         ].map((item) => (
-          <div key={item.id} className="rounded-xl border border-white/[0.05] bg-[#0c0e16] p-4">
+          <div key={item.id} className="rounded-xl border border-[#14161b]/[.09] bg-[#ffffff] p-4">
             <div className="flex items-center justify-between gap-3 mb-2">
               <div className="flex items-center gap-2 flex-wrap">
                 <item.Icon size={13} style={{ color: item.color }} strokeWidth={2.5} />
-                <p className="text-sm font-bold text-white">{item.label} Total Runs</p>
+                <p className="text-sm font-bold text-[#14161b]">{item.label} Total Runs</p>
                 {lean === (item.id.includes("over") ? "OVER" : "UNDER") && (
                   <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full border"
                     style={{ color: item.color, borderColor: `${item.color}35`, backgroundColor: `${item.color}12` }}>
@@ -795,15 +795,15 @@ function TotalRunsCard({ data, slip, onAdd }: {
                   disabled={item.inSlip}
                   className={`flex items-center gap-1 rounded-xl border px-3 py-1.5 text-xs font-bold transition-all ${
                     item.inSlip
-                      ? "border-[#34d399]/40 bg-[#34d399]/10 text-[#34d399]"
-                      : "border-white/[0.08] bg-white/[0.04] text-white/50 hover:bg-white/[0.08]"
+                      ? "border-[#12a150]/40 bg-[#12a150]/10 text-[#12a150]"
+                      : "border-[#14161b]/[.09] bg-[#14161b]/[0.04] text-[#14161b]/64 hover:bg-[#14161b]/[0.08]"
                   }`}
                 >
                   {item.inSlip ? <><Check size={10} className="mr-0.5" />Added</> : "Add Slip"}
                 </button>
               </div>
             </div>
-            <div className="h-1.5 rounded-full bg-white/[0.06]">
+            <div className="h-1.5 rounded-full bg-[#14161b]/[0.06]">
               <div className="h-full rounded-full" style={{ width: `${item.pct}%`, backgroundColor: item.color }} />
             </div>
           </div>
@@ -844,7 +844,7 @@ function AnimatedCardSlot({
   const hasAlternates     = variants.length > 1;
 
   const isSafe      = tier === "safe";
-  const headerColor = isSafe ? "#34d399" : "#f97316";
+  const headerColor = isSafe ? "#12a150" : "#ea6a0a";
   const HeaderIcon  = isSafe ? Shield : Target;
   const headerLabel = isSafe ? "Safe Pick" : "Long Shot";
   const headerSub   = isSafe ? "High-probability" : "Higher risk, higher reward";
@@ -887,9 +887,9 @@ function AnimatedCardSlot({
         <div className="w-0.5 h-4 rounded-full" style={{ backgroundColor: headerColor }} />
         <HeaderIcon size={11} strokeWidth={2.5} style={{ color: headerColor }} />
         <p className="text-[10px] font-black tracking-wider uppercase" style={{ color: headerColor }}>{headerLabel}</p>
-        <p className="text-[10px] text-white/20">{headerSub}</p>
+        <p className="text-[10px] text-[#14161b]/38">{headerSub}</p>
         {hasAlternates && (
-          <button onClick={cycleNext} className="ml-auto text-[9px] text-white/30 hover:text-white/60 transition-colors tabular-nums">
+          <button onClick={cycleNext} className="ml-auto text-[9px] text-[#14161b]/46 hover:text-[#14161b]/74 transition-colors tabular-nums">
             {(index % variants.length) + 1}/{variants.length} · next →
           </button>
         )}
@@ -907,11 +907,11 @@ function AnimatedCardSlot({
 
 function DailySlipCard({ slip }: { slip: DailySlip }) {
   const isSafe    = slip.tier === "safe";
-  const tierColor = isSafe ? "#34d399" : "#f97316";
+  const tierColor = isSafe ? "#12a150" : "#ea6a0a";
   const TierIcon  = isSafe ? Shield : Target;
 
   return (
-    <div className="rounded-2xl border bg-[#0c0e16] overflow-hidden flex flex-col"
+    <div className="rounded-2xl border bg-[#ffffff] overflow-hidden flex flex-col"
       style={{ borderColor: `${tierColor}22` }}>
 
       {/* Header */}
@@ -919,24 +919,24 @@ function DailySlipCard({ slip }: { slip: DailySlip }) {
         style={{ borderBottomColor: `${tierColor}14`, backgroundColor: `${tierColor}06` }}>
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-sm font-black text-white">{slip.label}</p>
+            <p className="text-sm font-black text-[#14161b]">{slip.label}</p>
             <div className="flex items-center gap-1.5 mt-0.5">
               <TierIcon size={10} style={{ color: tierColor }} strokeWidth={2.5} />
               <span className="text-[10px] font-bold" style={{ color: tierColor }}>
                 {isSafe ? "Safe Pick" : "Long Shot"}
               </span>
-              <span className="text-white/20 text-[10px]">· {slip.legs.length} legs</span>
+              <span className="text-[#14161b]/38 text-[10px]">· {slip.legs.length} legs</span>
             </div>
           </div>
           <div className="text-right shrink-0">
             <p className="text-2xl font-black leading-none" style={{ color: tierColor }}>{slip.combinedPct.toFixed(1)}%</p>
-            <p className="text-[9px] text-white/25 uppercase tracking-wider mt-0.5">combined</p>
+            <p className="text-[9px] text-[#14161b]/46 uppercase tracking-wider mt-0.5">combined</p>
           </div>
         </div>
       </div>
 
       {/* Legs — fills remaining space so cards in a grid stay equal height */}
-      <div className="flex-1 divide-y divide-white/[0.04]">
+      <div className="flex-1 divide-y divide-[#14161b]/[.09]">
         {slip.legs.map((leg) => {
           const color = propColor(leg.probability);
           return (
@@ -967,7 +967,7 @@ function DailySlipCard({ slip }: { slip: DailySlip }) {
               </div>
               {/* Two-line text */}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-black text-white leading-tight truncate">
+                <p className="text-sm font-black text-[#14161b] leading-tight truncate">
                   {leg.playerName ?? leg.description}
                 </p>
                 <p className="text-[11px] mt-0.5 font-medium truncate" style={{ color: `${color}b0` }}>
@@ -1007,12 +1007,12 @@ function DashboardView({
   if (slips.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
-        <div className="w-12 h-12 rounded-2xl border border-white/[0.07] bg-white/[0.04] flex items-center justify-center mb-4">
-          <LayoutDashboard size={22} className="text-white/20" strokeWidth={1.5} />
+        <div className="w-12 h-12 rounded-2xl border border-[#14161b]/[.09] bg-[#14161b]/[0.04] flex items-center justify-center mb-4">
+          <LayoutDashboard size={22} className="text-[#14161b]/38" strokeWidth={1.5} />
         </div>
-        <p className="text-white/35 text-sm font-bold mb-1">Not enough data yet</p>
-        <p className="text-white/22 text-xs">Check back once starting pitchers are confirmed</p>
-        <button onClick={onSwitchBuilder} className="mt-5 flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2 text-xs font-bold text-white/50 hover:text-white hover:border-white/[0.14] transition-colors">
+        <p className="text-[#14161b]/56 text-sm font-bold mb-1">Not enough data yet</p>
+        <p className="text-[#14161b]/46 text-xs">Check back once starting pitchers are confirmed</p>
+        <button onClick={onSwitchBuilder} className="mt-5 flex items-center gap-1.5 rounded-xl border border-[#14161b]/[.09] bg-[#14161b]/[0.04] px-4 py-2 text-xs font-bold text-[#14161b]/64 hover:text-[#14161b] hover:border-[#14161b]/[.09] transition-colors">
           <Settings2 size={12} strokeWidth={2} />
           Open Builder
         </button>
@@ -1027,7 +1027,7 @@ function DashboardView({
     >
       {/* Parlay size selector */}
       <div className="flex items-center gap-3 flex-wrap">
-        <p className="text-[10px] font-bold text-white/25 tracking-widest uppercase shrink-0">Parlay size</p>
+        <p className="text-[10px] font-bold text-[#14161b]/46 tracking-widest uppercase shrink-0">Parlay size</p>
         <div className="flex items-center gap-1.5">
           {[2, 3, 4, 5, 6].map((n) => {
             const avail  = availableCounts.includes(n);
@@ -1039,17 +1039,17 @@ function DashboardView({
                 disabled={!avail}
                 className={`w-10 h-8 rounded-xl text-xs font-black transition-all border ${
                   active
-                    ? "border-[#f97316]/50 bg-[#f97316]/15 text-[#f97316]"
+                    ? "border-[#ea6a0a]/50 bg-[#ea6a0a]/15 text-[#ea6a0a]"
                     : avail
-                    ? "border-white/[0.07] bg-[#0b0d15] text-white/50 hover:text-white hover:border-white/[0.14]"
-                    : "border-white/[0.03] bg-transparent text-white/15 cursor-not-allowed"
+                    ? "border-[#14161b]/[.09] bg-[#ffffff] text-[#14161b]/64 hover:text-[#14161b] hover:border-[#14161b]/[.09]"
+                    : "border-[#14161b]/[.09] bg-transparent text-[#14161b]/38 cursor-not-allowed"
                 }`}
               >
                 {n}
               </button>
             );
           })}
-          <span className="text-[11px] text-white/25 ml-1">legs</span>
+          <span className="text-[11px] text-[#14161b]/46 ml-1">legs</span>
         </div>
       </div>
 
@@ -1072,13 +1072,13 @@ function DashboardView({
           />
         ) : null}
         {safeVariants.length === 0 && longshotVariants.length === 0 && (
-          <div className="sm:col-span-2 rounded-2xl border border-white/[0.06] bg-[#0b0d15] py-12 text-center">
-            <p className="text-white/30 text-sm">No {effectiveLegCount}-leg picks available today</p>
+          <div className="sm:col-span-2 rounded-2xl border border-[#14161b]/[.09] bg-[#ffffff] py-12 text-center">
+            <p className="text-[#14161b]/46 text-sm">No {effectiveLegCount}-leg picks available today</p>
           </div>
         )}
       </div>
 
-      <p className="text-[11px] text-white/15 text-center pt-2">
+      <p className="text-[11px] text-[#14161b]/38 text-center pt-2">
         Parlays built from model probabilities · For educational use only
       </p>
     </div>
@@ -1115,14 +1115,14 @@ function SlipPanel({ slip, onRemove, onClear, onOddsChange }: {
   const toWin    = wagerNum > 0 ? parlayToWin(wagerNum, slip) : 0;
 
   return (
-    <div className="rounded-2xl border border-white/[0.07] bg-[#0b0d15] overflow-hidden lg:sticky lg:top-20 flex flex-col max-h-[calc(100vh-6rem)]">
-      <div className="px-4 py-3.5 border-b border-white/[0.05] flex items-center justify-between shrink-0">
+    <div className="rounded-2xl border border-[#14161b]/[.09] bg-[#ffffff] overflow-hidden lg:sticky lg:top-20 flex flex-col max-h-[calc(100vh-6rem)]">
+      <div className="px-4 py-3.5 border-b border-[#14161b]/[.09] flex items-center justify-between shrink-0">
         <div>
-          <p className="text-sm font-black text-white">Your Slip</p>
-          <p className="text-[11px] text-white/30">{slip.length} leg{slip.length === 1 ? "" : "s"}</p>
+          <p className="text-sm font-black text-[#14161b]">Your Slip</p>
+          <p className="text-[11px] text-[#14161b]/46">{slip.length} leg{slip.length === 1 ? "" : "s"}</p>
         </div>
         {slip.length > 0 && (
-          <button onClick={onClear} className="flex items-center gap-1 rounded-lg border border-[#ef4444]/25 bg-[#ef4444]/10 px-2.5 py-1.5 text-xs font-bold text-[#ef4444]">
+          <button onClick={onClear} className="flex items-center gap-1 rounded-lg border border-[#ef3b4a]/25 bg-[#ef3b4a]/10 px-2.5 py-1.5 text-xs font-bold text-[#ef3b4a]">
             <Trash2 size={11} />Clear
           </button>
         )}
@@ -1130,11 +1130,11 @@ function SlipPanel({ slip, onRemove, onClear, onOddsChange }: {
 
       {slip.length === 0 ? (
         <div className="py-10 text-center px-5">
-          <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center mx-auto mb-3">
-            <Receipt size={17} className="text-white/15" strokeWidth={1.5} />
+          <div className="w-10 h-10 rounded-xl bg-[#14161b]/[0.04] border border-[#14161b]/[.09] flex items-center justify-center mx-auto mb-3">
+            <Receipt size={17} className="text-[#14161b]/38" strokeWidth={1.5} />
           </div>
-          <p className="text-sm text-white/25 font-bold mb-1">Slip is empty</p>
-          <p className="text-xs text-white/18">Tap &ldquo;Slip&rdquo; on any prop to add a leg</p>
+          <p className="text-sm text-[#14161b]/46 font-bold mb-1">Slip is empty</p>
+          <p className="text-xs text-[#14161b]/38">Tap &ldquo;Slip&rdquo; on any prop to add a leg</p>
         </div>
       ) : (
         <div className="overflow-y-auto flex-1 p-3 space-y-2">
@@ -1143,21 +1143,21 @@ function SlipPanel({ slip, onRemove, onClear, onOddsChange }: {
             const numStr = entry.odds.replace(/[^0-9]/g, "");
             const color  = propColor(entry.probability);
             return (
-              <div key={entry.id} className="rounded-xl border border-white/[0.05] bg-[#0c0e16] p-2.5">
+              <div key={entry.id} className="rounded-xl border border-[#14161b]/[.09] bg-[#ffffff] p-2.5">
                 <div className="flex items-start gap-2 mb-2">
                   <div className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: color }} />
-                  <p className="text-[11px] font-bold text-white leading-snug flex-1 min-w-0">{entry.description}</p>
-                  <button onClick={() => onRemove(entry.id)} className="text-white/20 hover:text-white/50 shrink-0 ml-1">
+                  <p className="text-[11px] font-bold text-[#14161b] leading-snug flex-1 min-w-0">{entry.description}</p>
+                  <button onClick={() => onRemove(entry.id)} className="text-[#14161b]/38 hover:text-[#14161b]/64 shrink-0 ml-1">
                     <X size={12} />
                   </button>
                 </div>
                 <div className="flex items-center gap-2 pl-3">
-                  <span className="text-[10px] text-white/30 shrink-0 w-7">Odds</span>
-                  <div className="flex items-center rounded-lg border border-white/[0.08] bg-white/[0.04] overflow-hidden h-7">
+                  <span className="text-[10px] text-[#14161b]/46 shrink-0 w-7">Odds</span>
+                  <div className="flex items-center rounded-lg border border-[#14161b]/[.09] bg-[#14161b]/[0.04] overflow-hidden h-7">
                     <button
                       onClick={() => { const ns = sign === "+" ? "-" : "+"; onOddsChange(entry.id, numStr ? `${ns}${numStr}` : ""); }}
-                      className="w-7 h-full flex items-center justify-center text-xs font-black border-r border-white/[0.08] transition-colors shrink-0"
-                      style={{ color: sign === "+" ? "#34d399" : "#ef4444", backgroundColor: sign === "+" ? "rgba(80,200,130,0.10)" : "rgba(235,80,90,0.10)" }}
+                      className="w-7 h-full flex items-center justify-center text-xs font-black border-r border-[#14161b]/[.09] transition-colors shrink-0"
+                      style={{ color: sign === "+" ? "#12a150" : "#ef3b4a", backgroundColor: sign === "+" ? "rgba(80,200,130,0.10)" : "rgba(235,80,90,0.10)" }}
                     >
                       {sign}
                     </button>
@@ -1165,7 +1165,7 @@ function SlipPanel({ slip, onRemove, onClear, onOddsChange }: {
                       type="text" inputMode="numeric" placeholder="110" value={numStr}
                       onChange={(e) => { const v = e.target.value.replace(/[^0-9]/g, ""); onOddsChange(entry.id, v ? `${sign}${v}` : ""); }}
                       className="w-14 bg-transparent text-xs font-black text-center outline-none px-1"
-                      style={{ color: numStr ? (sign === "+" ? "#34d399" : "#ef4444") : "rgba(255,255,255,0.25)" }}
+                      style={{ color: numStr ? (sign === "+" ? "#12a150" : "#ef3b4a") : "rgba(20,22,27,.38)" }}
                     />
                   </div>
                   <span className="text-[10px] font-black shrink-0" style={{ color }}>{entry.probability}%</span>
@@ -1175,34 +1175,34 @@ function SlipPanel({ slip, onRemove, onClear, onOddsChange }: {
           })}
 
           {slip.length > 1 && (
-            <div className="rounded-xl border border-white/[0.07] bg-[#0c0e16] p-3">
+            <div className="rounded-xl border border-[#14161b]/[.09] bg-[#ffffff] p-3">
               <div className="flex items-center justify-between mb-1.5">
-                <p className="text-[10px] font-bold text-white/35 uppercase tracking-wider">Combined</p>
-                <p className="text-base font-black" style={{ color: combined >= 20 ? "#34d399" : combined >= 5 ? "#f97316" : "#ef4444" }}>
+                <p className="text-[10px] font-bold text-[#14161b]/56 uppercase tracking-wider">Combined</p>
+                <p className="text-base font-black" style={{ color: combined >= 20 ? "#12a150" : combined >= 5 ? "#ea6a0a" : "#ef3b4a" }}>
                   {formatCombinedPct(combined)}
                 </p>
               </div>
-              <div className="h-1 rounded-full bg-white/[0.06] overflow-hidden">
+              <div className="h-1 rounded-full bg-[#14161b]/[0.06] overflow-hidden">
                 <div className="h-full rounded-full transition-all"
-                  style={{ width: `${Math.min(combined * 3, 100)}%`, backgroundColor: combined >= 20 ? "#34d399" : combined >= 5 ? "#f97316" : "#ef4444" }} />
+                  style={{ width: `${Math.min(combined * 3, 100)}%`, backgroundColor: combined >= 20 ? "#12a150" : combined >= 5 ? "#ea6a0a" : "#ef3b4a" }} />
               </div>
             </div>
           )}
 
-          <div className="rounded-xl border border-white/[0.07] bg-[#0c0e16] p-3">
-            <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider mb-2">Wager</p>
-            <div className="flex items-center rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 h-9">
-              <span className="text-white/40 text-sm mr-1 shrink-0">$</span>
+          <div className="rounded-xl border border-[#14161b]/[.09] bg-[#ffffff] p-3">
+            <p className="text-[10px] font-bold text-[#14161b]/46 uppercase tracking-wider mb-2">Wager</p>
+            <div className="flex items-center rounded-xl border border-[#14161b]/[.09] bg-[#14161b]/[0.04] px-3 h-9">
+              <span className="text-[#14161b]/56 text-sm mr-1 shrink-0">$</span>
               <input
                 type="text" inputMode="decimal" placeholder="10" value={wager}
                 onChange={(e) => setWager(e.target.value.replace(/[^0-9.]/g, ""))}
-                className="flex-1 bg-transparent text-sm font-black text-white outline-none"
+                className="flex-1 bg-transparent text-sm font-black text-[#14161b] outline-none"
               />
             </div>
             {hasOdds && toWin > 0 && (
               <div className="flex items-center justify-between mt-2 px-1">
-                <p className="text-[10px] text-white/30">To win</p>
-                <p className="text-sm font-black text-[#34d399]">${toWin.toFixed(2)}</p>
+                <p className="text-[10px] text-[#14161b]/46">To win</p>
+                <p className="text-sm font-black text-[#12a150]">${toWin.toFixed(2)}</p>
               </div>
             )}
           </div>
@@ -1210,7 +1210,7 @@ function SlipPanel({ slip, onRemove, onClear, onOddsChange }: {
       )}
 
       {slip.length > 0 && (
-        <div className="px-4 py-3.5 border-t border-white/[0.06] shrink-0">
+        <div className="px-4 py-3.5 border-t border-[#14161b]/[.09] shrink-0">
           <button onClick={handleSaveSlip}
             className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 font-spot-sans font-extrabold text-[12px] transition-all"
             style={saved
@@ -1315,20 +1315,20 @@ export function PropsTool({ games, dailySlips, fanDuelOdds = {} }: { games: Prop
       {aiPicks.length > 0 && (
         <button
           onClick={importAiPicks}
-          className="w-full flex items-center gap-3 rounded-2xl border border-[#a78bfa]/30 bg-[#a78bfa]/08 px-4 py-3 hover:bg-[#a78bfa]/14 transition-colors"
+          className="w-full flex items-center gap-3 rounded-2xl border border-[#6d4fe0]/30 bg-[#6d4fe0]/08 px-4 py-3 hover:bg-[#6d4fe0]/14 transition-colors"
         >
-          <Bot size={16} className="text-[#a78bfa] shrink-0" strokeWidth={2} />
+          <Bot size={16} className="text-[#6d4fe0] shrink-0" strokeWidth={2} />
           <div className="flex-1 text-left">
-            <p className="text-sm font-black text-white">Edge AI suggested {aiPicks.length} pick{aiPicks.length > 1 ? "s" : ""}</p>
-            <p className="text-[10px] text-white/40 mt-0.5">{aiPicks.map(p => p.playerName).join(", ")}</p>
+            <p className="text-sm font-black text-[#14161b]">{aiPicks.length} pick{aiPicks.length > 1 ? "s" : ""} queued from HR Nuke</p>
+            <p className="text-[10px] text-[#14161b]/56 mt-0.5">{aiPicks.map(p => p.playerName).join(", ")}</p>
           </div>
-          <span className="text-xs font-bold text-[#a78bfa] shrink-0">Add all to slip →</span>
+          <span className="text-xs font-bold text-[#6d4fe0] shrink-0">Add all to slip →</span>
         </button>
       )}
 
       {/* View toggle + refresh */}
       <div className="flex items-center gap-2">
-        <div className="flex items-center gap-1 rounded-2xl border border-white/[0.07] bg-[#0c0e16] p-1 w-full sm:w-80">
+        <div className="flex items-center gap-1 rounded-2xl border border-[#14161b]/[.09] bg-[#ffffff] p-1 w-full sm:w-80">
           {(["dashboard", "builder"] as const).map((v) => {
             const isActive = view === v;
             const Icon = v === "dashboard" ? LayoutDashboard : Settings2;
@@ -1338,8 +1338,8 @@ export function PropsTool({ games, dailySlips, fanDuelOdds = {} }: { games: Prop
                 onClick={() => setView(v)}
                 className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2 px-4 text-xs font-bold transition-all ${
                   isActive
-                    ? "bg-[#f97316] text-white shadow-sm"
-                    : "text-white/40 hover:text-white/70"
+                    ? "bg-[#ea6a0a] text-white shadow-sm"
+                    : "text-white/40 hover:text-[#14161b]/74"
                 }`}
               >
                 <Icon size={12} strokeWidth={2.5} />
@@ -1354,14 +1354,14 @@ export function PropsTool({ games, dailySlips, fanDuelOdds = {} }: { games: Prop
             title="Refresh picks"
             className={`flex items-center justify-center w-10 h-10 rounded-xl border transition-colors shrink-0 ${
               isRefreshing
-                ? "border-[#f97316]/40 bg-[#f97316]/08"
-                : "border-white/[0.07] bg-[#0c0e16] hover:border-white/[0.14]"
+                ? "border-[#ea6a0a]/40 bg-[#ea6a0a]/08"
+                : "border-[#14161b]/[.09] bg-[#ffffff] hover:border-[#14161b]/[.09]"
             }`}
           >
             <RefreshCw
               size={15}
               strokeWidth={2}
-              className={isRefreshing ? "text-[#f97316] animate-spin" : "text-white/40"}
+              className={isRefreshing ? "text-[#ea6a0a] animate-spin" : "text-[#14161b]/56"}
             />
           </button>
         )}
@@ -1390,7 +1390,7 @@ export function PropsTool({ games, dailySlips, fanDuelOdds = {} }: { games: Prop
               <p className="text-xs font-bold uppercase tracking-widest" style={{ color: activeTab.color }}>
                 {activeTab.label}
               </p>
-              {isBatterProp && <span className="text-xs text-white/20">· {rows.length} players</span>}
+              {isBatterProp && <span className="text-xs text-[#14161b]/38">· {rows.length} players</span>}
             </div>
 
             {/* HR legend */}
@@ -1399,8 +1399,8 @@ export function PropsTool({ games, dailySlips, fanDuelOdds = {} }: { games: Prop
             {/* Batter grid */}
             {isBatterProp && (
               rows.length === 0
-                ? <div className="rounded-2xl border border-white/[0.07] bg-[#0b0d15] py-16 text-center">
-                    <p className="text-sm text-white/30">No data for this matchup yet.</p>
+                ? <div className="rounded-2xl border border-[#14161b]/[.09] bg-[#ffffff] py-16 text-center">
+                    <p className="text-sm text-[#14161b]/46">No data for this matchup yet.</p>
                   </div>
                 : <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
                     {rows.map((row, i) => (
@@ -1419,8 +1419,8 @@ export function PropsTool({ games, dailySlips, fanDuelOdds = {} }: { games: Prop
             {/* Pitcher K's */}
             {activeProp === "Pitcher K's" && (
               selected.pitchers.length === 0
-                ? <div className="rounded-2xl border border-white/[0.07] bg-[#0b0d15] py-16 text-center">
-                    <p className="text-sm text-white/30">No confirmed pitchers for this matchup.</p>
+                ? <div className="rounded-2xl border border-[#14161b]/[.09] bg-[#ffffff] py-16 text-center">
+                    <p className="text-sm text-[#14161b]/46">No confirmed pitchers for this matchup.</p>
                   </div>
                 : <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                     {selected.pitchers.map((p) => <PitcherKCard key={p.id} pitcher={p} slip={slip} onAdd={addToSlip} />)}
@@ -1435,8 +1435,8 @@ export function PropsTool({ games, dailySlips, fanDuelOdds = {} }: { games: Prop
             {/* 1st Inning O/U */}
             {activeProp === "1st Inn O/U" && (
               !selected.firstInning
-                ? <div className="rounded-2xl border border-white/[0.07] bg-[#0b0d15] py-16 text-center">
-                    <p className="text-sm text-white/30">No confirmed pitchers for this matchup.</p>
+                ? <div className="rounded-2xl border border-[#14161b]/[.09] bg-[#ffffff] py-16 text-center">
+                    <p className="text-sm text-[#14161b]/46">No confirmed pitchers for this matchup.</p>
                   </div>
                 : <FirstInningCard data={selected.firstInning} slip={slip} onAdd={addToSlip} />
             )}
@@ -1444,11 +1444,11 @@ export function PropsTool({ games, dailySlips, fanDuelOdds = {} }: { games: Prop
             {/* Moneyline */}
             {activeProp === "Moneyline" && (
               !selected.moneyline
-                ? <div className="rounded-2xl border border-white/[0.07] bg-[#0b0d15] py-16 text-center flex flex-col items-center gap-3">
-                    <p className="text-sm text-white/30">Prediction unavailable for this matchup.</p>
+                ? <div className="rounded-2xl border border-[#14161b]/[.09] bg-[#ffffff] py-16 text-center flex flex-col items-center gap-3">
+                    <p className="text-sm text-[#14161b]/46">Prediction unavailable for this matchup.</p>
                     <button
                       onClick={handleRefresh}
-                      className="flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2 text-xs font-bold text-white/50 hover:text-white hover:border-white/[0.14] transition-colors"
+                      className="flex items-center gap-1.5 rounded-xl border border-[#14161b]/[.09] bg-[#14161b]/[0.04] px-4 py-2 text-xs font-bold text-[#14161b]/64 hover:text-[#14161b] hover:border-[#14161b]/[.09] transition-colors"
                     >
                       <RefreshCw size={12} strokeWidth={2} />
                       Refresh to load

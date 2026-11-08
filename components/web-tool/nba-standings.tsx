@@ -7,7 +7,7 @@ import { Panel, Segmented, SportHeader } from "@/components/web-tool/sport-ui";
 import { nbaLogoUrl, nbaTeamHex, nbaTeamName } from "@/lib/nba/teams";
 import type { NbaStandingRow } from "@/lib/nba/types";
 
-const ACCENT = "#fb923c";
+const ACCENT = "#1a73ff";
 type View = "league" | "East" | "West" | "power";
 
 function Spotlight({ label, row, value, color }: { label: string; row: NbaStandingRow; value: string; color: string }) {
@@ -57,7 +57,7 @@ function Row({ r, idx, power, maxPower, seedCut }: { r: NbaStandingRow; idx: num
       style={{ borderTop: "1px solid var(--hairline)", boxShadow: seedCut ? "inset 0 1px 0 rgba(251,146,60,.5)" : undefined }}
     >
       <div className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r" style={{ background: hex }} />
-      <span className="font-spot-mono font-black text-[12px] w-6 text-center" style={{ color: idx < 6 ? "#fdba74" : idx < 10 ? "var(--text-3)" : "var(--text-faint)" }}>{idx + 1}</span>
+      <span className="font-spot-mono font-black text-[12px] w-6 text-center" style={{ color: idx < 6 ? "#c2540a" : idx < 10 ? "var(--text-3)" : "var(--text-faint)" }}>{idx + 1}</span>
       <div className="flex-1 min-w-0 flex items-center gap-2.5">
         <LogoPlate hex={hex} src={nbaLogoUrl(r.abbr)} code={r.abbr} size={32} radius={10} variant="clean" />
         <div className="min-w-0">
@@ -70,8 +70,8 @@ function Row({ r, idx, power, maxPower, seedCut }: { r: NbaStandingRow; idx: num
       <span className="font-spot-mono font-extrabold text-[12.5px] w-14 text-right" style={{ color: "var(--text)" }}>{r.wins}-{r.losses}</span>
       {power ? (
         <div className="w-24 sm:w-40 flex items-center justify-end gap-2">
-          <div className="flex-1 h-[6px] rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,.06)" }}>
-            <div className="h-full rounded-full" style={{ width: `${Math.max(6, ((r.power + maxPower) / (2 * maxPower)) * 100)}%`, background: r.power >= 0 ? "linear-gradient(90deg,#fb923c,#fdba74)" : "linear-gradient(90deg,#6b7280,#9ca3af)", transformOrigin: "left", animation: `bar-grow .8s cubic-bezier(.22,1,.36,1) ${Math.min(idx, 14) * 0.03}s both` }} />
+          <div className="flex-1 h-[6px] rounded-full overflow-hidden" style={{ background: "var(--wash-2)" }}>
+            <div className="h-full rounded-full" style={{ width: `${Math.max(6, ((r.power + maxPower) / (2 * maxPower)) * 100)}%`, background: r.power >= 0 ? "linear-gradient(90deg,#ea6a0a,#c2540a)" : "linear-gradient(90deg,#6b7280,#9ca3af)", transformOrigin: "left", animation: `bar-grow .8s cubic-bezier(.22,1,.36,1) ${Math.min(idx, 14) * 0.03}s both` }} />
           </div>
           <span className="font-spot-mono font-extrabold text-[11px] w-9 text-right" style={{ color: r.power >= 0 ? "var(--green)" : "var(--red-soft)" }}>{r.power > 0 ? "+" : ""}{r.power.toFixed(1)}</span>
         </div>
@@ -117,7 +117,7 @@ export function NbaStandings({ rows }: { rows: NbaStandingRow[] }) {
 
         {best && topPower && (
           <div className="snap-row -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-3 gap-3 mb-5 stagger">
-            <Spotlight label="Best record" row={best} value={`${best.wins}-${best.losses} · ${best.conf}`} color="#fdba74" />
+            <Spotlight label="Best record" row={best} value={`${best.wins}-${best.losses} · ${best.conf}`} color="#c2540a" />
             <Spotlight label="#1 Edge Power" row={topPower} value={`${topPower.power > 0 ? "+" : ""}${topPower.power.toFixed(1)} rating`} color="var(--purple-2)" />
             {hottest && <Spotlight label="Hottest streak" row={hottest} value={`${hottest.streak} · ${hottest.wins}-${hottest.losses}`} color="var(--green)" />}
           </div>
@@ -146,7 +146,7 @@ export function NbaStandings({ rows }: { rows: NbaStandingRow[] }) {
         </Panel>
 
         <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 font-spot-sans text-[10.5px]" style={{ color: "var(--text-faint)" }}>
-          <span><span style={{ color: "#fdba74" }}>●</span> Top 6 — direct playoff spots</span>
+          <span><span style={{ color: "#c2540a" }}>●</span> Top 6 — direct playoff spots</span>
           <span>Orange line — play-in cutoff (7–10 play-in)</span>
           <span>Edge Power = avg point differential × games/(games+12)</span>
         </div>

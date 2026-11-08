@@ -26,8 +26,8 @@ export function GameHero({ game, stadiumUrl }: GameHeroProps) {
 
   const awayAbbr = TEAM_ABBR[away.team.id] ?? away.team.name.split(" ").pop() ?? "";
   const homeAbbr = TEAM_ABBR[home.team.id] ?? home.team.name.split(" ").pop() ?? "";
-  const awayColor = TEAM_COLORS[away.team.id] ?? "#818cf8";
-  const homeColor = TEAM_COLORS[home.team.id] ?? "#FF7828";
+  const awayColor = TEAM_COLORS[away.team.id] ?? "#6d4fe0";
+  const homeColor = TEAM_COLORS[home.team.id] ?? "#1a73ff";
 
   const showScore = (isLive || isFinal) && awayScore !== undefined && homeScore !== undefined;
 
@@ -49,8 +49,8 @@ export function GameHero({ game, stadiumUrl }: GameHeroProps) {
       )}
 
       {/* Gradient layers */}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#080C14] via-[#080C14]/40 to-transparent" />
-      <div className="absolute inset-0 bg-gradient-to-r from-[#080C14]/70 via-transparent to-[#080C14]/70" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#eceef2] via-[#eceef2]/40 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#eceef2]/70 via-transparent to-[#eceef2]/70" />
 
       {/* Team color glow — bottom corners */}
       <div
@@ -66,7 +66,7 @@ export function GameHero({ game, stadiumUrl }: GameHeroProps) {
       <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between z-10">
         <Link
           href="/games"
-          className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors bg-black/40 backdrop-blur-md rounded-full px-3.5 py-2 border border-white/[0.12]"
+          className="flex items-center gap-2 text-sm text-[#14161b]/74 hover:text-[#14161b] transition-colors bg-black/40 backdrop-blur-md rounded-full px-3.5 py-2 border border-[#14161b]/[.09]"
         >
           <ArrowLeft size={13} strokeWidth={2.5} />
           <span className="font-semibold">Games</span>
@@ -98,13 +98,13 @@ export function GameHero({ game, stadiumUrl }: GameHeroProps) {
                   className="w-full h-full object-contain drop-shadow-2xl"
                 />
               </motion.div>
-              <span className="text-white/60 text-sm font-black tracking-wide">{awayAbbr}</span>
+              <span className="text-[#14161b]/74 text-sm font-black tracking-wide">{awayAbbr}</span>
             </div>
 
             {/* Score */}
             <div className="flex items-center gap-4 sm:gap-7">
               <span
-                className="text-6xl sm:text-8xl font-black text-white tabular-nums leading-none"
+                className="text-6xl sm:text-8xl font-black text-[#14161b] tabular-nums leading-none"
                 style={{ textShadow: `0 0 40px ${awayColor}70` }}
               >
                 {awayScore}
@@ -113,17 +113,17 @@ export function GameHero({ game, stadiumUrl }: GameHeroProps) {
               <div className="flex flex-col items-center gap-1 min-w-[40px]">
                 {isLive ? (
                   <>
-                    <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">{inningState}</span>
-                    <span className="text-base font-black text-[#FF7828]">{inning}</span>
+                    <span className="text-[10px] font-black text-[#14161b]/56 uppercase tracking-widest">{inningState}</span>
+                    <span className="text-base font-black text-[#1a73ff]">{inning}</span>
                     <div className="w-2 h-2 rounded-full bg-red-400 animate-ping mt-0.5" />
                   </>
                 ) : (
-                  <span className="text-[10px] font-black text-white/25 tracking-widest uppercase">Final</span>
+                  <span className="text-[10px] font-black text-[#14161b]/46 tracking-widest uppercase">Final</span>
                 )}
               </div>
 
               <span
-                className="text-6xl sm:text-8xl font-black text-white tabular-nums leading-none"
+                className="text-6xl sm:text-8xl font-black text-[#14161b] tabular-nums leading-none"
                 style={{ textShadow: `0 0 40px ${homeColor}70` }}
               >
                 {homeScore}
@@ -144,7 +144,7 @@ export function GameHero({ game, stadiumUrl }: GameHeroProps) {
                   className="w-full h-full object-contain drop-shadow-2xl"
                 />
               </motion.div>
-              <span className="text-white/60 text-sm font-black tracking-wide">{homeAbbr}</span>
+              <span className="text-[#14161b]/74 text-sm font-black tracking-wide">{homeAbbr}</span>
             </div>
           </motion.div>
         ) : (
@@ -166,15 +166,15 @@ export function GameHero({ game, stadiumUrl }: GameHeroProps) {
                   className="w-16 h-16 sm:w-22 sm:h-22 object-contain drop-shadow-2xl"
                 />
               </div>
-              <span className="text-white font-black text-2xl sm:text-4xl tracking-tight font-display">{awayAbbr}</span>
-              <span className="text-white/35 text-xs text-center max-w-[90px]">
+              <span className="text-[#14161b] font-black text-2xl sm:text-4xl tracking-tight font-display">{awayAbbr}</span>
+              <span className="text-[#14161b]/56 text-xs text-center max-w-[90px]">
                 {away.probablePitcher?.fullName ?? "TBD"}
               </span>
             </div>
 
             <div className="flex flex-col items-center gap-1">
-              <span className="text-white/15 text-2xl font-black">@</span>
-              <span className="text-white/15 text-[10px] text-center">{game.venue.name}</span>
+              <span className="text-[#14161b]/38 text-2xl font-black">@</span>
+              <span className="text-[#14161b]/38 text-[10px] text-center">{game.venue.name}</span>
             </div>
 
             <div className="flex flex-col items-center gap-2">
@@ -188,8 +188,8 @@ export function GameHero({ game, stadiumUrl }: GameHeroProps) {
                   className="w-16 h-16 sm:w-22 sm:h-22 object-contain drop-shadow-2xl"
                 />
               </div>
-              <span className="text-white font-black text-2xl sm:text-4xl tracking-tight font-display">{homeAbbr}</span>
-              <span className="text-white/35 text-xs text-center max-w-[90px]">
+              <span className="text-[#14161b] font-black text-2xl sm:text-4xl tracking-tight font-display">{homeAbbr}</span>
+              <span className="text-[#14161b]/56 text-xs text-center max-w-[90px]">
                 {home.probablePitcher?.fullName ?? "TBD"}
               </span>
             </div>
@@ -200,7 +200,7 @@ export function GameHero({ game, stadiumUrl }: GameHeroProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="text-white/20 text-xs"
+          className="text-[#14161b]/38 text-xs"
         >
           {game.venue.name}
         </motion.p>

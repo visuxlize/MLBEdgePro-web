@@ -3,7 +3,7 @@ import { NBA_TEAMS } from "./teams";
 import { modelNbaGame, powerRating } from "./analytics";
 import { nbaSeasonStartYear } from "@/lib/season";
 import type {
-  NbaBoxPlayer, NbaCupData, NbaCupGroup, NbaCupRow, NbaGame, NbaGameDetail, NbaOdds,
+  NbaBoxPlayer, NbaCupData, NbaLive, NbaPlayLine, NbaShot, NbaCupGroup, NbaCupRow, NbaGame, NbaGameDetail, NbaOdds,
   NbaPlayerSeason, NbaStandingRow, NbaTeamStatRow,
 } from "./types";
 
@@ -256,6 +256,51 @@ const TEAM_STAT_ROWS: { name: string; label: string; invert?: boolean }[] = [
   { name: "fastBreakPoints", label: "Fast-break pts" },
 ];
 
+function buildNbaLive(data: any, game: NbaGame): NbaLive | undefined {
+  const plays: any[] = data.plays ?? [];
+  if (plays.length === 0) return undefined;
+  const comp = data.header?.competitions?.[0];
+  const comps: any[] = comp?.competitors ?? [];
+  const idSide = new Map<string, "away" | "home">(comps.map((c) => [String(c.team?.id), c.homeAway as "away" | "home"]));
+  const lines = (side: string) => (comps.find((c) => c.homeAway === side)?.linescores ?? []).map((l: any) => String(l.displayValue ?? "0"));
+
+  const shots: NbaShot[] = [];
+  const margin: number[] = [];
+  let prevLeader = 0, leadChanges = 0, bigAway = 0, bigHome = 0;
+  let runSide: "away" | "home" | null = null, runPts = 0, runSince = "";
+  for (const p of plays) {
+    const side = p.team?.id ? idSide.get(String(p.team.id)) : undefined;
+    const c = p.coordinate;
+    if (p.shootingPlay && side && c && typeof c.x === "number" && c.x >= 0 && c.y >= 0 && c.y <= 50) {
+      shots.push({ x: c.x, y: c.y, made: !!p.scoringPlay, side, pts: p.scoreValue ?? (p.text?.includes("Three") ? 3 : 2), player: p.participants?.[0]?.athlete?.displayName ?? "", period: p.period?.number ?? 0, clock: p.clock?.displayValue ?? "" });
+    }
+    if (p.scoringPlay && typeof p.awayScore === "number") {
+      const m = p.awayScore - p.homeScore;
+      margin.push(m);
+      const leader = Math.sign(m);
+      if (leader !== 0 && prevLeader !== 0 && leader !== prevLeader) leadChanges++;
+      if (leader !== 0) prevLeader = leader;
+      bigAway = Math.max(bigAway, m); bigHome = Math.max(bigHome, -m);
+      const pts = p.scoreValue ?? 0;
+      if (side) {
+        if (side === runSide) runPts += pts; else { runSide = side; runPts = pts; runSince = `${p.period?.number ? "Q" + p.period.number : ""} ${p.clock?.displayValue ?? ""}`.trim(); }
+      }
+    }
+  }
+  const toLine = (p: any): NbaPlayLine => ({
+    id: String(p.id), period: p.period?.number ?? 0, clock: p.clock?.displayValue ?? "", text: p.text ?? p.shortDescription ?? "",
+    scoring: !!p.scoringPlay, side: p.team?.id ? idSide.get(String(p.team.id)) : undefined,
+    score: p.scoringPlay ? `${p.awayScore}-${p.homeScore}` : undefined,
+  });
+  const meaningful = plays.filter((p) => !/substitution|timeout|end of|start of/i.test(p.type?.text ?? "")).slice(-12).reverse().map(toLine);
+  return {
+    period: comp?.status?.period ?? 0, clock: comp?.status?.displayClock ?? "",
+    quarters: { away: lines("away"), home: lines("home") },
+    recent: meaningful, shots, margin, leadChanges, largestLead: { away: bigAway, home: bigHome },
+    run: runSide && runPts >= 4 ? { side: runSide, pts: runPts, since: runSince } : undefined,
+  };
+}
+
 export async function getNbaGameDetail(eventId: string): Promise<NbaGameDetail | null> {
   const [data, standings] = await Promise.all([
     getJson(`${SITE}/summary?event=${eventId}`, 120),
@@ -342,7 +387,7 @@ export async function getNbaGameDetail(eventId: string): Promise<NbaGameDetail |
     }
   }
 
-  return { game, teamStats, leaders, box, winProbSeries, injuries, recap: data.article?.headline ?? game.headline };
+  return { game, teamStats, leaders, box, winProbSeries, injuries, recap: data.article?.headline ?? game.headline, live: game.status !== "pre" ? buildNbaLive(data, game) : undefined };
 }
 
 /* ── Player season stats & props ─────────────────────────────────────────── */

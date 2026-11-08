@@ -8,6 +8,7 @@ import { SOCCER_LEAGUES, leagueLogoUrl, soccerHeadshotUrl } from "@/lib/soccer/l
 import type { SoccerLeagueKey, SoccerMatch } from "@/lib/soccer/types";
 import type { TableRow } from "@/lib/soccer/model";
 import type { LineupPlayer, SoccerMatchCenter } from "@/lib/soccer/match-center";
+import { SoccerLiveCard } from "@/components/web-tool/live-tracker";
 
 /* ───────────────────────── helpers ───────────────────────── */
 
@@ -486,11 +487,11 @@ function MatchCard({ c, onInsight }: { c: SoccerMatchCenter; onInsight: () => vo
 
       <div className="mt-6 pt-5 flex items-center justify-between gap-3 flex-wrap" style={{ borderTop: "1px solid var(--m-line)" }}>
         <div>
-          <p className="text-[18px] font-medium" style={{ color: INK }}>Get AI Match Insights</p>
+          <p className="text-[18px] font-medium" style={{ color: INK }}>Get Match Insights</p>
           <p className="text-[14px]" style={{ color: INK3 }}>Analyse game predict outcome</p>
         </div>
         <button onClick={onInsight} className="press inline-flex items-center gap-2 rounded-2xl px-5 py-3 text-[15px] font-medium text-white" style={{ background: BLUE, boxShadow: "0 8px 22px rgba(26,115,255,.35)" }}>
-          AI Insight <Sparkles size={18} />
+          Insights <Sparkles size={18} />
         </button>
       </div>
     </Card>
@@ -581,7 +582,7 @@ function InsightSheet({ c, onClose }: { c: SoccerMatchCenter; onClose: () => voi
         className="relative w-full sm:max-w-[560px] max-h-[88vh] overflow-y-auto rounded-t-[28px] sm:rounded-[28px] p-6" style={{ background: "#fff", color: INK, paddingBottom: "calc(24px + env(safe-area-inset-bottom))" }}>
         <div className="flex items-start justify-between gap-3">
           <div>
-            <span className="inline-flex items-center gap-1.5 text-[12px] font-bold rounded-full px-2.5 py-1" style={{ background: "#e8f0ff", color: BLUE }}><Sparkles size={13} /> AI Match Insight</span>
+            <span className="inline-flex items-center gap-1.5 text-[12px] font-bold rounded-full px-2.5 py-1" style={{ background: "#e8f0ff", color: BLUE }}><Sparkles size={13} /> Match Insight</span>
             <p className="mt-2 text-[22px] font-semibold leading-tight">{c.match.homeTeam.shortName} vs {c.match.awayTeam.shortName}</p>
           </div>
           <button onClick={onClose} aria-label="Close" className="press w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "#f3f4f7" }}><X size={18} /></button>
@@ -765,6 +766,22 @@ export function SoccerCenter({
             </div>
           </div>
 
+          {liveCount > 0 && (
+            <div className="mb-4">
+              <p className="text-[12px] font-bold uppercase tracking-wider mb-2 flex items-center gap-2" style={{ color: "#ef3b4a" }}><span className="spot-live-dot inline-block rounded-full" style={{ width: 6, height: 6, background: "#ef3b4a" }} />Live now · {liveCount}</p>
+              <div className="snap-row -mx-1 px-1 pb-1">
+                {matches.filter((m) => m.status === "live").map((m) => (
+                  <button key={m.id} onClick={() => loadCenter(m.league, m.id)} className="press w-[158px] m-pill px-3 py-2.5 text-left flex flex-col gap-1.5" style={{ boxShadow: sel?.id === m.id ? `inset 0 0 0 1.5px ${BLUE}, var(--m-shadow)` : "var(--m-shadow)" }}>
+                    <span className="text-[10.5px] font-extrabold" style={{ color: "#ef3b4a" }}>● {m.clock ?? "LIVE"}</span>
+                    {[[m.homeTeam, m.homeScore], [m.awayTeam, m.awayScore]].map(([t, sc]) => (
+                      <span key={(t as { id: string }).id} className="flex items-center gap-2"><Crest src={(t as { logo: string }).logo} name={(t as { abbr: string }).abbr} size={18} /><span className="flex-1 text-[12.5px] font-bold truncate" style={{ color: INK }}>{(t as { shortName: string }).shortName}</span><span className="text-[13px] font-extrabold" style={{ color: INK }}>{sc as number}</span></span>
+                    ))}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Phone league chips */}
           <div className="lg:hidden mb-4"><LeagueChips league={league} setLeague={setLeague} counts={counts} /></div>
 
@@ -782,7 +799,8 @@ export function SoccerCenter({
               {center ? (
                 <>
                   <div className="order-[1] md:order-none lg:order-1"><motion.div key={center.match.id} initial={{ opacity: 0, scale: 0.985 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.35 }}><Hero c={center} /></motion.div></div>
-                  <div className="order-[3] md:order-none lg:order-4">
+                  {center.live && <div className="order-[3] md:order-none lg:order-2 md:col-span-2 lg:col-span-1"><SoccerLiveCard c={center} /></div>}
+                  <div className="order-[3] md:order-none lg:order-5">
                     <Card className="p-4 sm:p-5">
                       <div className="flex items-center justify-between gap-2 mb-3">
                         <p className="text-[17px] font-semibold" style={{ color: INK }}>{tab === "live" ? "Live now" : "Matches"}</p>
@@ -802,8 +820,8 @@ export function SoccerCenter({
                       </div>
                     </Card>
                   </div>
-                  <div className="order-[4] md:order-none lg:order-2">{pre ? <PreviewCard c={center} /> : <Momentum c={center} />}</div>
-                  <div className="order-[5] md:order-none lg:order-3">{pre ? <FormTable c={center} /> : <BestPlayerCard c={center} />}</div>
+                  <div className="order-[4] md:order-none lg:order-3">{pre ? <PreviewCard c={center} /> : <Momentum c={center} />}</div>
+                  <div className="order-[5] md:order-none lg:order-4">{pre ? <FormTable c={center} /> : <BestPlayerCard c={center} />}</div>
                 </>
               ) : (
                 <Card className="p-10 text-center"><p style={{ color: INK3 }}>{loadingCenter ? "Loading match…" : "No matches to show for this day — pick another date."}</p></Card>

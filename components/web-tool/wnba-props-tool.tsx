@@ -51,7 +51,7 @@ export function WnbaPropsTool({ props }: { props: WnbaPlayerProp[] }) {
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-6" style={{ paddingBottom: slip.length ? 96 : 24 }}>
         <div className="flex items-end justify-between gap-4 flex-wrap mb-5">
           <div>
-            <p className="spot-label" style={{ color: "#2dd4bf" }}>Prop Projections</p>
+            <p className="spot-label" style={{ color: "#0f9d8e" }}>Prop Projections</p>
             <h1 className="font-spot-sans text-3xl sm:text-4xl font-black leading-tight mt-1" style={{ color: "var(--text)" }}>Today&rsquo;s WNBA Props</h1>
             <p className="mt-1.5 font-spot-sans text-[13px]" style={{ color: "var(--text-muted)" }}>
               Model projection vs the book. Green bar = value on the over, red = under.
@@ -65,7 +65,7 @@ export function WnbaPropsTool({ props }: { props: WnbaPlayerProp[] }) {
                   key={label}
                   onClick={() => setPos(label)}
                   className="rounded-full px-3.5 py-1.5 font-spot-sans font-extrabold text-[11px] tracking-[.06em]"
-                  style={active ? { background: "linear-gradient(135deg,#2dd4bf,#5eead4)", color: "#06070d" } : { color: "var(--text-muted)", border: "1px solid var(--hairline)" }}
+                  style={active ? { background: "linear-gradient(135deg,#0f9d8e,#0f8f80)", color: "#06070d" } : { color: "var(--text-muted)", border: "1px solid var(--hairline)" }}
                 >
                   {label}
                 </button>
@@ -105,16 +105,16 @@ export function WnbaPropsTool({ props }: { props: WnbaPlayerProp[] }) {
                   </div>
                   <div className="p-4 flex flex-col gap-3.5">
                     <p className="font-spot-sans font-bold text-xs" style={{ color: "var(--text-2)" }}>{p.market}</p>
-                    <div className="relative h-11 rounded-xl" style={{ background: "rgba(255,255,255,.05)", border: "1px solid var(--hairline)" }}>
-                      <div className="absolute top-0 bottom-0 z-[2]" style={{ left: `${viz.linePct}%`, width: 2, background: "rgba(255,255,255,.5)" }} />
-                      <div className="absolute z-[3] whitespace-nowrap rounded px-1.5 py-0.5 font-spot-mono font-extrabold text-[9px]" style={{ top: -8, left: `${viz.linePct}%`, transform: "translateX(-50%)", color: "var(--text-2)", background: "var(--panel)", border: "1px solid rgba(255,255,255,.12)" }}>
+                    <div className="relative h-11 rounded-xl" style={{ background: "var(--wash-2)", border: "1px solid var(--hairline)" }}>
+                      <div className="absolute top-0 bottom-0 z-[2]" style={{ left: `${viz.linePct}%`, width: 2, background: "rgba(20,22,27,.6)" }} />
+                      <div className="absolute z-[3] whitespace-nowrap rounded px-1.5 py-0.5 font-spot-mono font-extrabold text-[9px]" style={{ top: -8, left: `${viz.linePct}%`, transform: "translateX(-50%)", color: "var(--text-2)", background: "var(--panel)", border: "1px solid var(--wash-3)" }}>
                         Line {p.line}
                       </div>
                       <div
                         className="absolute flex items-center justify-end rounded-lg overflow-hidden"
                         style={{
                           top: 6, bottom: 6, left: `${viz.barLeft}%`, width: `${viz.barW}%`,
-                          background: viz.sideGreen ? "var(--green)" : "#f87171",
+                          background: viz.sideGreen ? "var(--green)" : "#e5484d",
                           boxShadow: `0 0 16px ${viz.sideGreen ? "rgba(52,211,153,.4)" : "rgba(248,113,113,.4)"}`,
                           paddingRight: 9,
                           ["--bar-target-width" as string]: `${viz.barW}%`,
@@ -123,7 +123,7 @@ export function WnbaPropsTool({ props }: { props: WnbaPlayerProp[] }) {
                       >
                         <span className="font-spot-mono font-extrabold text-[11px]" style={{ color: "#06070d" }}>{p.model}</span>
                       </div>
-                      <span className="absolute font-spot-sans font-extrabold text-[8px] uppercase tracking-[.1em]" style={{ bottom: 6, left: 8, color: "rgba(255,255,255,.3)" }}>Model proj.</span>
+                      <span className="absolute font-spot-sans font-extrabold text-[8px] uppercase tracking-[.1em]" style={{ bottom: 6, left: 8, color: "rgba(20,22,27,.38)" }}>Model proj.</span>
                     </div>
                     <div className="flex items-center justify-between gap-2.5">
                       <div className="flex items-center gap-1.5">
@@ -131,7 +131,7 @@ export function WnbaPropsTool({ props }: { props: WnbaPlayerProp[] }) {
                           className="rounded-lg px-2.5 py-1 font-spot-sans font-extrabold text-[11px]"
                           style={viz.sideGreen
                             ? { color: "var(--green)", background: "var(--green-bg)", border: "1px solid rgba(52,211,153,.3)" }
-                            : { color: "#fda4a4", background: "var(--red-bg)", border: "1px solid rgba(239,68,68,.3)" }}
+                            : { color: "#d6303d", background: "var(--red-bg)", border: "1px solid rgba(239,68,68,.3)" }}
                         >
                           {viz.side}
                         </span>
@@ -161,7 +161,7 @@ export function WnbaPropsTool({ props }: { props: WnbaPlayerProp[] }) {
             style={{ background: "rgba(11,11,21,.96)", border: "1px solid rgba(45,212,191,.3)", backdropFilter: "blur(16px)", boxShadow: "0 20px 60px rgba(0,0,0,.65)", pointerEvents: "auto" }}>
             <div>
               <span className="font-spot-sans font-black text-[13px]" style={{ color: "var(--text)" }}>
-                <span style={{ color: "#2dd4bf" }}>{slip.length}</span>-leg parlay
+                <span style={{ color: "#0f9d8e" }}>{slip.length}</span>-leg parlay
               </span>
               <span className="ml-2.5 font-spot-sans font-semibold text-[12px]" style={{ color: "var(--text-muted)" }}>
                 Avg edge <span className="font-spot-mono font-extrabold" style={{ color: "var(--green)" }}>{slipEdge}</span>
@@ -171,7 +171,7 @@ export function WnbaPropsTool({ props }: { props: WnbaPlayerProp[] }) {
             <div className="flex items-center gap-2">
               <button onClick={handleSave}
                 className="flex items-center gap-1.5 rounded-xl px-3.5 py-2 font-spot-sans font-extrabold text-[11px] transition-all"
-                style={{ background: saved ? "var(--green-bg)" : "rgba(45,212,191,.12)", color: saved ? "var(--green)" : "#2dd4bf", border: `1px solid ${saved ? "rgba(52,211,153,.32)" : "rgba(45,212,191,.28)"}` }}>
+                style={{ background: saved ? "var(--green-bg)" : "rgba(45,212,191,.12)", color: saved ? "var(--green)" : "#0f9d8e", border: `1px solid ${saved ? "rgba(52,211,153,.32)" : "rgba(45,212,191,.28)"}` }}>
                 {saved ? <Check size={12} /> : <BookmarkPlus size={12} />}
                 {saved ? "Saved!" : "Save Slip"}
               </button>

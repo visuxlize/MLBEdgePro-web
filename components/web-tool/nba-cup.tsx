@@ -8,7 +8,7 @@ import { Chip, EmptyState, Gauge, Panel, Segmented, SportHeader } from "@/compon
 import { nbaLogoUrl, nbaShortName, nbaTeamHex } from "@/lib/nba/teams";
 import type { NbaCupData, NbaCupGroup, NbaGame } from "@/lib/nba/types";
 
-const GOLD = "#fbbf24";
+const GOLD = "#d49a06";
 
 function GroupCard({ g, i }: { g: NbaCupGroup; i: number }) {
   return (
@@ -28,7 +28,7 @@ function GroupCard({ g, i }: { g: NbaCupGroup; i: number }) {
           <span className="font-spot-mono font-black text-[11px] w-3.5" style={{ color: "var(--text-faint)" }}>{idx + 1}</span>
           <LogoPlate hex={nbaTeamHex(r.abbr)} src={nbaLogoUrl(r.abbr)} code={r.abbr} size={30} radius={9} variant="clean" />
           <span className="flex-1 font-spot-sans font-extrabold text-[13px] truncate" style={{ color: "var(--text)" }}>{nbaShortName(r.abbr)}</span>
-          {r.q && <Chip color={r.q === "adv" ? "#34d399" : GOLD}>{r.q === "adv" ? "Adv" : "Wild card"}</Chip>}
+          {r.q && <Chip color={r.q === "adv" ? "#12a150" : GOLD}>{r.q === "adv" ? "Adv" : "Wild card"}</Chip>}
           <span className="font-spot-mono font-extrabold text-[12px] w-9 text-right" style={{ color: "var(--text)" }}>{r.wins}-{r.losses}</span>
           <span className="font-spot-mono font-bold text-[11px] w-9 text-right" style={{ color: r.diff >= 0 ? "var(--green)" : "var(--red-soft)" }}>{r.diff > 0 ? "+" : ""}{r.diff}</span>
         </div>
@@ -43,7 +43,7 @@ function MiniGame({ g }: { g: NbaGame }) {
   return (
     <Link href={`/nba/game/${g.id}`} className="press flex items-center gap-3 rounded-2xl px-3.5 py-3" style={{ background: "var(--panel)", border: "1px solid var(--hairline)" }}>
       <div className="w-[52px] shrink-0">
-        <p className="font-spot-mono font-extrabold text-[10px]" style={{ color: final ? "var(--text-muted)" : "#fdba74" }}>{final ? "FINAL" : g.status === "live" ? "LIVE" : g.timeLabel}</p>
+        <p className="font-spot-mono font-extrabold text-[10px]" style={{ color: final ? "var(--text-muted)" : "#c2540a" }}>{final ? "FINAL" : g.status === "live" ? "LIVE" : g.timeLabel}</p>
         <p className="font-spot-sans text-[9px]" style={{ color: "var(--text-faint)" }}>{g.dateLabel.replace(/^\w+, /, "")}</p>
       </div>
       <div className="flex-1 min-w-0 flex items-center justify-center gap-2.5">
@@ -87,7 +87,7 @@ export function NbaCup({ data }: { data: NbaCupData }) {
               <span style={{ color: "var(--green)" }}>●</span> Group leader — advancing &nbsp; <span style={{ color: GOLD }}>●</span> Best runner-up — wild card
             </p>
           </div>
-          {data.knockout.length > 0 && <Chip color="#a78bfa">Knockout rounds set</Chip>}
+          {data.knockout.length > 0 && <Chip color="#6d4fe0">Knockout rounds set</Chip>}
         </div>
 
         {data.groups.length === 0 ? (
@@ -106,7 +106,7 @@ export function NbaCup({ data }: { data: NbaCupData }) {
 
         {data.knockout.length > 0 && (
           <section className="mb-7">
-            <p className="spot-label mb-2.5" style={{ color: "#c4b5fd" }}>Knockout rounds</p>
+            <p className="spot-label mb-2.5" style={{ color: "#6d4fe0" }}>Knockout rounds</p>
             <div className="grid gap-2.5 sm:grid-cols-2">{data.knockout.map((g) => <MiniGame key={g.id} g={g} />)}</div>
           </section>
         )}

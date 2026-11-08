@@ -63,11 +63,11 @@ export function LogoPlate({
     <div
       className="shrink-0 flex items-center justify-center relative overflow-hidden"
       style={clean ? {
-        width: size, height: size, borderRadius: r, background: "#12141c",
+        width: size, height: size, borderRadius: r, background: "#ffffff",
         boxShadow: `inset 0 0 0 1.5px ${alpha(hex, "40")}, 0 2px 8px rgba(0,0,0,.5)`,
       } : {
         width: size, height: size, borderRadius: r, background: hex,
-        boxShadow: "inset 0 0 0 1.5px rgba(255,255,255,.45), 0 2px 6px rgba(0,0,0,.18)",
+        boxShadow: "inset 0 0 0 1.5px rgba(20,22,27,.6), 0 2px 6px rgba(0,0,0,.18)",
       }}
       title={name ?? code}
     >
@@ -167,7 +167,7 @@ export function WnbaHeadshot({
       className="relative shrink-0 overflow-hidden"
       style={{
         width: size, height: size, borderRadius: r,
-        background: `radial-gradient(115% 95% at 50% 4%, ${alpha(hex, "40")}, #0b0d16 76%)`,
+        background: `radial-gradient(115% 95% at 50% 4%, ${alpha(hex, "40")}, #ffffff 76%)`,
         boxShadow: `inset 0 0 0 1px ${alpha(hex, "38")}`,
       }}
     >
@@ -201,7 +201,7 @@ export const CutoutHeadshot = WnbaHeadshot;
 export function BlendedHeadshot({
   id, name, size = 64, teamId,
 }: { id: number; name: string; size?: number; teamId?: number }) {
-  const hex = teamId !== undefined ? teamHex(teamId) : "#7c5cfa";
+  const hex = teamId !== undefined ? teamHex(teamId) : "#6d4fe0";
   return <HeadshotPlate hex={hex} src={playerHeadshotUrl(id)} name={name} size={size} />;
 }
 
@@ -214,7 +214,7 @@ export function EdgeRing({
   return (
     <div className="spot-ring" style={{ width: size, height: size, ["--grade" as string]: c, ["--edge" as string]: value }}>
       <div className="flex flex-col items-center leading-none">
-        <span className="font-spot-mono font-extrabold text-white" style={{ fontSize: size * 0.3 }}>{value}</span>
+        <span className="font-spot-mono font-extrabold text-[#14161b]" style={{ fontSize: size * 0.3 }}>{value}</span>
         {grade && <span className="font-spot-sans font-black mt-0.5" style={{ fontSize: size * 0.17, color: c }}>{grade}</span>}
       </div>
     </div>
@@ -254,7 +254,7 @@ export function WinProbBar({
           <span className="font-spot-mono text-[11px] font-bold" style={{ color: "var(--text-3)" }}>{homePct}%</span>
         </div>
       )}
-      <div className="flex w-full overflow-hidden" style={{ height: 7, borderRadius: 5, background: "rgba(255,255,255,.12)" }}>
+      <div className="flex w-full overflow-hidden" style={{ height: 7, borderRadius: 5, background: "var(--wash-3)" }}>
         <div style={{ width: `${awayPct}%`, background: awayHex }} />
         <div style={{ flex: 1, background: homeHex }} />
       </div>
@@ -268,7 +268,7 @@ export function WinProbBar({
   );
 }
 
-/* ── AI Prediction tag + button ─────────────────────────────────────────────── */
+/* ── Model Pick tag + button ─────────────────────────────────────────────── */
 
 export function AIPredictionTag({ className = "" }: { className?: string }) {
   return (
@@ -276,7 +276,7 @@ export function AIPredictionTag({ className = "" }: { className?: string }) {
       className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 spot-label-sm ${className}`}
       style={{ color: "var(--purple-2)", background: "var(--purple-tint)", border: "1px solid var(--purple-line)" }}
     >
-      <span style={{ color: "var(--purple-2)" }}>◆</span> AI Prediction
+      <span style={{ color: "var(--purple-2)" }}>◆</span> Model Pick
     </span>
   );
 }
@@ -294,7 +294,7 @@ export function AIPredictionButton({
       style={{ background: "rgba(124,92,250,.06)", border: "1px solid rgba(124,92,250,.16)" }}
     >
       <span className="inline-flex items-center gap-1.5 spot-label-sm" style={{ color: "var(--purple-2)" }}>
-        <span>◆</span> AI Prediction
+        <span>◆</span> Model Pick
       </span>
       <span className="inline-flex items-center gap-2 font-spot-sans font-black text-[13px]" style={{ color: "var(--purple-soft)" }}>
         {teamId !== undefined && (
@@ -328,13 +328,13 @@ export function BaseDiamond({
   first, second, third, outs,
 }: { first?: boolean; second?: boolean; third?: boolean; outs?: number }) {
   const on = "var(--orange)";
-  const off = "rgba(255,255,255,.10)";
+  const off = "var(--wash-3)";
   const sq = (filled?: boolean) => (
     <span
       style={{
         width: 11, height: 11, transform: "rotate(45deg)", display: "inline-block",
         background: filled ? on : off, borderRadius: 2,
-        boxShadow: filled ? `0 0 8px ${alpha("#f97316", "88")}` : "none",
+        boxShadow: filled ? `0 0 8px ${alpha("#ea6a0a", "88")}` : "none",
       }}
     />
   );
@@ -348,7 +348,7 @@ export function BaseDiamond({
       {outs !== undefined && (
         <div className="flex items-center gap-1">
           {[0, 1, 2].map((i) => (
-            <span key={i} className="rounded-full" style={{ width: 5, height: 5, background: i < outs ? "var(--red)" : "rgba(255,255,255,.14)" }} />
+            <span key={i} className="rounded-full" style={{ width: 5, height: 5, background: i < outs ? "var(--red)" : "var(--wash-3)" }} />
           ))}
         </div>
       )}

@@ -11,25 +11,25 @@ export const viewport: Viewport = {
   maximumScale: 5,
   // Edge-to-edge on notched / foldable displays — content respects env(safe-area-inset-*) in globals.css
   viewportFit: "cover",
-  themeColor: "#06070d",
+  themeColor: "#eceef2",
 };
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
-  title: "MLB Edge Pro — AI-Powered MLB Analysis",
+  title: "Edge Pro — Live NBA, NFL & Soccer Analysis",
   description:
-    "Data-driven MLB game predictions, prop analysis, and edge reports. Make smarter picks every day.",
+    "Live game trackers, real DraftKings prop lines and model-graded picks for the NBA, NFL and soccer.",
   openGraph: {
-    title: "MLB Edge Pro",
-    description: "Data-driven MLB analysis. Props, edges, and win predictions.",
+    title: "Edge Pro",
+    description: "Live NBA, NFL & soccer analysis. Real prop lines, edges, and win probabilities.",
     url: baseUrl,
-    siteName: "MLB Edge Pro",
+    siteName: "Edge Pro",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "MLB Edge Pro",
-    description: "Data-driven MLB analysis. Props, edges, and win predictions.",
+    title: "Edge Pro",
+    description: "Live NBA, NFL & soccer analysis. Real prop lines, edges, and win probabilities.",
   },
 };
 
@@ -46,7 +46,7 @@ export default function RootLayout({
       signInFallbackRedirectUrl="/home"
       signUpFallbackRedirectUrl="/home"
     >
-      <html lang="en" className="dark" suppressHydrationWarning>
+      <html lang="en" suppressHydrationWarning>
         <head>
           {/* Bricolage Grotesque (display accents) + Hanken Grotesk (body/UI, everywhere) + JetBrains Mono (numbers) */}
           <link rel="preconnect" href="https://fonts.googleapis.com" />

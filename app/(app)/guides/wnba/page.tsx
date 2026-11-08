@@ -33,7 +33,7 @@ export default function WnbaGuidePage() {
               Guides
             </Link>
             <ChevronRight size={12} style={{ color: "var(--text-dim)" }} />
-            <span className="font-spot-sans font-bold text-[11px] uppercase tracking-[.12em]" style={{ color: "#2dd4bf" }}>WNBA</span>
+            <span className="font-spot-sans font-bold text-[11px] uppercase tracking-[.12em]" style={{ color: "#0f9d8e" }}>WNBA</span>
           </div>
           <h1 className="font-spot-sans font-black text-4xl sm:text-5xl uppercase leading-tight" style={{ color: "var(--text)", letterSpacing: "-.01em" }}>
             🏀 WNBA Analysis
@@ -55,7 +55,7 @@ export default function WnbaGuidePage() {
 
         {/* Quick Links */}
         <div>
-          <p className="spot-label mb-3" style={{ color: "#2dd4bf" }}>Quick Access</p>
+          <p className="spot-label mb-3" style={{ color: "#0f9d8e" }}>Quick Access</p>
           <div className="flex gap-3 flex-wrap">
             {QUICK_LINKS.map((q) => (
               <Link
@@ -82,7 +82,7 @@ export default function WnbaGuidePage() {
             {STRATEGY_CARDS.map((c) => (
               <div key={c.title} className="rounded-[16px] p-4" style={{ background: "var(--panel)", border: "1px solid var(--hairline)" }}>
                 <span className="inline-block font-spot-sans font-extrabold text-[9px] uppercase tracking-[.10em] px-2 py-0.5 rounded mb-2"
-                  style={{ color: "#2dd4bf", background: "rgba(45,212,191,.12)", border: "1px solid rgba(45,212,191,.25)" }}>
+                  style={{ color: "#0f9d8e", background: "rgba(45,212,191,.12)", border: "1px solid rgba(45,212,191,.25)" }}>
                   {c.tag}
                 </span>
                 <p className="font-spot-sans font-extrabold text-sm" style={{ color: "var(--text)" }}>{c.title}</p>

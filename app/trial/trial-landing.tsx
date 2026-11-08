@@ -11,9 +11,9 @@ const TIER_META = {
     trial:    "14-day free trial",
     price:    "$4.99/mo after",
     tagline:  "Props, Edge Report & matchup analysis — every game, every day.",
-    color:    "#FF7828",
-    bg:       "rgba(255,120,40,0.08)",
-    border:   "rgba(255,120,40,0.25)",
+    color:    "#1a73ff",
+    bg:       "rgba(26,115,255,0.08)",
+    border:   "rgba(26,115,255,0.25)",
     Icon:     Zap,
   },
   pro: {
@@ -21,7 +21,7 @@ const TIER_META = {
     trial:    "3-day free trial",
     price:    "$14.99/mo after",
     tagline:  "Spray charts, barrel rate, exit velocity & daily picks.",
-    color:    "#818CF8",
+    color:    "#6d4fe0",
     bg:       "rgba(129,140,248,0.08)",
     border:   "rgba(129,140,248,0.25)",
     Icon:     Star,
@@ -38,7 +38,7 @@ export function TrialLanding({ tier }: { tier: "fan" | "pro" }) {
   }, [tier]);
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center px-4 py-16 bg-[#0A0E14] overflow-hidden">
+    <div className="relative min-h-screen flex flex-col items-center justify-center px-4 py-16 bg-[#eceef2] overflow-hidden">
       {/* Ambient glow */}
       <div
         className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full blur-[100px]"
@@ -57,28 +57,28 @@ export function TrialLanding({ tier }: { tier: "fan" | "pro" }) {
           </span>
         </div>
 
-        <h1 className="text-3xl font-black text-white tracking-tight mb-3">
+        <h1 className="text-3xl font-black text-[#14161b] tracking-tight mb-3">
           Start your free trial
         </h1>
 
-        <p className="text-white/45 text-sm leading-relaxed mb-2">
+        <p className="text-[#14161b]/56 text-sm leading-relaxed mb-2">
           {meta.tagline}
         </p>
-        <p className="text-white/25 text-xs mb-10">
+        <p className="text-[#14161b]/46 text-xs mb-10">
           {meta.price} · Card required · Cancel anytime
         </p>
 
         {/* CTA — goes to the real /sign-up page which has proper OAuth handling */}
         <Link
           href="/sign-up"
-          className="inline-flex items-center justify-center gap-2 w-full h-13 rounded-full text-white font-bold text-base shadow-[0_8px_32px_rgba(255,120,40,0.35)] transition-opacity hover:opacity-90"
+          className="inline-flex items-center justify-center gap-2 w-full h-13 rounded-full text-[#14161b] font-bold text-base shadow-[0_8px_32px_rgba(26,115,255,0.35)] transition-opacity hover:opacity-90"
           style={{ background: meta.color }}
         >
           Create account — free {meta.label} trial
           <ArrowRight size={16} strokeWidth={2.5} />
         </Link>
 
-        <p className="mt-4 text-xs text-white/25">
+        <p className="mt-4 text-xs text-[#14161b]/46">
           Already have an account?{" "}
           <Link href="/sign-in" className="transition-colors" style={{ color: meta.color }}>
             Sign in

@@ -190,7 +190,7 @@ function SprayChart({ card }: { card: BatterCard }) {
       x: home.x - Math.cos(angle) * dist,
       y: home.y - Math.sin(angle) * dist,
       isHR,
-      color: isPull ? "#f97316" : isCenter ? "#34d399" : "#60a5fa",
+      color: isPull ? "#ea6a0a" : isCenter ? "#12a150" : "#60a5fa",
     };
   });
 
@@ -208,10 +208,10 @@ function SprayChart({ card }: { card: BatterCard }) {
       </div>
       <svg width="100%" viewBox={`0 0 ${W} ${H}`} className="block">
         <ellipse cx={home.x} cy={home.y} rx={wallR + 10} ry={wallR * 0.7} fill="rgba(124,92,250,0.10)" />
-        <path d={wallPath} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="2" />
-        <text x={home.x - wallR - 5} y={home.y - wallR * 0.4}  fill="rgba(255,255,255,0.25)" fontSize="10" textAnchor="middle">LF 318&apos;</text>
-        <text x={home.x}             y={home.y - wallR - 10}    fill="rgba(255,255,255,0.25)" fontSize="10" textAnchor="middle">CF 408&apos;</text>
-        <text x={home.x + wallR + 5} y={home.y - wallR * 0.4}  fill="rgba(255,255,255,0.25)" fontSize="10" textAnchor="middle">RF 314&apos;</text>
+        <path d={wallPath} fill="none" stroke="var(--wash-3)" strokeWidth="2" />
+        <text x={home.x - wallR - 5} y={home.y - wallR * 0.4}  fill="rgba(20,22,27,.38)" fontSize="10" textAnchor="middle">LF 318&apos;</text>
+        <text x={home.x}             y={home.y - wallR - 10}    fill="rgba(20,22,27,.38)" fontSize="10" textAnchor="middle">CF 408&apos;</text>
+        <text x={home.x + wallR + 5} y={home.y - wallR * 0.4}  fill="rgba(20,22,27,.38)" fontSize="10" textAnchor="middle">RF 314&apos;</text>
         <polygon points={`${home.x},${home.y} ${first.x},${first.y} ${sec.x},${sec.y} ${third.x},${third.y}`}
           fill="rgba(167,139,250,0.08)" stroke="rgba(167,139,250,0.25)" strokeWidth="1" />
         {dots.map((d, i) => (
@@ -222,14 +222,14 @@ function SprayChart({ card }: { card: BatterCard }) {
         ))}
         <circle cx={home.x} cy={home.y} r={5} fill="#FFFFFF" opacity={0.8} />
         {[first, sec, third].map((b, i) => (
-          <rect key={i} x={b.x - 4} y={b.y - 4} width={8} height={8} fill="rgba(255,255,255,0.4)" rx={1} transform={`rotate(45 ${b.x} ${b.y})`} />
+          <rect key={i} x={b.x - 4} y={b.y - 4} width={8} height={8} fill="rgba(20,22,27,.38)" rx={1} transform={`rotate(45 ${b.x} ${b.y})`} />
         ))}
         <text x={home.x + 88}  y={home.y - 55}  fill="rgba(249,115,22,0.85)" fontSize="10" fontWeight="bold">PULL {card.pull.pct}%</text>
         <text x={home.x - 12}  y={home.y - 140} fill="rgba(52,211,153,0.85)" fontSize="10" fontWeight="bold">CTR {card.center.pct}%</text>
         <text x={home.x - 120} y={home.y - 55}  fill="rgba(96,165,250,0.85)" fontSize="10" fontWeight="bold">OPPO {card.oppo.pct}%</text>
       </svg>
       <div className="flex items-center gap-4 px-5 pb-4">
-        {([["#f97316","Pull"],["#34d399","Center"],["#60a5fa","Oppo"]] as const).map(([c,l]) => (
+        {([["#ea6a0a","Pull"],["#12a150","Center"],["#60a5fa","Oppo"]] as const).map(([c,l]) => (
           <div key={l} className="flex items-center gap-1.5">
             <div className="rounded-full" style={{ width: 8, height: 8, backgroundColor: c }} />
             <span className="font-spot-sans text-[10px]" style={{ color: "var(--text-muted)" }}>{l}</span>
@@ -385,11 +385,11 @@ function BatterSpotlight({ card, pitcherName, onClose, onAdd, added }: {
                   <p className="font-spot-mono text-[10px]" style={{ color: "var(--text-muted)" }}>{p.usage}% · SLG {p.slg}</p>
                 </div>
                 <div className="flex-1 flex items-center gap-0.5 h-3">
-                  <div className="h-full rounded-l-full" style={{ width: `${p.pullPct}%`, background: "#f97316" }} />
-                  <div className="h-full" style={{ width: `${p.centerPct}%`, background: "#34d399" }} />
+                  <div className="h-full rounded-l-full" style={{ width: `${p.pullPct}%`, background: "#ea6a0a" }} />
+                  <div className="h-full" style={{ width: `${p.centerPct}%`, background: "#12a150" }} />
                   <div className="h-full rounded-r-full" style={{ width: `${p.oppoPct}%`, background: "#60a5fa" }} />
                 </div>
-                <p className="font-spot-sans text-xs font-bold shrink-0" style={{ color: p.pullPct > p.oppoPct ? "#f97316" : "#60a5fa" }}>
+                <p className="font-spot-sans text-xs font-bold shrink-0" style={{ color: p.pullPct > p.oppoPct ? "#ea6a0a" : "#60a5fa" }}>
                   {p.pullPct > p.oppoPct ? `PULL ${p.pullPct}%` : `OPPO ${p.oppoPct}%`}
                 </p>
               </div>

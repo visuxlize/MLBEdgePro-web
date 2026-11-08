@@ -19,7 +19,7 @@ function TrialCheckoutInner() {
   const [error, setError] = useState<string | null>(null);
 
   const isFan = tier === "fan";
-  const color = isFan ? "#FF7828" : "#818CF8";
+  const color = isFan ? "#1a73ff" : "#6d4fe0";
   const Icon = isFan ? Zap : Star;
   const trialDays = isFan ? "14" : "3";
 
@@ -53,22 +53,22 @@ function TrialCheckoutInner() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#0A0E14] flex flex-col items-center justify-center px-6 text-center">
-        <div className="rounded-2xl border border-[#EB505A]/25 bg-[#EB505A]/[0.06] p-8 max-w-md w-full">
-          <AlertCircle size={32} className="text-[#EB505A] mx-auto mb-4" strokeWidth={1.5} />
-          <p className="text-[#EB505A] font-bold text-lg mb-2">Couldn&apos;t start checkout</p>
-          <p className="text-white/40 text-sm mb-6 leading-relaxed">{error}</p>
+      <div className="min-h-screen bg-[#eceef2] flex flex-col items-center justify-center px-6 text-center">
+        <div className="rounded-2xl border border-[#ef3b4a]/25 bg-[#ef3b4a]/[0.06] p-8 max-w-md w-full">
+          <AlertCircle size={32} className="text-[#ef3b4a] mx-auto mb-4" strokeWidth={1.5} />
+          <p className="text-[#ef3b4a] font-bold text-lg mb-2">Couldn&apos;t start checkout</p>
+          <p className="text-[#14161b]/56 text-sm mb-6 leading-relaxed">{error}</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <a
               href={`/trial?tier=${tier}`}
-              className="inline-flex items-center justify-center gap-2 rounded-full px-6 py-2.5 text-sm font-bold text-white transition-colors"
+              className="inline-flex items-center justify-center gap-2 rounded-full px-6 py-2.5 text-sm font-bold text-[#14161b] transition-colors"
               style={{ background: color }}
             >
               Try again
             </a>
             <Link
               href="/games"
-              className="inline-flex items-center justify-center gap-2 rounded-full px-6 py-2.5 text-sm font-medium text-white/40 border border-white/[0.08] hover:text-white transition-colors"
+              className="inline-flex items-center justify-center gap-2 rounded-full px-6 py-2.5 text-sm font-medium text-[#14161b]/56 border border-[#14161b]/[.09] hover:text-[#14161b] transition-colors"
             >
               Back to app
             </Link>
@@ -79,7 +79,7 @@ function TrialCheckoutInner() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0E14] flex flex-col items-center justify-center px-6 text-center">
+    <div className="min-h-screen bg-[#eceef2] flex flex-col items-center justify-center px-6 text-center">
       <div
         className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full blur-[120px]"
         style={{ background: `${color}0D` }}
@@ -94,8 +94,8 @@ function TrialCheckoutInner() {
         </div>
 
         <div>
-          <p className="text-white font-black text-xl mb-1">Setting up your trial…</p>
-          <p className="text-white/40 text-sm">
+          <p className="text-[#14161b] font-black text-xl mb-1">Setting up your trial…</p>
+          <p className="text-[#14161b]/56 text-sm">
             Opening checkout for your{" "}
             <span className="font-bold" style={{ color }}>
               {trialDays}-day {isFan ? "Fan" : "Pro"} trial

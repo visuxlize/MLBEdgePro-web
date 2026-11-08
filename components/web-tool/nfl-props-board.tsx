@@ -8,7 +8,7 @@ import { Chip, EmptyState, Gauge, Segmented, SportHeader } from "@/components/we
 import { nflHeadshotUrl, nflLogoUrl, nflTeamHex } from "@/lib/nfl/teams";
 import type { NflPropMarket, NflPropPlay, NflSeasonGame } from "@/lib/nfl/types";
 
-const ACCENT = "#a78bfa";
+const ACCENT = "#1a73ff";
 type MarketFilter = "All" | NflPropMarket;
 
 export function NflPropCard({ p, inSlip, onToggle }: { p: NflPropPlay; inSlip?: boolean; onToggle?: () => void }) {
@@ -31,8 +31,8 @@ export function NflPropCard({ p, inSlip, onToggle }: { p: NflPropPlay; inSlip?: 
           <p className="mt-1 font-spot-sans font-semibold text-[11px]" style={{ color: "var(--text-3)" }}>{p.pos} · {p.team} {p.home ? "vs" : "@"} {p.opp}</p>
           <p className="font-spot-mono text-[10px]" style={{ color: "var(--text-faint)" }}>{p.kickoff}</p>
           <div className="mt-1.5 flex gap-1.5 flex-wrap">
-            {p.source === "draftkings" ? <Chip color="#34d399">DraftKings line</Chip> : <Chip color="#94a3b8">Reference line</Chip>}
-            {p.openLine != null && p.openLine !== p.line && <Chip color={p.line > p.openLine ? "#fbbf24" : "#60a5fa"}>{p.line > p.openLine ? "▲" : "▼"} {p.openLine} → {p.line}</Chip>}
+            {p.source === "draftkings" ? <Chip color="#12a150">DraftKings line</Chip> : <Chip color="#94a3b8">Reference line</Chip>}
+            {p.openLine != null && p.openLine !== p.line && <Chip color={p.line > p.openLine ? "#d49a06" : "#60a5fa"}>{p.line > p.openLine ? "▲" : "▼"} {p.openLine} → {p.line}</Chip>}
           </div>
         </div>
         <Gauge value={p.prob} label={p.grade} color={gc} size={62} stroke={6} />
@@ -42,20 +42,20 @@ export function NflPropCard({ p, inSlip, onToggle }: { p: NflPropPlay; inSlip?: 
           <p className="font-spot-sans font-extrabold text-[13px]" style={{ color: "var(--text)" }}>{p.market}</p>
           <p className="font-spot-mono font-bold text-[10px]" style={{ color: "var(--text-faint)" }}>Avg {p.seasonAvg} · {p.gp} GP</p>
         </div>
-        <div className="relative h-10 rounded-xl" style={{ background: "rgba(255,255,255,.05)", border: "1px solid var(--hairline)" }}>
-          <div className="absolute top-0 bottom-0 z-[2]" style={{ left: `${linePct}%`, width: 2, background: "rgba(255,255,255,.55)" }} />
-          <div className="absolute z-[3] whitespace-nowrap rounded px-1.5 py-0.5 font-spot-mono font-extrabold text-[9px]" style={{ top: -9, left: `${linePct}%`, transform: "translateX(-50%)", color: "var(--text-2)", background: "var(--panel)", border: "1px solid rgba(255,255,255,.12)" }}>Line {p.line}</div>
+        <div className="relative h-10 rounded-xl" style={{ background: "var(--wash-2)", border: "1px solid var(--hairline)" }}>
+          <div className="absolute top-0 bottom-0 z-[2]" style={{ left: `${linePct}%`, width: 2, background: "rgba(20,22,27,.6)" }} />
+          <div className="absolute z-[3] whitespace-nowrap rounded px-1.5 py-0.5 font-spot-mono font-extrabold text-[9px]" style={{ top: -9, left: `${linePct}%`, transform: "translateX(-50%)", color: "var(--text-2)", background: "var(--panel)", border: "1px solid var(--wash-3)" }}>Line {p.line}</div>
           <div className="absolute flex items-center justify-end rounded-lg overflow-hidden"
-            style={{ top: 6, bottom: 6, left: `${Math.min(linePct, projPct)}%`, width: `${Math.max(4, Math.abs(projPct - linePct))}%`, minWidth: 40, background: green ? "var(--green)" : "#f87171", boxShadow: `0 0 16px ${green ? "rgba(52,211,153,.4)" : "rgba(248,113,113,.4)"}`, paddingRight: 7, ["--bar-target-width" as string]: `${Math.max(4, Math.abs(projPct - linePct))}%`, animation: "bar-grow-w .9s cubic-bezier(.22,1,.36,1) .1s both" }}>
+            style={{ top: 6, bottom: 6, left: `${Math.min(linePct, projPct)}%`, width: `${Math.max(4, Math.abs(projPct - linePct))}%`, minWidth: 40, background: green ? "var(--green)" : "#e5484d", boxShadow: `0 0 16px ${green ? "rgba(52,211,153,.4)" : "rgba(248,113,113,.4)"}`, paddingRight: 7, ["--bar-target-width" as string]: `${Math.max(4, Math.abs(projPct - linePct))}%`, animation: "bar-grow-w .9s cubic-bezier(.22,1,.36,1) .1s both" }}>
             <span className="font-spot-mono font-extrabold text-[10.5px]" style={{ color: "#06070d" }}>{p.proj}</span>
           </div>
-          <span className="absolute font-spot-sans font-extrabold text-[8px] uppercase tracking-[.1em]" style={{ bottom: 4, left: 8, color: "rgba(255,255,255,.3)" }}>Model proj.</span>
+          <span className="absolute font-spot-sans font-extrabold text-[8px] uppercase tracking-[.1em]" style={{ bottom: 4, left: 8, color: "rgba(20,22,27,.38)" }}>Model proj.</span>
         </div>
         {p.notes.length > 0 && (
           <ul className="flex flex-col gap-1">
             {p.notes.slice(0, 3).map((n) => (
               <li key={n} className="flex gap-1.5 font-spot-sans text-[11px] leading-snug" style={{ color: "var(--text-muted)" }}>
-                <span style={{ color: "#c4b5fd" }}>◆</span>{n}
+                <span style={{ color: "#6d4fe0" }}>◆</span>{n}
               </li>
             ))}
           </ul>
@@ -63,7 +63,7 @@ export function NflPropCard({ p, inSlip, onToggle }: { p: NflPropPlay; inSlip?: 
         <div className="flex items-center justify-between gap-2.5">
           <div className="flex items-center gap-2">
             <span className="rounded-lg px-2.5 py-1 font-spot-sans font-extrabold text-[11px]"
-              style={p.over ? { color: "var(--green)", background: "var(--green-bg)", border: "1px solid rgba(52,211,153,.3)" } : { color: "#fda4a4", background: "var(--red-bg)", border: "1px solid rgba(239,68,68,.3)" }}>
+              style={p.over ? { color: "var(--green)", background: "var(--green-bg)", border: "1px solid rgba(52,211,153,.3)" } : { color: "#d6303d", background: "var(--red-bg)", border: "1px solid rgba(239,68,68,.3)" }}>
               {p.over ? "OVER" : "UNDER"} {p.line}
             </span>
             <span className="font-spot-mono font-bold text-[11px]" style={{ color: "var(--text-muted)" }}>
@@ -116,12 +116,12 @@ export function NflPropsBoard({ props, games, weekLabel, liveLines }: { props: N
                   <motion.div key={p.id} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.06 }}
                     className="relative overflow-hidden rounded-[22px] p-4 w-[268px] sm:w-[300px] flex items-center gap-3"
                     style={{ background: `linear-gradient(135deg, ${alpha(hex, "30")}, var(--panel) 72%)`, border: `1px solid ${alpha(hex, "55")}` }}>
-                    <span className="absolute top-2.5 right-3 font-spot-mono font-black text-[11px]" style={{ color: "rgba(255,255,255,.25)" }}>#{i + 1}</span>
+                    <span className="absolute top-2.5 right-3 font-spot-mono font-black text-[11px]" style={{ color: "rgba(20,22,27,.38)" }}>#{i + 1}</span>
                     <WnbaHeadshot hex={hex} src={nflHeadshotUrl(p.espnId)} name={p.player} size={84} radius={20} />
                     <div className="min-w-0">
                       <p className="font-spot-sans font-black text-[15px] leading-tight truncate" style={{ color: "var(--text)" }}>{p.player}</p>
                       <p className="font-spot-sans text-[10.5px]" style={{ color: "var(--text-muted)" }}>{p.pos} · {p.team} {p.home ? "vs" : "@"} {p.opp}</p>
-                      <p className="mt-1.5 font-spot-sans font-black text-[14px]" style={{ color: p.over ? "var(--green)" : "#fda4a4" }}>{p.over ? "Over" : "Under"} {p.line} {p.market}</p>
+                      <p className="mt-1.5 font-spot-sans font-black text-[14px]" style={{ color: p.over ? "var(--green)" : "#d6303d" }}>{p.over ? "Over" : "Under"} {p.line} {p.market}</p>
                       <p className="font-spot-mono font-bold text-[10.5px]" style={{ color: "var(--text-3)" }}>proj {p.proj} · {p.prob}% · <span style={{ color: gradeColor(p.grade) }}>{p.grade}</span></p>
                     </div>
                   </motion.div>
@@ -150,7 +150,7 @@ export function NflPropsBoard({ props, games, weekLabel, liveLines }: { props: N
             {filtered.length === 0 && <EmptyState title="No props match these filters" />}
             {filtered.length > limit && (
               <div className="mt-5 flex justify-center">
-                <button onClick={() => setLimit((l) => l + 18)} className="press rounded-xl px-5 py-2.5 font-spot-sans font-extrabold text-[12px]" style={{ color: ACCENT, background: "rgba(167,139,250,.1)", border: "1px solid rgba(167,139,250,.28)" }}>Show more ({filtered.length - limit})</button>
+                <button onClick={() => setLimit((l) => l + 18)} className="press rounded-xl px-5 py-2.5 font-spot-sans font-extrabold text-[12px]" style={{ color: ACCENT, background: "rgba(26,115,255,.1)", border: "1px solid rgba(26,115,255,.28)" }}>Show more ({filtered.length - limit})</button>
               </div>
             )}
           </>
