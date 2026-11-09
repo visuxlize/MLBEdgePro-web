@@ -5,7 +5,8 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { LogoPlate, WnbaHeadshot, alpha, gradeColor } from "@/components/web-tool/spotlight";
 import { PaywallGate } from "@/components/web-tool/paywall-gate";
-import { NflPropCard } from "@/components/web-tool/nfl-props-board";
+import { PropList } from "@/components/web-tool/props-explorer";
+import { nflToItems } from "@/components/web-tool/props-adapters";
 import { LiveStrip, NflLiveTracker, type StripItem } from "@/components/web-tool/live-tracker";
 import { Chip, CompareBar, EmptyState, Gauge, LiveBadge, OddsStrip, Panel, ProbSplit, Segmented } from "@/components/web-tool/sport-ui";
 import { nflHeadshotUrl, nflLogoUrl, nflTeamHex, nflTeamName } from "@/lib/nfl/teams";
@@ -217,7 +218,7 @@ export function NflGameDetailView({
         {tab === "props" && (
           <PaywallGate requiredTier="fan" feature="NFL Game Props" benefits={["Projections for every QB, RB, WR and TE in this game", "Hit probability, grade and the reasoning behind each lean"]}>
             {props.length === 0 ? <EmptyState title="No props for this game" body="Props are generated for games that haven't finished." /> : (
-              <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3">{props.map((p) => <NflPropCard key={p.id} p={p} />)}</div>
+              <PropList items={nflToItems(props)} />
             )}
           </PaywallGate>
         )}

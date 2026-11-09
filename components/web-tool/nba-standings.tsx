@@ -26,7 +26,7 @@ function Spotlight({ label, row, value, color }: { label: string; row: NbaStandi
 function Head({ power }: { power: boolean }) {
   const c = "font-spot-sans font-extrabold text-[9px] uppercase tracking-[.1em]";
   return (
-    <div className="flex items-center gap-2 px-3 sm:px-4 py-2.5 sticky top-14 z-10 backdrop-blur-md" style={{ background: "rgba(11,13,21,.92)", borderBottom: "1px solid var(--hairline)", color: "var(--text-faint)" }}>
+    <div className="flex items-center gap-2 px-3 sm:px-4 py-2.5" style={{ background: "var(--wash-1)", borderBottom: "1px solid var(--hairline)", color: "var(--text-faint)" }}>
       <span className={`${c} w-6 text-center`}>#</span>
       <span className={`${c} flex-1`}>Team</span>
       <span className={`${c} w-14 text-right`}>W-L</span>

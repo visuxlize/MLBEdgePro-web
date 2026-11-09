@@ -7,7 +7,7 @@ import { useUser, useClerk } from "@clerk/nextjs";
 import {
   CircleDot, BarChart3, Layers, Target, LayoutGrid, Users, ListOrdered,
   Settings, Lock, Menu, X, Zap, LogOut, ChevronRight, Home as HomeIcon,
-  Trophy, Grid2x2,
+  Trophy, Grid2x2, Sparkles,
 } from "lucide-react";
 import { useSubscription } from "@/lib/subscription";
 import { getSeasonInfo, type SportKey } from "@/lib/season";
@@ -95,18 +95,21 @@ const HOME_ITEM: NavItem = { href: "/home", icon: HomeIcon, label: "Home", requi
 const NAV: Record<SportKey, NavItem[]> = {
   nba: [
     { href: "/nba",           icon: CircleDot,   label: "Today",     requiredTier: null },
+    { href: "/picks",         icon: Sparkles,    label: "Picks",     requiredTier: "fan" },
     { href: "/nba/standings", icon: ListOrdered, label: "Standings", requiredTier: null },
     { href: "/nba/cup",       icon: Trophy,      label: "Cup",       requiredTier: null },
     { href: "/nba/props",     icon: Target,      label: "Props",     requiredTier: "fan" },
   ],
   nfl: [
     { href: "/nfl",           icon: CircleDot,   label: "Games",     requiredTier: null },
+    { href: "/picks",         icon: Sparkles,    label: "Picks",     requiredTier: "fan" },
     { href: "/nfl/standings", icon: ListOrdered, label: "Standings", requiredTier: null },
     { href: "/nfl/players",   icon: Users,       label: "Players",   requiredTier: null },
     { href: "/nfl/props",     icon: Target,      label: "Props",     requiredTier: "fan" },
   ],
   soccer: [
     { href: "/soccer",         icon: CircleDot,  label: "Matches", requiredTier: null },
+    { href: "/picks",          icon: Sparkles,   label: "Picks",   requiredTier: "fan" },
     { href: "/soccer/leagues", icon: LayoutGrid, label: "Leagues", requiredTier: null },
     { href: "/soccer/props",   icon: Layers,     label: "Props",   requiredTier: "fan" },
   ],
@@ -133,7 +136,7 @@ function detectSport(pathname: string): SportKey {
   if (pathname.startsWith("/soccer")) return "soccer";
   if (pathname.startsWith("/wnba")) return "wnba";
   if (pathname.startsWith("/nfl")) return "nfl";
-  if (pathname.startsWith("/home") || pathname.startsWith("/settings")) return "nba";
+  if (pathname.startsWith("/home") || pathname.startsWith("/settings") || pathname.startsWith("/slips") || pathname.startsWith("/picks")) return "nba";
   return "mlb";
 }
 

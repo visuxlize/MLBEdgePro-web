@@ -2,6 +2,8 @@ import Link from "next/link";
 import { AppSidebar } from "@/components/web-tool/app-sidebar";
 import { PendingTrialRedirect } from "@/components/PendingTrialRedirect";
 import { OffseasonGuard } from "@/components/web-tool/offseason-guard";
+import { SlipDock } from "@/components/web-tool/slip-panel";
+import { SlipSettler } from "@/components/web-tool/slip-settler";
 
 function DisclaimerStrip() {
   return (
@@ -24,6 +26,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen flex flex-col" style={{ background: "#eceef2" }}>
       <PendingTrialRedirect />
       <AppSidebar />
+      <SlipDock />
+      <SlipSettler />
       {/* Phones: clear the bottom tab bar. 640–1023: clear the vertical rail. */}
       <div className="flex-1 flex flex-col pb-[calc(62px+env(safe-area-inset-bottom))] sm:pb-0 sm:pl-[calc(76px+env(safe-area-inset-left))] lg:pl-0">
         <OffseasonGuard>

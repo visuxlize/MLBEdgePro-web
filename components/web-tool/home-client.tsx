@@ -268,6 +268,16 @@ export function HomeClient({ userName, todayDate, nba, nfl, soccer }: Props) {
           </aside>
         </div>
 
+        <Link href="/picks" className="press mt-6 flex items-center justify-between gap-3 rounded-[22px] px-4 py-3.5 sm:px-5 sm:py-4"
+          style={{ background: "linear-gradient(135deg, rgba(26,115,255,.12), var(--panel) 60%)", border: "1px solid rgba(26,115,255,.28)", boxShadow: "var(--shadow-card)" }}>
+          <div className="min-w-0">
+            <p className="spot-label" style={{ color: "var(--blue)" }}>New · Picks</p>
+            <p className="font-spot-sans font-black text-[15px] sm:text-[17px] mt-0.5" style={{ color: "var(--text)" }}>Today&apos;s best bets, parlays &amp; the research behind them</p>
+            <p className="font-spot-sans text-[11.5px] mt-0.5" style={{ color: "var(--text-muted)" }}>Singles, same-game and multi-game parlays across NBA, NFL and Soccer.</p>
+          </div>
+          <ArrowRight size={18} style={{ color: "var(--blue)" }} className="shrink-0" />
+        </Link>
+
         <div className="mt-6"><SavedSlipsPanel /></div>
       </div>
     </div>

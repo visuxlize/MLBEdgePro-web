@@ -14,9 +14,9 @@ interface Col { key: string; label: string; fmt?: (v: number, p: NflPlayerSeason
 const n1 = (v: number) => (Number.isFinite(v) ? v.toFixed(1) : "—");
 const int = (v: number) => (Number.isFinite(v) ? String(Math.round(v)) : "—");
 
-const CATS: Record<Cat, { label: string; sort: string; market: NflPropPlay["market"] | null; cols: Col[]; headline: Col; insight: (p: NflPlayerSeason) => string }> = {
+const CATS: Record<Cat, { label: string; sort: string; market: NflPropPlay["market"] | null; cols: Col[]; mobile: number[]; headline: Col; insight: (p: NflPlayerSeason) => string }> = {
   passing: {
-    label: "Passing", sort: "passingYards", market: "Pass Yds", headline: { key: "passingYards", label: "PASS YDS", fmt: int },
+    mobile: [1, 2], label: "Passing", sort: "passingYards", market: "Pass Yds", headline: { key: "passingYards", label: "PASS YDS", fmt: int },
     cols: [
       { key: "completions", label: "C/A", fmt: (_, p) => `${int(p.s.completions)}/${int(p.s.passingAttempts)}` },
       { key: "passingYards", label: "YDS", fmt: int }, { key: "passingTouchdowns", label: "TD", fmt: int }, { key: "interceptions", label: "INT", fmt: int },
@@ -25,7 +25,7 @@ const CATS: Record<Cat, { label: string; sort: string; market: NflPropPlay["mark
     insight: (p) => `${n1(p.s.yardsPerPassAttempt)} Y/A · ${int(p.s.passingTouchdowns)}:${int(p.s.interceptions)} TD:INT · ${n1(p.s.completionPct)}% completions`,
   },
   rushing: {
-    label: "Rushing", sort: "rushingYards", market: "Rush Yds", headline: { key: "rushingYards", label: "RUSH YDS", fmt: int },
+    mobile: [1, 3], label: "Rushing", sort: "rushingYards", market: "Rush Yds", headline: { key: "rushingYards", label: "RUSH YDS", fmt: int },
     cols: [
       { key: "rushingAttempts", label: "ATT", fmt: int }, { key: "rushingYards", label: "YDS", fmt: int }, { key: "yardsPerRushAttempt", label: "AVG", fmt: n1 },
       { key: "rushingTouchdowns", label: "TD", fmt: int }, { key: "rushingYardsPerGame", label: "YPG", fmt: n1 },
@@ -33,7 +33,7 @@ const CATS: Record<Cat, { label: string; sort: string; market: NflPropPlay["mark
     insight: (p) => `${n1(p.s.yardsPerRushAttempt)} yards per carry · ${n1(p.s.rushingYardsPerGame)} YPG · ${int(p.s.rushingTouchdowns)} TD`,
   },
   receiving: {
-    label: "Receiving", sort: "receivingYards", market: "Rec Yds", headline: { key: "receivingYards", label: "REC YDS", fmt: int },
+    mobile: [2, 0], label: "Receiving", sort: "receivingYards", market: "Rec Yds", headline: { key: "receivingYards", label: "REC YDS", fmt: int },
     cols: [
       { key: "receptions", label: "REC", fmt: int }, { key: "receivingTargets", label: "TGT", fmt: int }, { key: "receivingYards", label: "YDS", fmt: int },
       { key: "yardsPerReception", label: "AVG", fmt: n1 }, { key: "receivingTouchdowns", label: "TD", fmt: int }, { key: "receivingYardsPerGame", label: "YPG", fmt: n1 },
@@ -41,7 +41,7 @@ const CATS: Record<Cat, { label: string; sort: string; market: NflPropPlay["mark
     insight: (p) => `${p.s.receivingTargets ? Math.round((p.s.receptions / p.s.receivingTargets) * 100) : 0}% catch rate · ${n1(p.s.yardsPerReception)} Y/R · ${n1(p.s.receivingYardsPerGame)} YPG`,
   },
   defense: {
-    label: "Defense", sort: "sacks", market: null, headline: { key: "sacks", label: "SACKS", fmt: n1 },
+    mobile: [0, 1], label: "Defense", sort: "sacks", market: null, headline: { key: "sacks", label: "SACKS", fmt: n1 },
     cols: [
       { key: "sacks", label: "SACK", fmt: n1 }, { key: "tacklesForLoss", label: "TFL", fmt: int }, { key: "totalTackles", label: "TKL", fmt: int }, { key: "passesDefended", label: "PD", fmt: int },
     ],
@@ -67,36 +67,42 @@ export function NflPlayers({ boards, props }: { boards: Record<Cat, NflPlayerSea
 
   return (
     <div className="spotlight min-h-screen">
-      <div className="max-w-screen-xl mx-auto page-pad py-5 sm:py-6">
+      <div className="max-w-screen-xl mx-auto page-pad py-3 sm:py-6">
         <SportHeader eyebrow="NFL · Player analysis" title="Players to Know" subtitle="Season leaders in every phase — with this week's matchup grade for each star, built from the opposing defense, the game total and the spread." accent={ACCENT} />
 
-        <div className="mb-5">
+        <div className="mb-3.5 sm:mb-5">
           <Segmented id="nfl-cat" accent={ACCENT} value={cat} onChange={setCat} options={(Object.keys(CATS) as Cat[]).map((k) => ({ key: k, label: CATS[k].label }))} />
         </div>
 
         <div key={cat}>
-          {/* Top 3 */}
-          <div className="grid gap-3.5 md:grid-cols-3 mb-5 stagger">
+          {/* Top 3 — compact rows on phones, cards from md up */}
+          <div className="grid gap-2.5 md:gap-3.5 md:grid-cols-3 mb-3.5 sm:mb-5 stagger">
             {list.slice(0, 3).map((p, i) => {
               const hex = nflTeamHex(p.team);
               const play = playFor.get(p.espnId);
               return (
-                <div key={p.espnId} className="relative overflow-hidden rounded-[22px] p-4" style={{ background: `linear-gradient(140deg, ${alpha(hex, "30")}, var(--panel) 70%)`, border: `1px solid ${alpha(hex, "55")}` }}>
-                  <span className="absolute top-3 right-4 font-spot-mono font-black text-[34px] leading-none" style={{ color: "var(--wash-2)" }}>#{i + 1}</span>
-                  <div className="flex items-center gap-3.5">
-                    <div className="relative shrink-0">
+                <div key={p.espnId} className="relative overflow-hidden rounded-[18px] md:rounded-[22px] p-3 md:p-4" style={{ background: `linear-gradient(140deg, ${alpha(hex, "30")}, var(--panel) 70%)`, border: `1px solid ${alpha(hex, "55")}` }}>
+                  <span className="absolute top-2 right-3 md:top-3 md:right-4 font-spot-mono font-black text-[22px] md:text-[34px] leading-none" style={{ color: "var(--wash-2)" }}>#{i + 1}</span>
+                  <div className="flex items-center gap-3 md:gap-3.5">
+                    <div className="relative shrink-0 md:hidden">
+                      <WnbaHeadshot hex={hex} src={nflHeadshotUrl(p.espnId)} name={p.name} size={56} radius={16} />
+                      <div className="absolute -bottom-1 -right-1"><LogoPlate hex={hex} src={nflLogoUrl(p.team)} code={p.team} size={22} radius={7} variant="clean" /></div>
+                    </div>
+                    <div className="relative shrink-0 hidden md:block">
                       <WnbaHeadshot hex={hex} src={nflHeadshotUrl(p.espnId)} name={p.name} size={92} radius={22} />
                       <div className="absolute -bottom-1.5 -right-1.5"><LogoPlate hex={hex} src={nflLogoUrl(p.team)} code={p.team} size={30} radius={9} variant="clean" /></div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="font-spot-sans font-black text-[17px] leading-tight truncate" style={{ color: "var(--text)" }}>{p.name}</p>
-                      <p className="font-spot-sans font-semibold text-[11px]" style={{ color: "var(--text-3)" }}>{p.pos} · {p.team} · {p.gp} GP</p>
-                      <p className="mt-1.5 font-spot-mono font-black text-[26px] leading-none" style={{ color: "var(--text)" }}>{def.headline.fmt!(p.s[def.headline.key], p)}</p>
-                      <p className="font-spot-sans font-extrabold text-[9px] tracking-[.12em]" style={{ color: hex }}>{def.headline.label}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-spot-sans font-black text-[15px] md:text-[17px] leading-tight truncate pr-8" style={{ color: "var(--text)" }}>{p.name}</p>
+                      <p className="font-spot-sans font-semibold text-[10.5px] md:text-[11px]" style={{ color: "var(--text-3)" }}>{p.pos} · {p.team} · {p.gp} GP</p>
+                      <div className="mt-1 md:mt-1.5 flex items-baseline gap-1.5">
+                        <p className="font-spot-mono font-black text-[22px] md:text-[26px] leading-none" style={{ color: "var(--text)" }}>{def.headline.fmt!(p.s[def.headline.key], p)}</p>
+                        <p className="font-spot-sans font-extrabold text-[9px] tracking-[.12em]" style={{ color: hex }}>{def.headline.label}</p>
+                      </div>
                     </div>
                   </div>
-                  <p className="mt-3 font-spot-sans text-[12px] leading-snug" style={{ color: "var(--text-muted)" }}>{def.insight(p)}</p>
-                  <div className="mt-3 flex items-center gap-2 flex-wrap">
+                  <p className="mt-2 md:mt-3 font-spot-sans text-[11px] md:text-[12px] leading-snug" style={{ color: "var(--text-muted)" }}>{def.insight(p)}</p>
+                  <div className="mt-2 md:mt-3 flex items-center gap-x-2 gap-y-1 flex-wrap">
                     <MatchupChip play={play} />
                     {play && <span className="font-spot-mono font-bold text-[10.5px]" style={{ color: "var(--text-3)" }}>proj {play.proj} · <span style={{ color: gradeColor(play.grade) }}>{play.grade}</span></span>}
                   </div>
@@ -106,7 +112,36 @@ export function NflPlayers({ boards, props }: { boards: Record<Cat, NflPlayerSea
           </div>
 
           {/* Leaderboard */}
-          <Panel className="overflow-hidden">
+          {/* Phones: stat list (no sideways scrolling) */}
+          <Panel className="overflow-hidden sm:hidden">
+            {list.map((p, i) => {
+              const play = playFor.get(p.espnId);
+              const stats = def.mobile.map((ix) => def.cols[ix]);
+              return (
+                <div key={p.espnId} className="flex items-center gap-2.5 px-3 py-2" style={{ borderTop: i ? "1px solid var(--hairline)" : undefined }}>
+                  <span className="w-5 shrink-0 font-spot-mono font-black text-[11px]" style={{ color: i < 3 ? "#6d4fe0" : "var(--text-faint)" }}>{i + 1}</span>
+                  <WnbaHeadshot hex={nflTeamHex(p.team)} src={nflHeadshotUrl(p.espnId)} name={p.name} size={36} radius={10} />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-spot-sans font-extrabold text-[12.5px] truncate" style={{ color: "var(--text)" }}>{p.name}</p>
+                    <p className="font-spot-sans text-[10px] truncate" style={{ color: play ? (play.factor >= 1.03 ? "var(--green)" : play.factor <= 0.97 ? "var(--red-soft)" : "var(--text-faint)") : "var(--text-faint)" }}>
+                      {p.pos} · {p.team}{def.market ? (play ? ` · ${play.home ? "vs" : "@"} ${play.opp} ${play.proj}` : " · bye") : ""}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2.5 shrink-0">
+                    {stats.map((c, ci) => (
+                      <div key={c.key + c.label} className="text-right min-w-[34px]">
+                        <p className="font-spot-mono text-[12px]" style={{ color: ci === 0 ? "var(--text)" : "var(--text-3)", fontWeight: ci === 0 ? 800 : 500 }}>{(c.fmt ?? int)(p.s[c.key], p)}</p>
+                        <p className="font-spot-sans font-extrabold text-[8px] tracking-[.08em]" style={{ color: "var(--text-faint)" }}>{c.label}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </Panel>
+
+          {/* Tablet / desktop: full table */}
+          <Panel className="overflow-hidden hidden sm:block">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[520px] text-left">
                 <thead>

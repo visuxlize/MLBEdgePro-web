@@ -26,11 +26,11 @@ export function SportHeader({
   eyebrow, title, subtitle, accent, right,
 }: { eyebrow: string; title: string; subtitle?: string; accent: string; right?: ReactNode }) {
   return (
-    <div className="flex items-end justify-between gap-x-4 gap-y-3 flex-wrap mb-5 rise">
+    <div className="flex items-end justify-between gap-x-4 gap-y-3 flex-wrap mb-3.5 sm:mb-5 rise">
       <div className="min-w-0">
         <p className="spot-label" style={{ color: "var(--blue)" }}>{eyebrow}</p>
-        <h1 className="font-spot-sans text-[28px] sm:text-4xl font-black leading-[1.05] mt-1.5" style={{ color: "var(--text)" }}>{title}</h1>
-        {subtitle && <p className="mt-1.5 font-spot-sans text-[13px] max-w-xl" style={{ color: "var(--text-muted)" }}>{subtitle}</p>}
+        <h1 className="font-spot-sans text-[24px] sm:text-4xl font-black leading-[1.05] mt-1 sm:mt-1.5" style={{ color: "var(--text)" }}>{title}</h1>
+        {subtitle && <p className="mt-1 sm:mt-1.5 font-spot-sans text-[12px] sm:text-[13px] leading-snug line-clamp-2 sm:line-clamp-none max-w-xl" style={{ color: "var(--text-muted)" }}>{subtitle}</p>}
       </div>
       {right}
     </div>
@@ -49,7 +49,7 @@ export function Segmented<T extends string>({
           <button
             key={o.key}
             onClick={() => onChange(o.key)}
-            className="relative px-3.5 py-2 rounded-xl font-spot-sans font-extrabold text-[12px] whitespace-nowrap press"
+            className="relative px-3.5 py-1.5 sm:py-2 rounded-xl font-spot-sans font-extrabold text-[12px] whitespace-nowrap press"
             style={{ color: active ? "#ffffff" : "var(--text-muted)" }}
           >
             {active && (
